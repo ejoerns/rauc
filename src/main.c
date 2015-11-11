@@ -17,6 +17,11 @@
 GMainLoop *r_loop = NULL;
 int r_exit_status = 0;
 
+enum output_formats {
+	readable,
+	shell
+};
+
 static gboolean install_notify(gpointer data) {
 	RaucInstallArgs *args = data;
 
@@ -309,10 +314,21 @@ static gboolean status_start(int argc, char **argv)
 	gpointer key, value;
 	gboolean res = FALSE;
 	RaucSlot *booted = NULL;
+	enum output_formats output_format = readable;
 
 	g_debug("status start\n");
 
-	g_print("booted from: %s\n", get_bootname());
+	if (g_strcmp0(r_context_conf()->outformat, "shell") == 0) {
+		output_format = shell;
+	} else {
+		output_format = readable;
+	}
+
+	if (output_format == shell) {
+		g_print("system.booted.bootname=%s\n", get_bootname());
+	} else {
+		g_print("booted from: %s\n", get_bootname());
+	}
 
 	res = determine_slot_states();
 	if (!res) {
@@ -321,7 +337,18 @@ static gboolean status_start(int argc, char **argv)
 		goto out;
 	}
 
-	g_print("slot states:\n");
+	if (output_format == shell) {
+		g_print("system.slots=");
+		g_hash_table_iter_init(&iter, r_context()->config->slots);
+		while (g_hash_table_iter_next(&iter, &key, &value)) {
+			gchar *name = key;
+			g_print("%s ", name);
+		}
+		g_print("\n");
+	}
+
+	if (output_format == readable)
+		g_print("slot states:\n");
 	g_hash_table_iter_init(&iter, r_context()->config->slots);
 	while (g_hash_table_iter_next(&iter, &key, &value)) {
 		gchar *name = key;
@@ -344,18 +371,30 @@ static gboolean status_start(int argc, char **argv)
 			r_exit_status = 1;
 			break;
 		}
-		g_print("  %s: class=%s, device=%s, type=%s, bootname=%s\n",
-			name, slot->sclass, slot->device, slot->type, slot->bootname);
-		g_print("      state=%s", state);
-		if (slot->parent)
-			g_print(", parent=%s", slot->parent->name);
-		else
-			g_print(", parent=(none)");
-		if (slot->mountpoint)
-			g_print(", mountpoint=%s", slot->mountpoint);
-		else
-			g_print(", mountpoint=(none)");
-		g_print("\n");
+
+		if (output_format == shell) {
+			g_print("slot.%s.state=%s\n", name, state);
+			g_print("slot.%s.class=%s\n", name, slot->sclass);
+			g_print("slot.%s.device=%s\n", name, slot->device);
+			g_print("slot.%s.type=%s\n", name, slot->type);
+			g_print("slot.%s.bootname=%s\n", name, slot->bootname);
+			g_print("slot.%s.parent=%s\n", name, slot->parent ? slot->parent->name : "(none)");
+			g_print("slot.%s.mountpoint=%s\n", name, slot->mountpoint ? slot->mountpoint : "(none)");
+		} else {
+			g_print("  %s: class=%s, device=%s, type=%s, bootname=%s\n",
+					name, slot->sclass, slot->device, slot->type, slot->bootname);
+			g_print("      state=%s", state);
+			if (slot->parent)
+				g_print(", parent=%s", slot->parent->name);
+			else
+				g_print(", parent=(none)");
+			if (slot->mountpoint)
+				g_print(", mountpoint=%s", slot->mountpoint);
+			else
+				g_print(", mountpoint=(none)");
+			g_print("\n");
+		}
+
 	}
 
 	if (argc < 3) {
@@ -424,7 +463,7 @@ static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, version = FALSE;
 	gchar *confpath = NULL, *certpath = NULL, *keypath = NULL, *mount = NULL,
-	      *handlerextra = NULL;
+	      *handlerextra = NULL, *format = NULL;
 	GOptionContext *context = NULL;
 	GOptionEntry entries[] = {
 		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
@@ -433,6 +472,7 @@ static void cmdline_handler(int argc, char **argv)
 		{"mount", '\0', 0, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
 		{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handlerextra, "extra handler arguments", "ARGS"},
 		{"version", '\0', 0, G_OPTION_ARG_NONE, &version, "display version", NULL},
+		{"output-format", '\0', 0, G_OPTION_ARG_STRING, &format, "output format", "FORMAT"},
 		{"help", 'h', 0, G_OPTION_ARG_NONE, &help, NULL, NULL},
 		{0}
 	};
@@ -520,6 +560,8 @@ static void cmdline_handler(int argc, char **argv)
 			r_context_conf()->mountprefix = mount;
 		if (handlerextra)
 			r_context_conf()->handlerextra = handlerextra;
+		if (format)
+			r_context_conf()->outformat = format;
 	} else {
 		if (confpath != NULL ||
 		    certpath != NULL ||

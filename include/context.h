@@ -19,6 +19,8 @@ typedef struct {
 	/* optional global mount prefix overwrite */
 	gchar *mountprefix;
 
+	gchar *outformat;
+
 	/* optional custom handler extra arguments */
 	gchar *handlerextra;
 } RaucContext;
