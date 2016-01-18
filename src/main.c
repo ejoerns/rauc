@@ -397,6 +397,7 @@ static void cmdline_handler(int argc, char **argv)
 #endif
 		{0}
 	};
+	RaucCommand *rc;
 	RaucCommand *rcommand = NULL;
 
 	context = g_option_context_new("<COMMAND>");
@@ -440,9 +441,9 @@ static void cmdline_handler(int argc, char **argv)
 	}
 
 
-	RaucCommand *rc = rcommands;
 
 	/* try to get known command */
+	rc = rcommands;
 	while (rc->name) {
 		if (g_strcmp0(rc->name, cmdarg) == 0) {
 			rcommand = rc;
