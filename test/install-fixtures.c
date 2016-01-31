@@ -59,6 +59,8 @@ void fixture_helper_fixture_set_up_system_user(gchar *tmpdir,
 			tmpdir, "openssl-ca/dev-ca.pem"));
 
 	/* Setup pseudo devices */
+	g_assert(test_prepare_dummy_file(tmpdir, "images/rescue-0",
+					SLOT_SIZE, "/dev/zero") == 0);
 	g_assert(test_prepare_dummy_file(tmpdir, "images/rootfs-0",
 			SLOT_SIZE, "/dev/zero") == 0);
 	g_assert(test_prepare_dummy_file(tmpdir, "images/appfs-0",
@@ -67,6 +69,7 @@ void fixture_helper_fixture_set_up_system_user(gchar *tmpdir,
 			SLOT_SIZE, "/dev/zero") == 0);
 	g_assert(test_prepare_dummy_file(tmpdir, "images/appfs-1",
 			SLOT_SIZE, "/dev/zero") == 0);
+	g_assert_true(test_make_filesystem(tmpdir, "images/rescue-0"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/rootfs-0"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/appfs-0"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/rootfs-1"));
