@@ -282,6 +282,13 @@ test_expect_success !SERVICE "rauc --override-boot-slot=system0 status: internal
   rauc -c test.conf --override-boot-slot=system0 status
 "
 
+mkdir images
+touch images/rescue-0
+touch images/rootfs-0
+touch images/rootfs-1
+touch images/appfs-0
+touch images/appfs-1
+
 test_expect_success !SERVICE "rauc status readable: internally" "
   rauc -c test.conf --override-boot-slot=system0 status --output-format=readable
 "
