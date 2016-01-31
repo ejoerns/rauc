@@ -875,6 +875,9 @@ gchar* slotstate_to_str(SlotState slotstate)
 		case ST_BOOTED:
 			state = g_strdup("booted");
 			break;
+		case ST_NOTFOUND:
+			state = g_strdup("not found");
+			break;
 		case ST_UNKNOWN:
 		default:
 			g_error("invalid slot status %d", slotstate);
