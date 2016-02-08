@@ -45,7 +45,8 @@ librauc_la_SOURCES = \
 	src/network.c \
 	src/service.c \
 	src/signature.c \
-	src/utils.c
+	src/utils.c \
+	src/update_handler.c
 nodist_librauc_la_SOURCES = \
 	$(gdbus_installer_generated)
 librauc_la_CFLAGS = $(AM_CFLAGS) $(CODE_COVERAGE_CFLAGS)

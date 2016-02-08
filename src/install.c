@@ -11,6 +11,7 @@
 #include "mount.h"
 #include "utils.h"
 #include "bootchooser.h"
+#include "update_handler.h"
 #include <sys/ioctl.h>
 #include <gio/gfiledescriptorbased.h>
 #include <gio/gunixmounts.h>
@@ -21,7 +22,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <mtd/ubi-user.h>
 
 #define R_SLOT_ERROR r_slot_error_quark ()
 
@@ -505,104 +505,17 @@ static gboolean launch_and_wait_custom_handler(RaucInstallArgs *args, gchar* cwd
 	return res;
 }
 
-static gboolean copy_image(GFile *src, GFile *dest, gchar* fs_type, GError **error) {
-	gboolean res = FALSE;
-	GError *ierror = NULL;
-	GFileInputStream *instream = NULL;
-	GOutputStream *outstream = NULL;
-	gssize size;
-	int fd_out;
-	int ret;
-	goffset imgsize;
-
-	/* open source image and determine size */
-	instream = g_file_read(src, NULL, &ierror);
-	if (instream == NULL) {
-		g_propagate_prefixed_error(error, ierror,
-				"failed to open file for reading: ");
-		goto out;
-	}
-
-	res = g_seekable_seek(G_SEEKABLE(instream),
-			      0, G_SEEK_END, NULL, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(error, ierror,
-				"src image seek failed: ");
-		goto out;
-	}
-	imgsize = g_seekable_tell(G_SEEKABLE(instream));
-	res = g_seekable_seek(G_SEEKABLE(instream),
-			      0, G_SEEK_SET, NULL, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(error, ierror,
-				"src image seek failed: ");
-		goto out;
-	}
-	res = FALSE;
-
-	g_debug("Input image size is %" G_GOFFSET_FORMAT " bytes", imgsize);
-
-	if (imgsize == 0) {
-		g_set_error_literal(error, R_HANDLER_ERROR, 0,
-				"Input image is empty");
-		goto out;
-	}
-
-	fd_out = open(g_file_get_path(dest), O_WRONLY);
-	if (fd_out == -1) {
-		g_set_error(error, R_HANDLER_ERROR, 0,
-				"opening output device failed: %s", strerror(errno));
-		goto out;
-	}
-
-	outstream = g_unix_output_stream_new(fd_out, TRUE);
-	if (outstream == NULL) {
-		g_propagate_prefixed_error(error, ierror,
-				"failed to open file for writing: ");
-		goto out;
-	}
-
-	if (g_strcmp0(fs_type, "ubifs") == 0) {
-		/* set up ubi volume for image copy */
-		ret = ioctl(fd_out, UBI_IOCVOLUP, &imgsize);
-		if (ret == -1) {
-			g_set_error(error, R_HANDLER_ERROR, 0,
-					"ubi volume update failed: %s", strerror(errno));
-			goto out;
-		}
-	}
-
-	size = g_output_stream_splice(
-			outstream,
-			(GInputStream*)instream,
-			G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-			NULL,
-			&ierror);
-	if (size == -1) {
-		g_propagate_prefixed_error(error, ierror,
-				"failed splicing data: ");
-		goto out;
-	} else if (size != imgsize) {
-		g_set_error_literal(error, R_HANDLER_ERROR, 0,
-				"image size and written size differ!");
-		goto out;
-	}
-
-
-	res = TRUE;
-out:
-	g_clear_object(&instream);
-	g_clear_object(&outstream);
-	return res;
-}
 
 static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cwd, RaucManifest *manifest, GHashTable *target_group, GError **error) {
 
+	GError *ierror = NULL;
 	gboolean res = FALSE;
 	gchar *mountpoint = NULL;
 
 	GHashTableIter iter;
 	gpointer class, member;
+
+	setup_fstype_handlers();
 
 	if (!verify_compatible(manifest)) {
 		res = FALSE;
@@ -611,11 +524,10 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cw
 		goto out;
 	}
 
-	mountpoint = r_create_mount_point("image", NULL);
+	mountpoint = r_create_mount_point("image", &ierror);
 	if (!mountpoint) {
 		res = FALSE;
-		g_set_error_literal(error, R_HANDLER_ERROR, 0,
-				"Failed to create image mount point");
+		g_propagate_error(error, ierror);
 		goto out;
 	}
 
@@ -640,7 +552,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cw
 
 	install_args_update(args, "Updating slots...");
 	for (GList *l = manifest->images; l != NULL; l = l->next) {
-		GError *ierror = NULL;
 		gchar *dest_slot_name;
 		RaucSlot  *dest_slot;
 		RaucImage *mfimage;
@@ -649,15 +560,17 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cw
 		GFile *destdevicefile = NULL;
 		gchar *slotstatuspath = NULL;
 		RaucSlotStatus *slot_state = NULL;
+		img_to_fs_handler update_handler = NULL;
 
 		mfimage = l->data;
 		dest_slot_name = g_hash_table_lookup(target_group, mfimage->slotclass);
 		dest_slot = g_hash_table_lookup(r_context()->config->slots, dest_slot_name);
 
-		if (g_path_is_absolute(mfimage->filename)) {
-			srcimagepath = g_strdup(mfimage->filename);
-		} else {
+		/* if image filename is relative, make it aboslut */
+		if (!g_path_is_absolute(mfimage->filename)) {
 			srcimagepath = g_build_filename(cwd, mfimage->filename, NULL);
+			g_free(mfimage->filename);
+			mfimage->filename = srcimagepath;
 		}
 
 		if (!g_file_test(srcimagepath, G_FILE_TEST_EXISTS)) {
@@ -671,6 +584,15 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cw
 			res = FALSE;
 			g_set_error(error, R_HANDLER_ERROR, 0,
 					"Destination device '%s' not found", dest_slot->device);
+			goto out;
+		}
+
+		/* determine whether upate image type is compatible with destination slot type */
+		update_handler = check_for_update_handler(mfimage, dest_slot, &ierror);
+
+		if (update_handler == NULL) {
+			res = FALSE;
+			g_propagate_error(error, ierror);
 			goto out;
 		}
 
@@ -729,12 +651,11 @@ copy:
 		install_args_update(args, g_strdup_printf("Updating slot %s", dest_slot->name));
 
 		/* update slot */
-		g_message("Copying %s to %s", srcimagepath, dest_slot->device);
+		g_message("Updating %s with %s", dest_slot->device, srcimagepath);
 
-		res = copy_image(
-			srcimagefile,
-			destdevicefile,
-			dest_slot->type,
+		res = update_handler(
+			mfimage,
+			dest_slot,
 			&ierror);
 
 		if (!res) {
