@@ -46,6 +46,12 @@ static void manifest_check_common(RaucManifest *rm) {
 	}
 }
 
+/* Test: test_load_manifest
+ *
+ * Tests loading a valid manifest file and checks if content in resulting
+ * RaucManifest structure is ok.
+ * Second test is accessing a non-existing file.
+ * Third test is reading an invalid manifest file */
 static void test_load_manifest(void)
 {
 	RaucManifest *rm = NULL;
@@ -77,12 +83,19 @@ static void test_load_manifest(void)
 
 }
 
+/* Test: test_save_load_manifest
+ *
+ * Creates a new manifest file by filling a RaucManifest struct and saving it
+ * with save_manifest_file().
+ * Then the saved manifest is loaded again using load_manifest_file() and
+ * resulting structs are checked to be consistent to input content. */
 static void test_save_load_manifest(void)
 {
 	RaucManifest *rm = g_new0(RaucManifest, 1);
 	RaucImage *new_image;
 	RaucFile *new_file;
 
+	/* setup manifest structures */
 	rm->update_compatible = g_strdup("BarCorp FooBazzer");
 	rm->update_version = g_strdup("2011.03-1");
 	rm->keyring = g_strdup("mykeyring.tar");
@@ -117,10 +130,12 @@ static void test_save_load_manifest(void)
 	g_assert_cmpuint(g_list_length(rm->images), ==, 2);
 	g_assert_cmpuint(g_list_length(rm->files), ==, 1);
 
+	/* save manifest */
 	g_assert_true(save_manifest_file("test/savedmanifest.raucm", rm, NULL));
 
 	g_clear_pointer(&rm, free_manifest);
 
+	/* load and assert manifest */
 	g_assert_true(load_manifest_file("test/savedmanifest.raucm", &rm, NULL));
 
 	g_assert_nonnull(rm);
@@ -153,7 +168,11 @@ static void test_save_load_manifest(void)
 	free_manifest(rm);
 }
 
-
+/* Test: test_load_manifest_mem
+ *
+ * Tests loading a valid manifest file from memory and checks if content in
+ * resulting RaucManifest structure is ok.
+ */
 static void test_load_manifest_mem(void)
 {
 	GBytes *data = NULL;
