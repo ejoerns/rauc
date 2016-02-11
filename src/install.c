@@ -505,48 +505,6 @@ static gboolean launch_and_wait_custom_handler(RaucInstallArgs *args, gchar* cwd
 	return res;
 }
 
-/* Creates a mount subdir in mount path prefix */
-static gchar* create_mount_point(const gchar *name, GError **error) {
-	gchar* prefix;
-	gchar* mountpoint = NULL;
-
-	prefix = r_context()->config->mount_prefix;
-	if (!g_file_test (prefix, G_FILE_TEST_IS_DIR)) {
-		g_set_error(
-				error,
-				R_INSTALL_ERROR,
-				3,
-				"mount prefix path %s does not exist",
-				prefix);
-		goto out;
-	}
-
-
-	mountpoint = g_build_filename(prefix, name, NULL);
-
-	if (!g_file_test (mountpoint, G_FILE_TEST_IS_DIR)) {
-		gint ret;
-		ret = g_mkdir(mountpoint, 0777);
-
-		if (ret != 0) {
-			g_set_error(
-					error,
-					R_INSTALL_ERROR,
-					3,
-					"Failed creating mount path '%s'",
-					mountpoint);
-			g_free(mountpoint);
-			mountpoint = NULL;
-			goto out;
-		}
-	}
-
-out:
-
-	return mountpoint;
-}
-
-
 static gboolean copy_image(GFile *src, GFile *dest, gchar* fs_type, GError **error) {
 	gboolean res = FALSE;
 	GError *ierror = NULL;
@@ -653,7 +611,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* cw
 		goto out;
 	}
 
-	mountpoint = create_mount_point("image", NULL);
+	mountpoint = r_create_mount_point("image", NULL);
 	if (!mountpoint) {
 		res = FALSE;
 		g_set_error_literal(error, R_HANDLER_ERROR, 0,
@@ -931,7 +889,7 @@ static gboolean launch_and_wait_network_handler(const gchar* base_url,
 	g_hash_table_iter_init(&iter, target_group);
 	while (g_hash_table_iter_next(&iter, (gpointer* )&slotclass,
 				      (gpointer *)&slotname)) {
-		gchar *mountpoint = create_mount_point(slotname, NULL);
+		gchar *mountpoint = r_create_mount_point(slotname, NULL);
 		gchar *slotstatuspath = NULL;
 		RaucSlot *slot = NULL;
 		RaucSlotStatus *slot_state = NULL;
@@ -1071,7 +1029,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 		goto out;
 	}
 
-	mountpoint = create_mount_point("bundle", &ierror);
+	mountpoint = r_create_mount_point("bundle", &ierror);
 	if (!mountpoint) {
 		res = FALSE;
 		g_propagate_prefixed_error(
