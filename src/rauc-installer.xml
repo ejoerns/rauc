@@ -29,6 +29,8 @@
     <!-- Progress: Provides installation progress informations in the form
          (percentage, message, nesting depth) -->
     <property name="Progress" type="(isi)" access="read"/>
+    <property name="SlotStatus" type="a(sss)" access="read"/>
+    <property name="BootedSlot" type="s" access="read"/>
 
     <!--
          Completed:
