@@ -212,6 +212,7 @@ static gboolean bundle_start(int argc, char **argv)
 {
 	GError *ierror = NULL;
 	g_debug("bundle start");
+	r_context_prepare();
 
 	if (r_context()->certpath == NULL ||
 	    r_context()->keypath == NULL) {
@@ -264,6 +265,7 @@ static gboolean checksum_start(int argc, char **argv)
 	gboolean sign = FALSE;
 
 	g_debug("checksum start");
+	r_context_prepare();
 
 	if (r_context()->certpath != NULL &&
 	    r_context()->keypath != NULL) {
@@ -549,6 +551,8 @@ static gboolean info_start(int argc, char **argv)
 	GError *error = NULL;
 	gboolean res = FALSE;
 	gchar* (*formatter)(RaucManifest *manifest) = NULL;
+
+	r_context_prepare();
 
 	if (argc < 3) {
 		g_printerr("A file name must be provided\n");
@@ -850,6 +854,7 @@ static gboolean status_start(int argc, char **argv)
 	gboolean res = FALSE;
 
 	g_debug("status start");
+	r_context_prepare();
 
 	res = determine_slot_states(&ierror);
 	if (!res) {

@@ -313,7 +313,7 @@ no_image:
 	mountprefix = g_build_filename(fixture->tmpdir, "testmount", NULL);
 	g_assert_nonnull(mountprefix);
 	r_context_conf()->mountprefix = mountprefix;
-	r_context();
+	r_context_prepare();
 	g_assert(g_mkdir(mountprefix, 0777) == 0);
 
 	/* get handler for this */

@@ -243,6 +243,7 @@ static void install_fixture_set_up_network(InstallFixture *fixture,
 	rm->files = g_list_append(rm->files, &files[1]);
 
 	/* Create signed manifest */
+	r_context_prepare();
 	g_assert_true(save_manifest_file(manifestpath, rm, NULL));
 	g_assert_true(update_manifest(contentdir, TRUE, NULL));
 	rename_manifest(contentdir, "manifest-1");
@@ -278,6 +279,7 @@ static void install_fixture_tear_down(InstallFixture *fixture,
 static void install_test_bootname(InstallFixture *fixture,
 		gconstpointer user_data)
 {
+	r_context_prepare();
 	g_assert_nonnull(r_context()->bootslot);
 }
 
@@ -318,6 +320,8 @@ sha256=ecf4c031d01cb9bfa9aa5ecfce93efcf9149544bdbf91178d2c2d9d1d24076ca\n\
 filename=bootloader.img";
 	gchar* pathname = write_tmp_file(fixture->tmpdir, "manifest.raucm", manifest_file, NULL);
 	g_assert_nonnull(pathname);
+
+	r_context_prepare();
 
 	g_assert_true(load_manifest_file(pathname, &rm, NULL));
 
@@ -389,7 +393,7 @@ static void install_test_bundle(InstallFixture *fixture,
 	mountprefix = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountprefix);
 	r_context_conf()->mountprefix = mountprefix;
-	r_context();
+	r_context_prepare();
 
 	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
 	g_assert_nonnull(bundlepath);
@@ -434,7 +438,7 @@ static void install_test_network(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	manifesturl = g_strconcat("file://", fixture->tmpdir,
 				  "/content/manifest-1.raucm", NULL);
@@ -466,7 +470,7 @@ static void install_test_bundle_thread(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
 	g_assert_nonnull(bundlepath);
@@ -502,7 +506,7 @@ static void install_test_network_thread(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	manifesturl = g_strconcat("file://", fixture->tmpdir,
 				  "/content/manifest-1.raucm", NULL);
@@ -533,7 +537,7 @@ static void install_test_bundle_hook_install_check(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
 	g_assert_nonnull(bundlepath);
@@ -567,7 +571,7 @@ static void install_test_bundle_hook_install(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
 	g_assert_nonnull(bundlepath);
@@ -618,7 +622,7 @@ static void install_test_bundle_hook_post_install(InstallFixture *fixture,
 	mountdir = g_build_filename(fixture->tmpdir, "mount", NULL);
 	g_assert_nonnull(mountdir);
 	r_context_conf()->mountprefix = mountdir;
-	r_context();
+	r_context_prepare();
 
 	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
 	g_assert_nonnull(bundlepath);
