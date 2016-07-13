@@ -163,6 +163,8 @@ void fixture_helper_set_up_bundle(gchar *tmpdir,
 					tmpdir, "content/hook.sh"));
 	}
 
+	r_context_prepare();
+
 	/* Update checksums in manifest */
 	g_assert_true(update_manifest(contentdir, FALSE, NULL));
 
