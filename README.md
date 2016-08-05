@@ -64,6 +64,10 @@ Documentation: https://rauc.readthedocs.org/
 
 Please see the [documentation](https://rauc.readthedocs.org/) for details.
 
+### Prerequisites
+
+    sudo apt-get install automake libtool libglib2.0-dev libcurl3-dev libssl-dev 
+
 ### Building from sources
 
     git clone https://github.com/jluebbe/rauc
