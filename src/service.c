@@ -142,7 +142,11 @@ out:
 	g_clear_pointer(&manifestpath, g_free);
 
 	if (res) {
-		r_installer_complete_info(interface, invocation, manifest->update_compatible, manifest->update_version);
+		r_installer_complete_info(
+				interface,
+				invocation,
+				manifest->update_compatible,
+				manifest->update_version ? manifest->update_version : "");
 	} else {
 		g_dbus_method_invocation_return_error(invocation,
 						      G_IO_ERROR,
