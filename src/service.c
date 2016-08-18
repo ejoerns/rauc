@@ -130,9 +130,6 @@ static gboolean r_on_handle_info(RInstaller *interface,
 		goto out;
 	}
 
-	g_print("compatible: %s\n", manifest->update_compatible);
-	g_print("version:    %s\n", manifest->update_version);
-
 out:
 	if (tmpdir)
 		rm_tree(tmpdir, NULL);
