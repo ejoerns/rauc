@@ -685,8 +685,8 @@ typedef struct {
 
 RaucUpdatePair updatepairs[] = {
 	{"*.ext4", "ext4", img_to_fs_handler},
-	{"*.ext4", "raw", img_to_fs_handler},
-	{"*.vfat", "raw", img_to_fs_handler},
+	{"*.ext4", "raw", img_to_raw_handler},
+	{"*.vfat", "raw", img_to_raw_handler},
 	{"*.tar.*", "ext4", tar_to_ext4_handler},
 	{"*.tar.*", "ubifs", tar_to_ubifs_handler},
 	{"*.ubifs", "ubifs", img_to_ubivol_handler},
