@@ -498,7 +498,6 @@ unmount_out:
 	/* finally umount ubi volume */
 	g_message("Unmounting ubifs slot %s", dest_slot->device);
 	if (!r_umount_slot(dest_slot, &ierror)) {
-		res = FALSE;
 		g_warning("Unmounting failed: %s", ierror->message);
 		g_clear_error(&ierror);
 	}
@@ -558,7 +557,6 @@ unmount_out:
 	/* finally umount ext4 volume */
 	g_message("Unmounting ext4 slot %s", dest_slot->device);
 	if (!r_umount_slot(dest_slot, &ierror)) {
-		res = FALSE;
 		g_warning("Unmounting failed: %s", ierror->message);
 		g_clear_error(&ierror);
 	}
