@@ -371,7 +371,6 @@ unmount_out:
 	/* finally umount slot */
 	g_message("Unmounting slot %s", slot->device);
 	if (!r_umount_slot(slot, &ierror)) {
-		res = FALSE;
 		g_warning("Unmounting failed: %s", ierror->message);
 		g_clear_error(&ierror);
 	}
