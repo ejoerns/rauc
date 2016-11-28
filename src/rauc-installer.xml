@@ -28,7 +28,8 @@
     <!-- Progress: Provides installation progress informations in the form
          (percentage, message, nesting depth) -->
     <property name="Progress" type="(isi)" access="read"/>
-    <property name="SlotStatus" type="a(sss)" access="read"/>
+    <!-- SlotStatus: Holds the status of each slot managed by rauc -->
+    <property name="SlotStatus" type="aa{sv}" access="read"/>
     <property name="BootedSlot" type="s" access="read"/>
 
     <!--
