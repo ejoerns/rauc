@@ -43,6 +43,8 @@ static gboolean service_install_cleanup(gpointer data)
 	}
 	r_old_installer_emit_completed(r_old_installer, args->status_result);
 	r_old_installer_set_operation(r_old_installer, "idle");
+	r_installer_complete_install(r_installer, NULL, args->status_result);
+	r_installer_set_operation(r_installer, "idle");
 	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_old_installer));
 	g_mutex_unlock(&args->status_mutex);
 
@@ -80,6 +82,7 @@ out:
 	g_clear_pointer(&args, g_free);
 	if (res) {
 		r_old_installer_complete_install(interface, invocation);
+		r_installer_complete_install(interface, invocation, 0);
 	} else {
 		r_old_installer_set_operation(r_old_installer, "idle");
 		g_dbus_method_invocation_return_error(invocation,

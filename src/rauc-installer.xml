@@ -3,11 +3,13 @@
     <!--
          Install:
          @source: Path to bundle to be installed
+         @result: return code (0 for success)
 
          Triggers an installation.
     -->
     <method name="Install">
-      <arg name="source" type="s"/>
+      <arg name="source" type="s" direction="in"/>
+      <arg name="result" type="i" direction="out" />
     </method>
 
     <!--
@@ -59,15 +61,5 @@
          (percentage, message, nesting depth) -->
     <property name="Progress" type="(isi)" access="read"/>
 
-    <!--
-         Completed:
-         @result: return code (0 for success)
-
-         This signal is emitted when installation completed, either
-         successfully or with an error.
-    -->
-    <signal name="Completed">
-      <arg name="result" type="i"/>
-    </signal>
   </interface>
 </node>
