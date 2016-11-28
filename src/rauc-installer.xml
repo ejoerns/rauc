@@ -13,13 +13,12 @@
     <!--
      Info: D-Bus variant of rauc info <bundle>
      @bundle: full path to the queried bundle.
-     @compatile: the compatible string from the bundle
-     @version: the version string from the bundle
+     @info: Returned struct with bundle info (compatible, version, description,
+     build)
     -->
     <method name="Info">
       <arg name="bundle" type="s" direction="in" />
-      <arg name="compatible" type="s" direction="out" />
-      <arg name="version" type="s" direction="out" />
+      <arg name="info" type="a{sv}" direction="out" />
     </method>
 
     <!--
