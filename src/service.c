@@ -9,12 +9,12 @@
 #include "context.h"
 #include "install.h"
 #include "mark.h"
-#include "rauc-installer-generated.h"
+#include "rauc-installer-generated-old.h"
 #include "service.h"
 #include "utils.h"
 
 GMainLoop *service_loop = NULL;
-RInstaller *r_installer = NULL;
+ROLDInstaller *r_old_installer = NULL;
 guint r_bus_name_id = 0;
 
 static gboolean service_install_notify(gpointer data)
@@ -41,9 +41,9 @@ static gboolean service_install_cleanup(gpointer data)
 	} else {
 		g_message("installing `%s` failed: %d", args->name, args->status_result);
 	}
-	r_installer_emit_completed(r_installer, args->status_result);
-	r_installer_set_operation(r_installer, "idle");
-	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_installer));
+	r_old_installer_emit_completed(r_old_installer, args->status_result);
+	r_old_installer_set_operation(r_old_installer, "idle");
+	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_old_installer));
 	g_mutex_unlock(&args->status_mutex);
 
 	install_args_free(args);
@@ -51,7 +51,7 @@ static gboolean service_install_cleanup(gpointer data)
 	return G_SOURCE_REMOVE;
 }
 
-static gboolean r_on_handle_install(RInstaller *interface,
+static gboolean r_on_handle_install(ROLDInstaller *interface,
 		GDBusMethodInvocation  *invocation,
 		const gchar *source)
 {
@@ -68,8 +68,8 @@ static gboolean r_on_handle_install(RInstaller *interface,
 	args->notify = service_install_notify;
 	args->cleanup = service_install_cleanup;
 
-	r_installer_set_operation(r_installer, "installing");
-	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_installer));
+	r_old_installer_set_operation(r_old_installer, "installing");
+	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_old_installer));
 	res = install_run(args);
 	if (!res) {
 		goto out;
@@ -79,9 +79,9 @@ static gboolean r_on_handle_install(RInstaller *interface,
 out:
 	g_clear_pointer(&args, g_free);
 	if (res) {
-		r_installer_complete_install(interface, invocation);
+		r_old_installer_complete_install(interface, invocation);
 	} else {
-		r_installer_set_operation(r_installer, "idle");
+		r_old_installer_set_operation(r_old_installer, "idle");
 		g_dbus_method_invocation_return_error(invocation,
 				G_IO_ERROR,
 				G_IO_ERROR_FAILED_HANDLED,
@@ -92,7 +92,7 @@ out:
 }
 
 
-static gboolean r_on_handle_info(RInstaller *interface,
+static gboolean r_on_handle_info(ROLDInstaller *interface,
 		GDBusMethodInvocation  *invocation,
 		const gchar *arg_bundle)
 {
@@ -147,7 +147,7 @@ out:
 		rm_tree(tmpdir, NULL);
 
 	if (res) {
-		r_installer_complete_info(
+		r_old_installer_complete_info(
 				interface,
 				invocation,
 				manifest->update_compatible,
@@ -369,8 +369,8 @@ out:
 
 void set_last_error(gchar *message)
 {
-	if (r_installer)
-		r_installer_set_last_error(r_installer, message);
+	if (r_old_installer)
+		r_old_installer_set_last_error(r_old_installer, message);
 }
 
 static void send_progress_callback(gint percentage,
@@ -387,8 +387,8 @@ static void send_progress_callback(gint percentage,
 	progress_update[2] = g_variant_new_int32(nesting_depth);
 
 	progress_update_tuple = g_variant_new_tuple(progress_update, 3);
-	r_installer_set_progress(r_installer, progress_update_tuple);
-	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_installer));
+	r_old_installer_set_progress(r_old_installer, progress_update_tuple);
+	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_old_installer));
 }
 
 static void r_on_bus_acquired(GDBusConnection *connection,
@@ -397,32 +397,32 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 {
 	GError *ierror = NULL;
 
-	r_installer = r_installer_skeleton_new();
+	r_old_installer = r_old_installer_skeleton_new();
 
-	g_signal_connect(r_installer, "handle-install",
-			G_CALLBACK(r_on_handle_install),
-			NULL);
+	g_signal_connect(r_old_installer, "handle-install",
+			 G_CALLBACK(r_on_handle_install),
+			 NULL);
 
-	g_signal_connect(r_installer, "handle-info",
-			G_CALLBACK(r_on_handle_info),
-			NULL);
+	g_signal_connect(r_old_installer, "handle-info",
+			 G_CALLBACK(r_on_handle_info),
+			 NULL);
 
-	g_signal_connect(r_installer, "handle-mark",
+	g_signal_connect(r_old_installer, "handle-mark",
 			G_CALLBACK(r_on_handle_mark),
 			NULL);
 
-	g_signal_connect(r_installer, "handle-get-slot-status",
+	g_signal_connect(r_old_installer, "handle-get-slot-status",
 			G_CALLBACK(r_on_handle_get_slot_status),
 			NULL);
 
 	r_context_register_progress_callback(send_progress_callback);
 
 	// Set initial Operation status to "idle"
-	r_installer_set_operation(r_installer, "idle");
+	r_old_installer_set_operation(r_old_installer, "idle");
 
-	if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(r_installer),
+	if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(r_old_installer),
 			    connection,
-			    "/",
+			    "/de/pengutronix/Rauc1",
 			    &ierror)) {
 		g_error("Failed to export interface: %s", ierror->message);
 		g_error_free(ierror);
