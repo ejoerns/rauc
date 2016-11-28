@@ -145,7 +145,7 @@ static gboolean install_start(int argc, char **argv)
 	if (ENABLE_SERVICE) {
 		installer = r_installer_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
 			G_DBUS_PROXY_FLAGS_GET_INVALIDATED_PROPERTIES,
-			"de.pengutronix.rauc", "/", NULL, &error);
+			"de.pengutronix.Rauc1", "/de/pengutronix/Rauc1", NULL, &error);
 		if (installer == NULL) {
 			g_printerr("Error creating proxy: %s\n", error->message);
 			g_error_free (error);
