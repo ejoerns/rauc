@@ -339,7 +339,7 @@ gboolean r_service_run(void) {
 	g_unix_signal_add(SIGTERM, r_on_signal, NULL);
 
 	r_bus_name_id = g_bus_own_name(bus_type,
-				       "de.pengutronix.rauc",
+				       "de.pengutronix.Rauc1",
 				       G_BUS_NAME_OWNER_FLAGS_NONE,
 				       r_on_bus_acquired,
 				       r_on_name_acquired,

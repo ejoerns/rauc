@@ -28,7 +28,7 @@ $(gdbus_installer_generated): src/rauc-installer.xml
 	$(AM_V_GEN) gdbus-codegen \
 		--generate-c-code rauc-installer-generated \
 		--c-namespace R \
-		--interface-prefix de.pengutronix.rauc. \
+		--interface-prefix de.pengutronix.Rauc1. \
 		$<
 
 noinst_LTLIBRARIES = librauc.la

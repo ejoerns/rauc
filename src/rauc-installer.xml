@@ -1,5 +1,5 @@
 <node>
-  <interface name="de.pengutronix.rauc.Installer">
+  <interface name="de.pengutronix.Rauc1.Installer">
     <!--
          Install:
          @source: Path to bundle to be installed
