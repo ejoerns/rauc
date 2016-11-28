@@ -17,18 +17,28 @@ AM_CFLAGS = -DG_LOG_DOMAIN=\"rauc\" $(WARN_CFLAGS) $(GLIB_CFLAGS) $(CURL_CFLAGS)
 AM_LDFLAGS = $(WARN_LDFLAGS) $(GLIB_LDFLAGS) $(CURL_LDFLAGS) $(OPENSSL_LDFLAGS)
 AM_CPPFLAGS = -I${top_srcdir}/include -include ${top_builddir}/config.h $(OPENSSL_INCLUDES)
 
+gdbus_installer_generated_old = \
+	rauc-installer-generated-old.c \
+	rauc-installer-generated-old.h
 gdbus_installer_generated = \
 	rauc-installer-generated.c \
 	rauc-installer-generated.h
 
-BUILT_SOURCES += $(gdbus_installer_generated)
+BUILT_SOURCES += $(gdbus_installer_generated_old) $(gdbus_installer_generated)
+EXTRA_DIST += src/rauc-installer-old.xml
 EXTRA_DIST += src/rauc-installer.xml
 
+$(gdbus_installer_generated_old): src/rauc-installer-old.xml
+	$(AM_V_GEN) gdbus-codegen \
+		--generate-c-code rauc-installer-generated-old \
+		--c-namespace R_OLD \
+		--interface-prefix de.pengutronix.rauc. \
+		$<
 $(gdbus_installer_generated): src/rauc-installer.xml
 	$(AM_V_GEN) gdbus-codegen \
 		--generate-c-code rauc-installer-generated \
-		--c-namespace R \
-		--interface-prefix de.pengutronix.rauc. \
+		--c-namespace R_DBUS \
+		--interface-prefix de.pengutronix. \
 		$<
 
 noinst_LTLIBRARIES = librauc.la
@@ -70,6 +80,7 @@ if WANT_NETWORK
 librauc_la_SOURCES += src/network.c include/network.h
 endif
 nodist_librauc_la_SOURCES = \
+	$(gdbus_installer_generated_old) \
 	$(gdbus_installer_generated)
 librauc_la_CFLAGS = $(AM_CFLAGS) $(CODE_COVERAGE_CFLAGS)
 librauc_la_LDFLAGS = $(AM_LDFLAGS) $(CODE_COVERAGE_LDFLAGS)
@@ -213,7 +224,8 @@ EXTRA_DIST += $(wildcard docs/*.rst)
 
 AM_DISTCHECK_CONFIGURE_FLAGS = "--without-systemdunitdir"
 
-CLEANFILES = $(gdbus_installer_generated) \
+CLEANFILES = $(gdbus_installer_generated_old) \
+	     $(gdbus_installer_generated) \
 	     $(nodist_systemdunit_DATA) \
 	     $(nodist_dbussystem_DATA) \
 	     $(nodist_dbuswrapper_SCRIPTS) \
