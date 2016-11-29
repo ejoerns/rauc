@@ -125,27 +125,30 @@ out:
  * in RaucSlot struct.
  */
 static gboolean obtain_slot_status(RaucSlot *slot, GError **error) {
-	gboolean res = TRUE;
+	gboolean res = FALSE;
 	GError *ierror = NULL;
 	gchar *slot_status_path = NULL;
 	gboolean already_mounted = slot->mount_point != NULL;
 
-	if (!already_mounted)
+	if (!already_mounted) {
 		res = r_mount_slot(slot, &ierror);
-
-	if (res) {
-		slot_status_path = g_build_filename(slot->mount_point, "slot.raucs", NULL);
-		load_slot_status(slot_status_path, &slot->status, NULL);
-		if (!already_mounted)
-			r_umount_slot(slot, NULL);
-
-		g_clear_pointer(&slot_status_path, g_free);
-	} else {
-		g_propagate_error(error, ierror);
-		return FALSE;
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 	}
 
-	return TRUE;
+	slot_status_path = g_build_filename(slot->mount_point, "slot.raucs", NULL);
+	load_slot_status(slot_status_path, &slot->status, NULL);
+	g_clear_pointer(&slot_status_path, g_free);
+
+	if (!already_mounted)
+		r_umount_slot(slot, NULL);
+
+
+	res = TRUE;
+out:
+	return res;
 }
 
 /*
@@ -160,7 +163,7 @@ static gboolean set_slots_status(GError **error) {
 	res = determine_slot_states(&ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
-		return FALSE;
+		goto out;
 	}
 
 	g_hash_table_iter_init(&iter, r_context()->config->slots);
@@ -168,10 +171,13 @@ static gboolean set_slots_status(GError **error) {
 		res = obtain_slot_status(value, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
+			goto out;
 		}
 	}
 
-	return TRUE;
+	res = TRUE;
+out:
+	return res;
 }
 
 void r_context_prepare(void) {
