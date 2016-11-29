@@ -186,21 +186,27 @@ out:
 }
 
 /*
- * Builds GVariant structure from slot info.
+ * Builds GVariant Dictionary from slot status info.
  */
-static GVariant** get_slot_status(RaucSlot *slot) {
-	GVariant **g_slot_status;
-	gchar *version = g_strdup("");
+static GVariant* get_slot_status(RaucSlot *slot) {
+	gchar *version;
+	GVariantDict slot_info;
 
 	if (slot->status) {
 		version = g_strdup(slot->status->checksum.digest);
+	} else {
+		version = g_strdup("");
 	}
 
-	g_slot_status = g_new(GVariant*, 3);
-	g_slot_status[0] = g_variant_new_string(slot->name);
-	g_slot_status[1] = g_variant_new_string(slot->description);
-	g_slot_status[2] = g_variant_new_string(version);
-	return g_slot_status;
+	g_variant_dict_init(&slot_info, NULL);
+
+	g_variant_dict_insert(&slot_info, "class", "s", slot->sclass);
+	g_variant_dict_insert(&slot_info, "device", "s", slot->device);
+	g_variant_dict_insert(&slot_info, "description", "s", slot->description);
+	g_variant_dict_insert(&slot_info, "version", "s", version);
+	g_variant_dict_insert(&slot_info, "mountpoint", "s", slot->mount_point ?: "");
+
+	return g_variant_dict_end(&slot_info);
 }
 
 /*
@@ -219,10 +225,13 @@ static void set_slot_status_dbus(void) {
 	g_hash_table_iter_init(&iter, r_context()->config->slots);
 	while (g_hash_table_iter_next(&iter, &key, &value)) {
 		RaucSlot *slot = value;
-		GVariant **slot_status;
-		slot_status = get_slot_status(value);
+		GVariant* slot_status[2];
+
+		g_message("Adding slot: %s", slot->name);
+		slot_status[0] = g_variant_new_string(slot->name);
+		slot_status[1] = get_slot_status(slot);
 		slot_status_tuples[slot_count] = g_variant_new_tuple(
-			slot_status, 3);
+			slot_status, 2);
 		if (slot->state == ST_BOOTED) {
 			r_installer_set_booted_slot(r_installer,
 						    g_strdup(slot->name));
@@ -230,7 +239,8 @@ static void set_slot_status_dbus(void) {
 		slot_count++;
 	}
 
-	slot_status_array = g_variant_new_array(G_VARIANT_TYPE("(sss)"),
+	/* its an array of slot name/dict items */
+	slot_status_array = g_variant_new_array(G_VARIANT_TYPE("(sa{sv})"),
 						slot_status_tuples,
 						slot_number);
 	r_installer_set_slot_status(r_installer, slot_status_array);
