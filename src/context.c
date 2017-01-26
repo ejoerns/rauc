@@ -234,6 +234,7 @@ void r_context_prepare(void) {
 
 	if (!set_slots_status(&error)) {
 		g_warning("Could not set slot status: %s", error->message);
+		g_clear_error(&error);
 	}
 
 	context->pending = FALSE;
