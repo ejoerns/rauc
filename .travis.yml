@@ -1,5 +1,5 @@
 language: c
-sudo: required
+sudo: false
 compiler: gcc
 dist: trusty
 before_install:
@@ -27,7 +27,7 @@ script:
   - ./configure --enable-code-coverage
   - make clean
   - make -j2
-  - make check TESTS= && sudo ./uml-test
+  - make check TESTS= && ./uml-test
   - make distcheck
 after_success:
   - coveralls --build-root '.' --exclude tests --exclude rauc-installer-generated.c
