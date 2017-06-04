@@ -68,6 +68,7 @@ script:
   - ./uncrustify.sh && git diff --exit-code
 after_success:
   - coveralls --build-root '.' --exclude test --exclude rauc-installer-generated.c
+  - bash <(curl -s https://codecov.io/bash)
 after_failure:
   - cat test/*.log
   - cat test-suite.log
