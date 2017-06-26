@@ -173,6 +173,7 @@ static gboolean install_start(int argc, char **argv)
 		}
 		g_debug("Trying to contact rauc service");
 		if (!r_old_installer_call_install_sync(installer_old, args->name, NULL,
+		//if (!r_installer_call_install_sync(installer, args->name, NULL, NULL, NULL,
 				    &error)) {
 			g_printerr("Failed %s\n", error->message);
 			g_error_free(error);

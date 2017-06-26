@@ -9,6 +9,7 @@
     -->
     <method name="Install">
       <arg name="source" type="s" direction="in"/>
+      <arg name="options" type="a{sv}" direction="in" />
       <arg name="result" type="i" direction="out" />
     </method>
 
