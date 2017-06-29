@@ -252,8 +252,6 @@ static void r_context_configure(void)
 	if (context->keyringpath) {
 		context->config->keyring_path = context->keyringpath;
 	}
-
-	context->pending = FALSE;
 }
 
 gboolean r_context_get_busy(void)
