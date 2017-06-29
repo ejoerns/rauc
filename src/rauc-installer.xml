@@ -63,4 +63,15 @@
     <property name="Progress" type="(isi)" access="read"/>
 
   </interface>
+  <interface name="de.pengutronix.Rauc1.Bootchooser">
+    <method name="mark-good">
+      <arg name="slot" type="s" direction="in" />
+    </method>
+    <method name="mark-bad">
+      <arg name="slot" type="s" direction="in" />
+    </method>
+    <method name="mark-active">
+      <arg name="slot" type="s" direction="in" />
+    </method>
+  </interface>
 </node>
