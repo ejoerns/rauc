@@ -13,6 +13,7 @@
 #include "context.h"
 #include "install.h"
 #include "rauc-installer-generated.h"
+#include "rauc-installer-generated-old.h"
 #include "service.h"
 #include "signature.h"
 #include "update_handler.h"
