@@ -16,7 +16,7 @@
 
 GMainLoop *service_loop = NULL;
 ROLDInstaller *r_old_installer = NULL;
-RDBUSRauc1*r_installer = NULL;
+RDBUSRauc1 *r_installer = NULL;
 guint r_bus_name_id = 0;
 
 static gboolean service_install_notify(gpointer data)
@@ -430,6 +430,13 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 			    connection,
 			    "/de/pengutronix/Rauc1",
 			    &ierror)) {
+		g_error("Failed to export (old) interface: %s", ierror->message);
+		g_error_free(ierror);
+	}
+	if (!g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(r_installer),
+					      connection,
+					      "/de/pengutronix/Rauc1",
+					      &ierror)) {
 		g_error("Failed to export interface: %s", ierror->message);
 		g_error_free(ierror);
 	}

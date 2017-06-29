@@ -102,6 +102,7 @@ static gboolean install_start(int argc, char **argv)
 	GBusType bus_type = (!g_strcmp0(g_getenv("DBUS_STARTER_BUS_TYPE"), "session"))
 	                    ? G_BUS_TYPE_SESSION : G_BUS_TYPE_SYSTEM;
 	ROLDInstaller *installer_old = NULL;
+	RDBUSRauc1 *installer = NULL;
 	RaucInstallArgs *args = NULL;
 	GError *error = NULL;
 	g_autofree gchar *bundlelocation = NULL;
@@ -158,7 +159,15 @@ static gboolean install_start(int argc, char **argv)
 				G_DBUS_PROXY_FLAGS_GET_INVALIDATED_PROPERTIES,
 				"de.pengutronix.Rauc1", "/de/pengutronix/Rauc1", NULL, &error);
 		if (installer_old == NULL) {
-			g_printerr("Error creating proxy: %s\n", error->message);
+			g_printerr("Error creating DBus proxy: %s\n", error->message);
+			g_error_free(error);
+			goto out_loop;
+		}
+		installer = r_dbus_rauc1_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+			G_DBUS_PROXY_FLAGS_GET_INVALIDATED_PROPERTIES,
+			"de.pengutronix.Rauc1", "/de/pengutronix/Rauc1", NULL, &error);
+		if (installer == NULL) {
+			g_printerr("Error creating DBus proxy: %s\n", error->message);
 			g_error_free(error);
 			goto out_loop;
 		}
@@ -167,15 +176,30 @@ static gboolean install_start(int argc, char **argv)
 			g_printerr("Failed to connect properties-changed signal\n");
 			goto out_loop;
 		}
+		if (g_signal_connect(installer, "g-properties-changed",
+				     G_CALLBACK(on_installer_changed), args) <= 0) {
+			g_printerr("failed to connect properties-changed signal\n");
+			goto out_loop;
+		}
 		if (g_signal_connect(installer_old, "completed",
 				     G_CALLBACK(on_installer_completed), args) <= 0) {
 			g_printerr("Failed to connect completed signal\n");
 			goto out_loop;
 		}
-		g_debug("Trying to contact rauc service");
+		if (g_signal_connect(installer, "completed",
+				     G_CALLBACK(on_installer_completed), args) <= 0) {
+			g_printerr("failed to connect completed signal\n");
+			goto out_loop;
+		}
+		g_debug("Trying to contact rauc service\n");
 		if (!r_old_installer_call_install_sync(installer_old, args->name, NULL,
-		//if (!r_installer_call_install_sync(installer, args->name, NULL, NULL, NULL,
-				    &error)) {
+						   &error)) {
+			g_printerr("failed %s\n", error->message);
+			g_error_free(error);
+			goto out_loop;
+		}
+		if (!r_dbus_rauc1_call_install_sync(installer, args->name, NULL, NULL, NULL,
+						   &error)) {
 			g_printerr("Failed %s\n", error->message);
 			g_error_free(error);
 			goto out_loop;
