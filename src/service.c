@@ -153,8 +153,8 @@ out:
 		r_old_installer_complete_info(
 				interface,
 				invocation,
-				manifest->update_compatible,
-				manifest->update_version ? manifest->update_version : "");
+				NULL // TODO!
+				);
 	} else {
 		g_dbus_method_invocation_return_error(invocation,
 				G_IO_ERROR,
