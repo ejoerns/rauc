@@ -69,8 +69,6 @@ gboolean determine_slot_states(GError **error) {
 
 	g_assert_nonnull(r_context()->config);
 
-	r_context_begin_step("determine_slot_states", "Determining slot states", 0);
-
 	if (r_context()->config->slots == NULL) {
 		g_set_error_literal(
 				error,
@@ -166,7 +164,6 @@ gboolean determine_slot_states(GError **error) {
 
 out:
 	g_clear_pointer(&slotlist, g_list_free);
-	r_context_end_step("determine_slot_states", res);
 
 	return res;
 }
@@ -994,7 +991,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	g_assert_nonnull(bundlefile);
 
-	r_context_begin_step("do_install_bundle", "Installing", 5);
+	r_context_begin_step("do_install_bundle", "Installing", 4);
 	res = determine_slot_states(&ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
