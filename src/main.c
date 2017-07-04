@@ -9,7 +9,6 @@
 #endif
 #include <stdio.h>
 
-#include "bootchooser.h"
 #include "bundle.h"
 #include "config_file.h"
 #include "context.h"
@@ -17,6 +16,7 @@
 #include "rauc-installer-generated.h"
 #include "service.h"
 #include "utils.h"
+#include "mark.h"
 
 GMainLoop *r_loop = NULL;
 int r_exit_status = 0;
@@ -797,58 +797,11 @@ static gchar* r_status_formatter_json(gboolean pretty)
 #endif
 }
 
-static RaucSlot* get_slot_by_identifier(const gchar *identifier, GError **error)
-{
-	GHashTableIter iter;
-	RaucSlot *slot = NULL, *booted = NULL;
-
-	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
-
-	g_hash_table_iter_init(&iter, r_context()->config->slots);
-	while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&booted)) {
-		if (booted->state == ST_BOOTED)
-			break;
-		booted = NULL;
-	}
-	g_assert(booted);
-
-	if (!g_strcmp0(identifier, "booted")) {
-		slot = booted;
-	} else if (!g_strcmp0(identifier, "other")) {
-		g_hash_table_iter_init(&iter, r_context()->config->slots);
-		while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&slot)) {
-			if (slot->sclass == booted->sclass && !slot->parent && slot->bootname && slot != booted)
-				break;
-			slot = NULL;
-		}
-		if (!slot)
-			g_set_error(error,
-				    R_SLOT_ERROR,
-				    R_SLOT_ERROR_FAILED,
-				    "No other slot found");
-	} else {
-		g_hash_table_iter_init(&iter, r_context()->config->slots);
-		while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&slot)) {
-			if (slot->sclass == booted->sclass && !slot->parent && !g_strcmp0(slot->name, identifier))
-				break;
-			slot = NULL;
-		}
-		if (!slot)
-			g_set_error(error,
-				    R_SLOT_ERROR,
-				    R_SLOT_ERROR_FAILED,
-				    "No slot with class %s and name %s found",
-				    booted->sclass,
-				    identifier);
-	}
-
-	return slot;
-}
-
 static gboolean status_start(int argc, char **argv)
 {
-	RaucSlot *slot = NULL;
 	gchar *text = NULL;
+	gchar *message = NULL;
+	const gchar *state = NULL;
 	const gchar *slot_identifier = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
@@ -893,27 +846,22 @@ static gboolean status_start(int argc, char **argv)
 		goto out;
 	}
 
-	slot = get_slot_by_identifier(slot_identifier, &ierror);
-	if (ierror) {
-		g_printerr("Failed to determine slot: %s\n", ierror->message);
-		g_clear_error(&ierror);
+	if (g_strcmp0(argv[2], "mark-good") == 0) {
+		state = "good";
+	} else if (g_strcmp0(argv[2], "mark-bad") == 0) {
+		state = "bad";
+	} else if (g_strcmp0(argv[2], "mark-active") == 0) {
+		state = "active";
+	} else {
+		g_message("unknown subcommand %s", argv[2]);
 		r_exit_status = 1;
 		goto out;
 	}
 
-	if (g_strcmp0(argv[2], "mark-good") == 0) {
-		g_print("marking slot %s as good\n", slot->name);
-		r_exit_status = r_boot_set_state(slot, TRUE) ? 0 : 1;
-	} else if (g_strcmp0(argv[2], "mark-bad") == 0) {
-		g_print("marking slot %s as bad\n", slot->name);
-		r_exit_status = r_boot_set_state(slot, FALSE) ? 0 : 1;
-	} else if (g_strcmp0(argv[2], "mark-active") == 0) {
-		g_print("marking slot %s as active\n", slot->name);
-		r_exit_status = r_boot_set_primary(slot) ? 0 : 1;
-	} else {
-		g_message("unknown subcommand %s", argv[2]);
-		r_exit_status = 1;
-	}
+	r_exit_status = mark_run(state, slot_identifier, NULL, &message) ? 0 : 1;
+	if (message)
+		g_message("rauc mark: %s", message);
+	g_free(message);
 
 out:
 	return TRUE;
