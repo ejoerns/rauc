@@ -2,6 +2,7 @@
 
 #include <gio/gio.h>
 #include <glib/gstdio.h>
+#include <string.h>
 
 #include "bundle.h"
 #include "context.h"
@@ -102,6 +103,46 @@ static gboolean unsquashfs(const gchar *bundlename, const gchar *contentdir, con
 	res = TRUE;
 out:
 	r_context_end_step("unsquashfs", res);
+	return res;
+}
+
+static gboolean casync_make(const gchar *bundlename, const gchar *contentdir, const gchar *store, GError **error) {
+	GSubprocess *sproc = NULL;
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	GPtrArray *args = g_ptr_array_new_full(5, g_free);
+
+	g_ptr_array_add(args, g_strdup("casync"));
+	g_ptr_array_add(args, g_strdup("make"));
+	g_ptr_array_add(args, g_strdup(bundlename));
+	g_ptr_array_add(args, g_strdup(contentdir));
+	if (store) {
+		g_ptr_array_add(args, g_strdup("--store"));
+		g_ptr_array_add(args, g_strdup(store));
+	}
+	g_ptr_array_add(args, NULL);
+
+	sproc = g_subprocess_newv((const gchar * const *)args->pdata,
+				 G_SUBPROCESS_FLAGS_STDOUT_SILENCE, &ierror);
+	if (sproc == NULL) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to start casync: ");
+		goto out;
+	}
+
+	res = g_subprocess_wait_check(sproc, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to run casync: ");
+		goto out;
+	}
+
+	res = TRUE;
+out:
 	return res;
 }
 
@@ -404,6 +445,149 @@ gboolean resign_bundle(RaucBundle *bundle, const gchar *outpath, GError **error)
 	}
 
 	res = sign_bundle(outpath, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	return res;
+}
+
+static gboolean convert_to_casync_bundle(RaucBundle *bundle, const gchar *outbundle, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	gchar *tmpdir, *contentdir, *mfpath, *bundleidxpath, *storepath, *basepath;
+	RaucManifest *mf = NULL;
+	GFile *bundlefile = NULL, *manifestfile = NULL, *caidxfile = NULL;
+	GFileOutputStream *bundlestream = NULL;
+	gssize writesize;
+	GInputStream *manifeststream, *idxinstream = NULL;
+
+	g_return_val_if_fail(bundle, FALSE);
+	g_return_val_if_fail(outbundle, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	basepath = g_strndup(outbundle, strlen(outbundle) - 6);
+	bundleidxpath = g_strconcat(basepath, ".caidx", NULL);
+	storepath = g_strconcat(basepath, ".castr", NULL);
+	g_free(basepath);
+
+	tmpdir = g_build_filename(g_get_tmp_dir(), "_rauc_casync", NULL);
+	contentdir = g_build_filename(tmpdir, "content", NULL);
+	mfpath = g_build_filename(contentdir, "manifest.raucm", NULL);
+
+	if (g_mkdir(tmpdir, 0777) != 0) {
+		g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED, "Failed to create tmp dir %s", tmpdir);
+		res = FALSE;
+		goto out;
+	}
+
+	/* Extract input bundle to content/ dir */
+	res = extract_bundle(bundle, contentdir, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Load manifest from content/ dir */
+	res = load_manifest_file(mfpath, &mf, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Generate catar for content dir */
+	res = casync_make(bundleidxpath, contentdir, storepath, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Open bundle file */
+	bundlefile = g_file_new_for_path(outbundle);
+	bundlestream = g_file_create(bundlefile, G_FILE_CREATE_NONE, NULL, &ierror);
+	if (bundlestream == NULL) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to open bundle for writing: ");
+		res = FALSE;
+		goto out;
+	}
+
+	/* Write casync bundle identifier */
+	res = g_output_stream_write_all(G_OUTPUT_STREAM(bundlestream), "RCASNC1\n", 8, NULL, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Append manifest content */
+	manifestfile = g_file_new_for_path(mfpath);
+	manifeststream = (GInputStream*)g_file_read(manifestfile, NULL, &ierror);
+
+	writesize = g_output_stream_splice(G_OUTPUT_STREAM(bundlestream),
+			manifeststream, G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+			NULL, &ierror);
+	if (writesize == -1) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto out;
+	}
+
+	/* Append caidx content */
+	caidxfile = g_file_new_for_path(bundleidxpath);
+	idxinstream = (GInputStream*)g_file_read(caidxfile, NULL, &ierror);
+
+	writesize = g_output_stream_splice(G_OUTPUT_STREAM(bundlestream),
+			idxinstream, G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+			NULL, &ierror);
+	if (writesize == -1) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto out;
+	}
+	
+	/* Append caidx size */
+	res = output_stream_write_uint64_all((GOutputStream *)bundlestream, writesize, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to append caidx size to bundle: ");
+		goto out;
+	}
+
+
+	res = TRUE;
+out:
+	/* Remove temporary bundle creation directory */
+	rm_tree(tmpdir, NULL);
+
+	g_clear_pointer(&mf, free_manifest);
+	g_clear_pointer(&tmpdir, g_free);
+	g_clear_pointer(&contentdir, g_free);
+	g_clear_pointer(&mfpath, g_free);
+	g_clear_pointer(&bundleidxpath, g_free);
+	g_clear_pointer(&storepath, g_free);
+	g_clear_object(&bundlestream);
+	g_clear_object(&caidxfile);
+	return res;
+}
+
+gboolean create_casync_bundle(RaucBundle *bundle, const gchar *outbundle, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+
+	res = convert_to_casync_bundle(bundle, outbundle, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = sign_bundle(outbundle, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
