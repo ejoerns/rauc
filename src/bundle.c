@@ -134,6 +134,49 @@ static gboolean input_stream_read_uint64_all(GInputStream *stream,
 	return res;
 }
 
+typedef enum {
+	BUNDLE_UNKNOWN = 0,
+	BUNDLE_SQUASHFS = 1
+} BundleType;
+
+#define SQUASHFS_MAGIC			0x73717368
+
+static gboolean input_stream_read_bundle_identifier(GInputStream *stream, BundleType *type, GError **error) {
+	GError *ierror = NULL;
+	guint32 squashfs_id;
+	gboolean res;
+	gsize bytes_read;
+	BundleType _type;
+
+	res = g_input_stream_read_all(stream, &squashfs_id, (goffset) sizeof(squashfs_id), &bytes_read, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+	if (bytes_read != sizeof(squashfs_id)) {
+		g_set_error(error,
+				G_IO_ERROR,
+				G_IO_ERROR_PARTIAL_INPUT,
+				"Only %lu of %lu bytes read",
+				bytes_read,
+				sizeof(squashfs_id));
+		return FALSE;
+	}
+
+	if (squashfs_id == SQUASHFS_MAGIC) {
+		g_debug("Detected SquashFS Bundle identifier");
+		_type = BUNDLE_SQUASHFS;
+	} else {
+		g_debug("Unkown identifier 0x%08x", squashfs_id);
+		_type = BUNDLE_UNKNOWN;
+	}
+
+	if (type)
+		*type = _type;
+
+	return TRUE;
+}
+
 static gboolean output_stream_write_bytes_all(GOutputStream *stream,
                                               GBytes *bytes,
                                               GCancellable *cancellable,
@@ -354,6 +397,7 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 	goffset offset;
 	gboolean res = FALSE;
 	RaucBundle *ibundle = g_new0(RaucBundle, 1);
+	BundleType btype;
 
 	g_return_val_if_fail (bundle == NULL || *bundle == NULL, FALSE);
 
@@ -375,6 +419,21 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 				error,
 				ierror,
 				"failed to open bundle for reading: ");
+		goto out;
+	}
+
+	res = input_stream_read_bundle_identifier(G_INPUT_STREAM(bundlestream), &btype, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to read bundle identifier: ");
+		goto out;
+	}
+
+	if (btype == BUNDLE_UNKNOWN) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_IDENTIFIER, "invalid bundle identifier");
+		res = FALSE;
 		goto out;
 	}
 
