@@ -137,13 +137,14 @@ static gboolean input_stream_read_uint64_all(GInputStream *stream,
 }
 
 #define SQUASHFS_MAGIC			0x73717368
+#define RAUC_CASYNC_MAGIC		0xa31434e53414352
 
 static gboolean input_stream_read_bundle_identifier(GInputStream *stream, BundleType *type, GError **error) {
 	GError *ierror = NULL;
 	guint32 squashfs_id;
+	guint64 rauc_casync_id;
 	gboolean res;
 	gsize bytes_read;
-	BundleType _type;
 
 	res = g_input_stream_read_all(stream, &squashfs_id, (goffset) sizeof(squashfs_id), &bytes_read, NULL, &ierror);
 	if (!res) {
@@ -160,16 +161,43 @@ static gboolean input_stream_read_bundle_identifier(GInputStream *stream, Bundle
 		return FALSE;
 	}
 
+	res = g_seekable_seek(G_SEEKABLE(stream), -(goffset) sizeof(squashfs_id), G_SEEK_CUR, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
 	if (squashfs_id == SQUASHFS_MAGIC) {
 		g_debug("Detected SquashFS Bundle identifier");
-		_type = BUNDLE_SQUASHFS;
-	} else {
-		g_debug("Unkown identifier 0x%08x", squashfs_id);
-		_type = BUNDLE_UNKNOWN;
+		if (type)
+			*type = BUNDLE_SQUASHFS;
+		return TRUE;
+	}
+
+	res = g_input_stream_read_all(stream, &rauc_casync_id, (goffset) sizeof(rauc_casync_id), &bytes_read, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+	if (bytes_read != sizeof(rauc_casync_id)) {
+		g_set_error(error,
+				G_IO_ERROR,
+				G_IO_ERROR_PARTIAL_INPUT,
+				"Only %lu of %lu bytes read",
+				bytes_read,
+				sizeof(rauc_casync_id));
+		return FALSE;
+	}
+
+	if (rauc_casync_id == RAUC_CASYNC_MAGIC) {
+		g_debug("Detected RAUC casync bundle identifier");
+		if (type)
+			*type = BUNDLE_CASYNC;
+		return TRUE;
 	}
 
 	if (type)
-		*type = _type;
+		*type = BUNDLE_UNKNOWN;
 
 	return TRUE;
 }
