@@ -754,11 +754,18 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
 
 	r_context_begin_step("extract_bundle", "Extracting bundle", 1);
 
-	res = unsquashfs(bundle->path, outputdir, NULL, &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
-		goto out;
+	if (bundle->type == BUNDLE_SQUASHFS) {
+		res = unsquashfs(bundle->path, outputdir, NULL, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+	} else if (bundle->type == BUNDLE_CASYNC) {
+		g_warning("CASYNC BUNDLE NOT SUPPORTED, YET!");
+	} else {
+		g_warning("UNKNOWN BUNDLE TYPE!!!");
 	}
+
 
 	res = TRUE;
 out:
@@ -767,51 +774,134 @@ out:
 }
 
 gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error) {
-	gchar* tmpdir = NULL;
-	gchar* bundledir = NULL;
 	gchar* manifestpath = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
 	g_return_val_if_fail(bundle != NULL, FALSE);
 
+	if (bundle->type == BUNDLE_SQUASHFS) {
+		gchar* tmpdir = NULL;
+		gchar* bundledir = NULL;
 
-	tmpdir = g_dir_make_tmp("bundle-XXXXXX", &ierror);
-	if (!tmpdir) {
-		g_propagate_error(error, ierror);
-		goto out;
-	}
+		tmpdir = g_dir_make_tmp("bundle-XXXXXX", &ierror);
+		if (!tmpdir) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+		bundledir = g_build_filename(tmpdir, "bundle-content", NULL);
+		manifestpath = g_build_filename(bundledir, "manifest.raucm", NULL);
 
-	bundledir = g_build_filename(tmpdir, "bundle-content", NULL);
-	manifestpath = g_build_filename(bundledir, "manifest.raucm", NULL);
+		res = unsquashfs(bundle->path, bundledir, "manifest.raucm", &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 
-	res = unsquashfs(bundle->path, bundledir, "manifest.raucm", &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
-		goto out;
-	}
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 
-	if (!res) {
-		g_propagate_error(error, ierror);
-		goto out;
-	}
+		res = load_manifest_file(manifestpath, manifest, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 
-	res = load_manifest_file(manifestpath, manifest, &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
+	} else if (bundle->type == BUNDLE_CASYNC) {
+		GFile *bundlefile = NULL;
+		GInputStream *bundlestream = NULL;
+		guint64 sigsize;
+		goffset offset;
+		GBytes *mfdata = NULL;
+
+		bundlefile = g_file_new_for_path(bundle->path);
+		bundlestream = (GInputStream*)g_file_read(bundlefile, NULL, &ierror);
+
+		/* seek to end - signature size offset */
+		res = g_seekable_seek(G_SEEKABLE(bundlestream),
+				-sizeof(sigsize), G_SEEK_END, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to seek to end of bundle: ");
+			goto out;
+		}
+
+		/* get sigsize */
+		res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
+				&sigsize, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to read signature size from bundle: ");
+			goto out;
+		}
+
+		/* Seek to start of signature */
+		res = g_seekable_seek(G_SEEKABLE(bundlestream),
+				-sigsize - 2 * sizeof(sigsize), G_SEEK_CUR, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to seek to end of caidx: ");
+			goto out;
+		}
+
+		/* get caidx size */
+		res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
+				&sigsize, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to read caidx size from bundle: ");
+			goto out;
+		}
+
+		offset = g_seekable_tell((GSeekable *)bundlestream);
+
+		sigsize = offset - sizeof(sigsize) - sigsize - 8;
+
+		/* Seek to start of manifest */
+		res = g_seekable_seek(G_SEEKABLE(bundlestream),
+				8, G_SEEK_SET, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to seek to start of manifest: ");
+			goto out;
+		}
+
+		res = input_stream_read_bytes_all(bundlestream, &mfdata, sigsize, NULL, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			res = FALSE;
+			goto out;
+		}
+
+		res = load_manifest_mem(mfdata, manifest, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+
+		g_clear_object(&bundlestream);
+		g_clear_object(&bundlefile);
+	} else {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_UNKNOWN_FORMAT, "Unknown bundle format %d", bundle->type);
+		res = FALSE;
 		goto out;
 	}
 
 	res = TRUE;
 
 out:
-	if (tmpdir)
-		rm_tree(tmpdir, NULL);
-
-	g_clear_pointer(&tmpdir, g_free);
-	g_clear_pointer(&bundledir, g_free);
-	g_clear_pointer(&manifestpath, g_free);
-
 	return res;
 }
 
