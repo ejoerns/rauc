@@ -136,11 +136,6 @@ static gboolean input_stream_read_uint64_all(GInputStream *stream,
 	return res;
 }
 
-typedef enum {
-	BUNDLE_UNKNOWN = 0,
-	BUNDLE_SQUASHFS = 1
-} BundleType;
-
 #define SQUASHFS_MAGIC			0x73717368
 
 static gboolean input_stream_read_bundle_identifier(GInputStream *stream, BundleType *type, GError **error) {
@@ -439,6 +434,8 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 		goto out;
 	}
 
+	ibundle->type = btype;
+
 	offset = sizeof(sigsize);
 	res = g_seekable_seek(G_SEEKABLE(bundlestream),
 			      -offset, G_SEEK_END, NULL, &ierror);
@@ -610,6 +607,21 @@ out:
 	return res;
 }
 
+static gboolean mount_bundle_classic(RaucBundle *bundle, const gchar *mountpoint, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+
+	res = r_mount_loop(bundle->path, mountpoint, bundle->size, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	return res;
+}
+
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 	gchar* mount_point = NULL;
 	GError *ierror = NULL;
@@ -632,7 +644,12 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	g_message("Mounting bundle '%s' to '%s'", bundle->path, mount_point);
 
-	res = r_mount_loop(bundle->path, mount_point, bundle->size, &ierror);
+	if (bundle->type == BUNDLE_SQUASHFS) {
+		res = mount_bundle_classic(bundle, mount_point, &ierror);
+	} else {
+		/* Should not be reached! Abort here */
+		g_error("Cannot mount unknown bundle type!");
+	}
 	if (!res) {
 		g_propagate_error(error, ierror);
 		g_rmdir(mount_point);
