@@ -11,7 +11,8 @@ GQuark r_bundle_error_quark(void);
 typedef enum {
 	R_BUNDLE_ERROR_SIGNATURE,
 	R_BUNDLE_ERROR_KEYRING,
-	R_BUNDLE_ERROR_IDENTIFIER
+	R_BUNDLE_ERROR_IDENTIFIER,
+	R_BUNDLE_ERROR_UNKNOWN_FORMAT
 } RBundleError;
 
 typedef enum {
