@@ -16,7 +16,8 @@ typedef enum {
 
 typedef enum {
 	BUNDLE_UNKNOWN = 0,
-	BUNDLE_SQUASHFS = 1
+	BUNDLE_SQUASHFS = 1,
+	BUNDLE_CASYNC = 2
 } BundleType;
 
 typedef struct {
