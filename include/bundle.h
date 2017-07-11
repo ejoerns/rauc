@@ -14,10 +14,16 @@ typedef enum {
 	R_BUNDLE_ERROR_IDENTIFIER
 } RBundleError;
 
+typedef enum {
+	BUNDLE_UNKNOWN = 0,
+	BUNDLE_SQUASHFS = 1
+} BundleType;
+
 typedef struct {
 	gchar *path;
 	gsize size;
 	gchar *mount_point;
+	BundleType type;
 	STACK_OF(X509) *verified_chain;
 } RaucBundle;
 

@@ -136,11 +136,6 @@ static gboolean input_stream_read_uint64_all(GInputStream *stream,
 	return res;
 }
 
-typedef enum {
-	BUNDLE_UNKNOWN = 0,
-	BUNDLE_SQUASHFS = 1
-} BundleType;
-
 #define SQUASHFS_MAGIC			0x73717368
 
 static gboolean input_stream_read_bundle_identifier(GInputStream *stream, BundleType *type, GError **error) {
@@ -438,6 +433,8 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 		res = FALSE;
 		goto out;
 	}
+
+	ibundle->type = btype;
 
 	offset = sizeof(sigsize);
 	res = g_seekable_seek(G_SEEKABLE(bundlestream),
