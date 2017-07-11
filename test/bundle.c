@@ -131,6 +131,7 @@ static void bundle_test_extract_manifest(BundleFixture *fixture,
 {
 	gchar *outputdir, *manifestpath;
 	RaucBundle *bundle = NULL;
+	RaucManifest *manifest = NULL;
 
 	outputdir = g_build_filename(fixture->tmpdir, "output", NULL);
 	g_assert_nonnull(outputdir);
@@ -141,8 +142,8 @@ static void bundle_test_extract_manifest(BundleFixture *fixture,
 	g_assert_true(check_bundle(fixture->bundlename, &bundle, TRUE, NULL));
 	g_assert_nonnull(bundle);
 
-	g_assert_true(extract_file_from_bundle(bundle, outputdir, "manifest.raucm", NULL));
-	g_assert_true(g_file_test(manifestpath, G_FILE_TEST_EXISTS));
+	g_assert_true(extract_manifest_from_bundle(bundle, &manifest, NULL));
+	g_assert_nonnull(manifest);
 
 	free_bundle(bundle);
 }

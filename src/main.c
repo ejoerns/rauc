@@ -679,16 +679,6 @@ static gboolean info_start(int argc, char **argv)
 		goto out;
 	}
 
-	tmpdir = g_dir_make_tmp("bundle-XXXXXX", &error);
-	if (!tmpdir) {
-		g_printerr("%s\n", error->message);
-		g_clear_error(&error);
-		goto out;
-	}
-
-	bundledir = g_build_filename(tmpdir, "bundle-content", NULL);
-	manifestpath = g_build_filename(bundledir, "manifest.raucm", NULL);
-
 	res = check_bundle(argv[2], &bundle, !info_noverify, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
@@ -696,14 +686,7 @@ static gboolean info_start(int argc, char **argv)
 		goto out;
 	}
 
-	res = extract_file_from_bundle(bundle, bundledir, "manifest.raucm", &error);
-	if (!res) {
-		g_printerr("%s\n", error->message);
-		g_clear_error(&error);
- 		goto out;
- 	}
-
-	res = load_manifest_file(manifestpath, &manifest, &error);
+	res = extract_manifest_from_bundle(bundle, &manifest, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
 		g_clear_error(&error);
