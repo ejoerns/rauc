@@ -5,8 +5,10 @@
 
 #include "bundle.h"
 #include "context.h"
+#include "manifest.h"
 #include "mount.h"
 #include "signature.h"
+#include "utils.h"
 
 GQuark
 r_bundle_error_quark (void)
@@ -560,20 +562,52 @@ out:
 	return res;
 }
 
-gboolean extract_file_from_bundle(RaucBundle *bundle, const gchar *outputdir, const gchar *file, GError **error) {
+gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error) {
+	gchar* tmpdir = NULL;
+	gchar* bundledir = NULL;
+	gchar* manifestpath = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
 	g_return_val_if_fail(bundle != NULL, FALSE);
 
-	res = unsquashfs(bundle->path, outputdir, file, &ierror);
+
+	tmpdir = g_dir_make_tmp("bundle-XXXXXX", &ierror);
+	if (!tmpdir) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	bundledir = g_build_filename(tmpdir, "bundle-content", NULL);
+	manifestpath = g_build_filename(bundledir, "manifest.raucm", NULL);
+
+	res = unsquashfs(bundle->path, bundledir, "manifest.raucm", &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = load_manifest_file(manifestpath, manifest, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
 	}
 
 	res = TRUE;
+
 out:
+	if (tmpdir)
+		rm_tree(tmpdir, NULL);
+
+	g_clear_pointer(&tmpdir, g_free);
+	g_clear_pointer(&bundledir, g_free);
+	g_clear_pointer(&manifestpath, g_free);
+
 	return res;
 }
 

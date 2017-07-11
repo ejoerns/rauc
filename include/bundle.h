@@ -3,6 +3,8 @@
 #include <openssl/cms.h>
 #include <glib.h>
 
+#include "manifest.h"
+
 #define R_BUNDLE_ERROR r_bundle_error_quark ()
 GQuark r_bundle_error_quark(void);
 
@@ -81,7 +83,7 @@ gboolean resign_bundle(RaucBundle *bundle, const gchar *outpath, GError **error)
 gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **error);
 
 /**
- * Extract a single file from a bundle.
+ * Extract manifest from a bundle.
  *
  * This will extract a single file into a given directory.
  *
@@ -89,13 +91,12 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
  * RaucBundle struct.
  *
  * @param bundle RaucBundle struct as returned by check_bundle()
- * @param outputdir directory to extract the file into
- * @param file filename of file to extract from bundle
+ * @param manifest Return location for manifest
  * @param error Return location for a GError
  *
  * @return TRUE on success, FALSE if an error occurred
  */
-gboolean extract_file_from_bundle(RaucBundle *bundle, const gchar *outputdir, const gchar *file, GError **error);
+gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error);
 
 /**
  * Mount a bundle.
