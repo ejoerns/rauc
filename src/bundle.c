@@ -905,6 +905,21 @@ out:
 	return res;
 }
 
+static gboolean mount_bundle_classic(RaucBundle *bundle, const gchar *mountpoint, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+
+	res = r_mount_loop(bundle->path, mountpoint, bundle->size, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	return res;
+}
+
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 	gchar* mount_point = NULL;
 	GError *ierror = NULL;
@@ -927,7 +942,12 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	g_message("Mounting bundle '%s' to '%s'", bundle->path, mount_point);
 
-	res = r_mount_loop(bundle->path, mount_point, bundle->size, &ierror);
+	if (bundle->type == BUNDLE_SQUASHFS) {
+		res = mount_bundle_classic(bundle, mount_point, &ierror);
+	} else {
+		/* Should not be reached! Abort here */
+		g_error("Cannot mount unknown bundle type!");
+	}
 	if (!res) {
 		g_propagate_error(error, ierror);
 		g_rmdir(mount_point);
