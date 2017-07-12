@@ -42,7 +42,17 @@ gboolean r_mount_loop(const gchar *filename, const gchar *mountpoint, gsize size
 gboolean r_umount(const gchar *dirdev, GError **error);
 
 /**
- * Create a mount directory.
+ * Mont a casync file.
+ *
+ * @param source name of idx file to mount
+ * @param mountpoint destination mount point
+ * @param store path to casync store or NULL
+ * @param error a GError object
+ */
+gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gchar *store, GError **error);
+
+/**
+ * Create a mount dir under mount prefix path.
  *
  * The directory will be created relative to the configured mount prefix path.
  *
