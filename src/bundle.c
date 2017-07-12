@@ -10,6 +10,7 @@
 #include "mount.h"
 #include "signature.h"
 #include "utils.h"
+#include "network.h"
 
 GQuark
 r_bundle_error_quark (void)
@@ -1004,8 +1005,15 @@ out:
 	return res;
 }
 
+static gboolean is_remote_scheme(const gchar *scheme) {
+	return (g_strcmp0(scheme, "http") == 0) ||
+		(g_strcmp0(scheme, "https") == 0) ||
+		(g_strcmp0(scheme, "sftp") == 0) ||
+		(g_strcmp0(scheme, "ftp") == 0);
+}
+
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
-	gchar* mount_point = NULL;
+	gchar *mount_point= NULL, *bundlescheme = NULL, *origpath = NULL, *bundlename = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
@@ -1026,13 +1034,29 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	g_message("Mounting bundle '%s' to '%s'", bundle->path, mount_point);
 
+	/* Download Bundle to temporary location if remote URI is given */
+	bundlescheme = g_uri_parse_scheme(bundle->path);
+	if (is_remote_scheme(bundlescheme)) {
+		g_message("Remote URI detected, downloading bundle ...");
+		origpath = bundle->path;
+		bundlename = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
+		res = download_file(bundlename, origpath, 64*1024, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(error, ierror, "Failed to download bundle %s: ", origpath);
+			goto out;
+		}
+	}
+
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		res = mount_bundle_classic(bundle, mount_point, &ierror);
 	} else if (bundle->type == BUNDLE_CASYNC) {
 		gchar *storepath;
 
 		g_warning("Mounting casync bundle not fully suppoted, yet");
-		storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
+		if (origpath)
+			storepath = g_strndup(origpath, strlen(origpath) - 6);
+		else
+			storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
 		storepath = g_strconcat(storepath, ".castr", NULL);
 
 		res = mount_bundle_casync(bundle, mount_point, storepath, &ierror);
@@ -1053,6 +1077,13 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	res = TRUE;
 out:
+	/* In case of remote bundle, cleanup locally downloaded one */
+	if (origpath) {
+		g_remove(bundlename);
+	}
+
+	g_clear_pointer(&origpath, g_free);
+	g_clear_pointer(&bundlescheme, g_free);
 	return res;
 }
 
