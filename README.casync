@@ -1,0 +1,16 @@
+casync requirements:
+
+* Have casync and wait-nofity in PATH
+* Have casync patched to use execvp instead of execv (to honor PATH)
+
+Generate a casync Bundle from a classic one:
+
+./rauc convert --key=test/openssl-ca/dev/private/autobuilder-1.pem --cert=test/openssl-ca/dev/autobuilder-1.cert.pem --keyring=test/openssl-ca/dev-ca.pem test-bundle.raucb casync-bundle.raucb
+
+Inspect:
+
+./rauc info -d --keyring=test/openssl-ca/dev-ca.pem casync-bundle.raucb
+
+Install:
+
+./rauc install casync-bundle.raucb
