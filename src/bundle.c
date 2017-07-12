@@ -963,6 +963,53 @@ out:
 	return res;
 }
 
+static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint, const gchar* storepath, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	GBytes *mfdata = NULL;
+	GFile *tmpidx = NULL;
+	GFileIOStream *iostream = NULL;
+	GOutputStream *tmpidxstream = NULL;
+
+	/* extract idx file from bundle */
+	mfdata = read_casync_bundle(bundle->path, BUNDLE_CASYNC_READ_IDX, &ierror);
+	if (!mfdata) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto out;
+	}
+
+	/* Write to temporary location */
+	tmpidx = g_file_new_tmp("XXXXXX.caidx", &iostream, &ierror);
+	if (!tmpidx) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto out;
+	}
+
+	tmpidxstream = g_io_stream_get_output_stream((GIOStream*)iostream);
+
+	res = output_stream_write_bytes_all(tmpidxstream, mfdata, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+	g_clear_object(&tmpidxstream);
+
+	g_debug("Wrote idx to %s, using store path: %s", g_file_get_path(tmpidx), storepath);
+
+	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	g_clear_object(&tmpidx);
+	return res;
+}
+
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 	gchar* mount_point = NULL;
 	GError *ierror = NULL;
@@ -987,6 +1034,16 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		res = mount_bundle_classic(bundle, mount_point, &ierror);
+	} else if (bundle->type == BUNDLE_CASYNC) {
+		gchar *storepath;
+
+		g_warning("Mounting casync bundle not fully suppoted, yet");
+		storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
+		storepath = g_strconcat(storepath, ".castr", NULL);
+
+		res = mount_bundle_casync(bundle, mount_point, storepath, &ierror);
+
+		g_clear_pointer(&storepath, g_free);
 	} else {
 		/* Should not be reached! Abort here */
 		g_error("Cannot mount unknown bundle type!");

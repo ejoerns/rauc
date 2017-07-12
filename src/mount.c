@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <gio/gio.h>
+#include <glib/gprintf.h>
 #include <glib/gstdio.h>
 #include <unistd.h>
 
@@ -99,6 +100,72 @@ out:
 	g_ptr_array_unref(args);
 	return res;
 }
+
+gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gchar *store, GError **error) {
+	GSubprocess *sproc = NULL;
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	GPtrArray *args = g_ptr_array_new_full(10, g_free);
+	GDataInputStream *datainstream = NULL;
+	gchar* outline;
+	gint pid = 0;
+
+	g_return_val_if_fail(source, FALSE);
+	g_return_val_if_fail(mountpoint, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+	
+	g_ptr_array_add(args, g_strdup("notify-wait"));
+	g_ptr_array_add(args, g_strdup("casync"));
+	g_ptr_array_add(args, g_strdup("mount"));
+	if (store) {
+		g_ptr_array_add(args, g_strdup("--store"));
+		g_ptr_array_add(args, g_strdup(store));
+	}
+	g_ptr_array_add(args, g_strdup(source));
+	g_ptr_array_add(args, g_strdup(mountpoint));
+	g_ptr_array_add(args, NULL);
+
+	sproc = g_subprocess_newv((const gchar * const *)args->pdata,
+				  G_SUBPROCESS_FLAGS_STDOUT_PIPE, &ierror);
+	if (sproc == NULL) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to start casync: ");
+		goto out;
+	}
+
+	datainstream = g_data_input_stream_new(g_subprocess_get_stdout_pipe(sproc));
+
+	do {
+		outline = g_data_input_stream_read_line(datainstream, NULL, NULL, NULL);
+		if (!outline)
+			continue;
+
+		pid = g_ascii_strtoull(outline, NULL, 10);
+
+	} while (outline);
+
+	res = g_subprocess_wait_check(sproc, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to run casync: ");
+		goto out;
+	}
+
+	if (pid == 0) {
+		g_warning("Failed to get a valid PID");
+	}
+
+
+	res = TRUE;
+out:
+	g_ptr_array_unref(args);
+	return res;
+}
+
 
 
 /* Creates a mount subdir in mount path prefix */
