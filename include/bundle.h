@@ -23,6 +23,7 @@ typedef enum {
 
 typedef struct {
 	gchar *path;
+	gchar *origpath;
 	gsize size;
 	gchar *mount_point;
 	BundleType type;

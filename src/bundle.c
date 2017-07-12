@@ -10,6 +10,7 @@
 #include "mount.h"
 #include "signature.h"
 #include "utils.h"
+#include "network.h"
 
 GQuark
 r_bundle_error_quark (void)
@@ -598,6 +599,13 @@ out:
 	return res;
 }
 
+static gboolean is_remote_scheme(const gchar *scheme) {
+	return (g_strcmp0(scheme, "http") == 0) ||
+		(g_strcmp0(scheme, "https") == 0) ||
+		(g_strcmp0(scheme, "sftp") == 0) ||
+		(g_strcmp0(scheme, "ftp") == 0);
+}
+
 gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, GError **error) {
 	GError *ierror = NULL;
 	GBytes *sig = NULL;
@@ -608,11 +616,30 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 	gboolean res = FALSE;
 	RaucBundle *ibundle = g_new0(RaucBundle, 1);
 	BundleType btype;
+	gchar *bundlescheme = NULL;
 
 	g_return_val_if_fail (bundle == NULL || *bundle == NULL, FALSE);
 
-	ibundle->path = g_strdup(bundlename);
+	/* Download Bundle to temporary location if remote URI is given */
+	bundlescheme = g_uri_parse_scheme(bundlename);
+	if (is_remote_scheme(bundlescheme)) {
+#if ENABLE_NETWORK
+		ibundle->origpath = g_strdup(bundlename);
+		ibundle->path = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
 
+		g_message("Remote URI detected, downloading bundle to %s...", ibundle->path);
+		res = download_file(ibundle->path, ibundle->origpath, 64*1024, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(error, ierror, "Failed to download bundle %s: ", ibundle->origpath);
+			goto out;
+		}
+		g_debug("Downloaded temp bundle to %s", ibundle->path);
+#else
+		g_warning("Mounting remote bundle not supported, recompile with --enable-network");
+#endif
+	} else {
+		ibundle->path = g_strdup(bundlename);
+	}
 
 	if (verify && !r_context()->config->keyring_path) {
 		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_KEYRING, "No keyring file provided");
@@ -1011,7 +1038,7 @@ out:
 }
 
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
-	gchar* mount_point = NULL;
+	gchar *mount_point= NULL, *bundlescheme = NULL, *bundlename = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
@@ -1038,7 +1065,10 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 		gchar *storepath;
 
 		g_warning("Mounting casync bundle not fully suppoted, yet");
-		storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
+		if (bundle->origpath)
+			storepath = g_strndup(bundle->origpath, strlen(bundle->origpath) - 6);
+		else
+			storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
 		storepath = g_strconcat(storepath, ".castr", NULL);
 
 		res = mount_bundle_casync(bundle, mount_point, storepath, &ierror);
@@ -1059,6 +1089,13 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 
 	res = TRUE;
 out:
+	/* In case of remote bundle, cleanup locally downloaded one */
+	if (bundle->origpath) {
+		g_remove(bundlename);
+	}
+
+	g_clear_pointer(&bundle->origpath, g_free);
+	g_clear_pointer(&bundlescheme, g_free);
 	return res;
 }
 
