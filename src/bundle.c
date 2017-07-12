@@ -779,6 +779,112 @@ out:
 	return res;
 }
 
+typedef enum {
+	BUNDLE_CASYNC_READ_MANIFEST,
+	BUNDLE_CASYNC_READ_IDX
+} BundleCasyncRead;
+
+static GBytes* read_casync_bundle(const gchar *bundlename, BundleCasyncRead readtype, GError **error) {
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	GFile *bundlefile = NULL;
+	GInputStream *bundlestream = NULL;
+	guint64 sigsize;
+	goffset offset;
+	GBytes *mfdata = NULL;
+
+	bundlefile = g_file_new_for_path(bundlename);
+	bundlestream = (GInputStream*)g_file_read(bundlefile, NULL, &ierror);
+
+	/* seek to end - signature size offset */
+	offset = sizeof(sigsize);
+	res = g_seekable_seek(G_SEEKABLE(bundlestream),
+			-offset, G_SEEK_END, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to seek to end of bundle: ");
+		goto out;
+	}
+
+	/* get sigsize */
+	res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
+			&sigsize, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to read signature size from bundle: ");
+		goto out;
+	}
+
+	/* Seek to start of signature */
+	res = g_seekable_seek(G_SEEKABLE(bundlestream),
+			-sigsize - 2 * sizeof(sigsize), G_SEEK_CUR, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to seek to end of caidx: ");
+		goto out;
+	}
+
+	/* get caidx size */
+	res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
+			&sigsize, NULL, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"failed to read caidx size from bundle: ");
+		goto out;
+	}
+
+	offset = g_seekable_tell((GSeekable *)bundlestream);
+
+	if (readtype == BUNDLE_CASYNC_READ_MANIFEST) {
+		sigsize = offset - sizeof(sigsize) - sigsize - 8;
+
+		/* Seek to start of manifest */
+		res = g_seekable_seek(G_SEEKABLE(bundlestream),
+				8, G_SEEK_SET, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to seek to start of manifest: ");
+			goto out;
+		}
+	} else if (readtype == BUNDLE_CASYNC_READ_IDX) {
+		/* Seek to start of idx */
+		res = g_seekable_seek(G_SEEKABLE(bundlestream),
+				-sigsize - sizeof(sigsize), G_SEEK_CUR, NULL, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"failed to seek to start of manifest: ");
+			goto out;
+		}
+	} else {
+		/* Should not be reached. Abort here! */
+		g_error("Invalid readtype");
+	}
+
+	res = input_stream_read_bytes_all(bundlestream, &mfdata, sigsize, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto out;
+	}
+
+	g_clear_object(&bundlestream);
+	g_clear_object(&bundlefile);
+out:
+	return mfdata;
+}
+
 gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error) {
 	gchar* manifestpath = NULL;
 	GError *ierror = NULL;
@@ -816,76 +922,10 @@ gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifes
 		}
 
 	} else if (bundle->type == BUNDLE_CASYNC) {
-		GFile *bundlefile = NULL;
-		GInputStream *bundlestream = NULL;
-		guint64 sigsize;
-		goffset offset;
 		GBytes *mfdata = NULL;
 
-		bundlefile = g_file_new_for_path(bundle->path);
-		bundlestream = (GInputStream*)g_file_read(bundlefile, NULL, &ierror);
-
-		/* seek to end - signature size offset */
-		res = g_seekable_seek(G_SEEKABLE(bundlestream),
-				-sizeof(sigsize), G_SEEK_END, NULL, &ierror);
-		if (!res) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"failed to seek to end of bundle: ");
-			goto out;
-		}
-
-		/* get sigsize */
-		res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
-				&sigsize, NULL, &ierror);
-		if (!res) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"failed to read signature size from bundle: ");
-			goto out;
-		}
-
-		/* Seek to start of signature */
-		res = g_seekable_seek(G_SEEKABLE(bundlestream),
-				-sigsize - 2 * sizeof(sigsize), G_SEEK_CUR, NULL, &ierror);
-		if (!res) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"failed to seek to end of caidx: ");
-			goto out;
-		}
-
-		/* get caidx size */
-		res = input_stream_read_uint64_all(G_INPUT_STREAM(bundlestream),
-				&sigsize, NULL, &ierror);
-		if (!res) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"failed to read caidx size from bundle: ");
-			goto out;
-		}
-
-		offset = g_seekable_tell((GSeekable *)bundlestream);
-
-		sigsize = offset - sizeof(sigsize) - sigsize - 8;
-
-		/* Seek to start of manifest */
-		res = g_seekable_seek(G_SEEKABLE(bundlestream),
-				8, G_SEEK_SET, NULL, &ierror);
-		if (!res) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"failed to seek to start of manifest: ");
-			goto out;
-		}
-
-		res = input_stream_read_bytes_all(bundlestream, &mfdata, sigsize, NULL, &ierror);
-		if (!res) {
+		mfdata = read_casync_bundle(bundle->path, BUNDLE_CASYNC_READ_MANIFEST, &ierror);
+		if (!mfdata) {
 			g_propagate_error(error, ierror);
 			res = FALSE;
 			goto out;
@@ -896,9 +936,6 @@ gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifes
 			g_propagate_error(error, ierror);
 			goto out;
 		}
-
-		g_clear_object(&bundlestream);
-		g_clear_object(&bundlefile);
 	} else {
 		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_UNKNOWN_FORMAT, "Unknown bundle format %d", bundle->type);
 		res = FALSE;
