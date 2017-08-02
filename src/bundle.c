@@ -1037,6 +1037,7 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 	/* Download Bundle to temporary location if remote URI is given */
 	bundlescheme = g_uri_parse_scheme(bundle->path);
 	if (is_remote_scheme(bundlescheme)) {
+#if ENABLE_NETWORK
 		g_message("Remote URI detected, downloading bundle ...");
 		origpath = bundle->path;
 		bundlename = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
@@ -1045,6 +1046,10 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 			g_propagate_prefixed_error(error, ierror, "Failed to download bundle %s: ", origpath);
 			goto out;
 		}
+		g_debug("Downloaded temp bundle to %s", bundlename);
+#else
+		g_warning("Mounting remote bundle not supported, recompile with --enable-network");
+#endif
 	}
 
 	if (bundle->type == BUNDLE_SQUASHFS) {
