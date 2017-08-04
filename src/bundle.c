@@ -880,12 +880,39 @@ out:
 	return mfdata;
 }
 
+static gboolean is_remote_scheme(const gchar *scheme) {
+	return (g_strcmp0(scheme, "http") == 0) ||
+		(g_strcmp0(scheme, "https") == 0) ||
+		(g_strcmp0(scheme, "sftp") == 0) ||
+		(g_strcmp0(scheme, "ftp") == 0);
+}
+
 gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error) {
+	gchar *bundlescheme, *origpath = NULL;
 	gchar* manifestpath = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
 	g_return_val_if_fail(bundle != NULL, FALSE);
+
+	/* Download Bundle to temporary location if remote URI is given */
+	bundlescheme = g_uri_parse_scheme(bundle->path);
+	if (is_remote_scheme(bundlescheme)) {
+#if ENABLE_NETWORK
+		g_message("Remote URI detected, downloading bundle ...");
+		origpath = bundle->path;
+		bundle->path = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
+		res = download_file(bundle->path, origpath, 64*1024, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(error, ierror, "Failed to download bundle %s: ", origpath);
+			goto out;
+		}
+		g_debug("Downloaded temp bundle to %s", bundle->path);
+#else
+		g_warning("Mounting remote bundle not supported, recompile with --enable-network");
+#endif
+	}
+
 
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		gchar* tmpdir = NULL;
@@ -940,6 +967,11 @@ gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifes
 	res = TRUE;
 
 out:
+	/* In case of remote bundle, cleanup locally downloaded one */
+	if (origpath) {
+		g_remove(bundle->path);
+	}
+
 	return res;
 }
 
@@ -1003,13 +1035,6 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 out:
 	g_clear_object(&tmpidx);
 	return res;
-}
-
-static gboolean is_remote_scheme(const gchar *scheme) {
-	return (g_strcmp0(scheme, "http") == 0) ||
-		(g_strcmp0(scheme, "https") == 0) ||
-		(g_strcmp0(scheme, "sftp") == 0) ||
-		(g_strcmp0(scheme, "ftp") == 0);
 }
 
 gboolean mount_bundle(RaucBundle *bundle, GError **error) {
