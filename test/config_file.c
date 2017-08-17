@@ -41,6 +41,7 @@ static void config_file_full_config(ConfigFileFixture *fixture,
 compatible=FooCorp Super BarBazzer\n\
 bootloader=barebox\n\
 mountprefix=/mnt/myrauc/\n\
+statusfile=/mnt/persistent-rw-fs/system.raucs\n\
 \n\
 [keyring]\n\
 path=/etc/rauc/keyring/\n\
@@ -87,6 +88,7 @@ parent=rootfs.1\n";
 	g_assert_cmpstr(config->system_bootloader, ==, "barebox");
 	g_assert_cmpstr(config->mount_prefix, ==, "/mnt/myrauc/");
 	g_assert_true(config->activate_installed);
+	g_assert_cmpstr(config->statusfile_path, ==, "/mnt/persistent-rw-fs/system.raucs");
 
 	g_assert_nonnull(config->slots);
 	slotlist = g_hash_table_get_keys(config->slots);
@@ -290,6 +292,32 @@ activate-installed=false\n";
 }
 
 
+static void config_file_statusfile_missing(ConfigFileFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucConfig *config;
+	GError *ierror = NULL;
+	gchar* pathname;
+
+	const gchar *cfg_file = "\
+[system]\n\
+compatible=FooCorp Super BarBazzer\n\
+bootloader=barebox\n\
+mountprefix=/mnt/myrauc/\n";
+
+
+	pathname = write_tmp_file(fixture->tmpdir, "valid_bootloader.conf", cfg_file, NULL);
+	g_assert_nonnull(pathname);
+
+	g_assert_true(load_config(pathname, &config, &ierror));
+	g_assert_null(ierror);
+	g_assert_nonnull(config);
+	g_assert_null(config->statusfile_path);
+
+	free_config(config);
+}
+
+
 static void config_file_test3(void)
 {
 	RaucSlotStatus *ss = g_new0(RaucSlotStatus, 1);
@@ -361,6 +389,9 @@ int main(int argc, char *argv[])
 		   config_file_fixture_tear_down);
 	g_test_add("/config-file/activate-installed-key-set-to-false", ConfigFileFixture, NULL,
 		   config_file_fixture_set_up, config_file_activate_installed_set_to_false,
+		   config_file_fixture_tear_down);
+	g_test_add("/config-file/statusfile-missing", ConfigFileFixture, NULL,
+		   config_file_fixture_set_up, config_file_statusfile_missing,
 		   config_file_fixture_tear_down);
 	g_test_add_func("/config-file/test3", config_file_test3);
 	g_test_add_func("/config-file/test5", config_file_test5);
