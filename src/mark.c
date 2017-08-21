@@ -1,5 +1,6 @@
 #include "bootchooser.h"
 #include "context.h"
+#include "install.h"
 #include "mark.h"
 
 static RaucSlot* get_slot_by_identifier(const gchar *identifier, GError **error)
@@ -56,17 +57,24 @@ gboolean mark_run(const gchar *state,
 		  gchar **message)
 {
 	RaucSlot *slot = NULL;
-	GError *error = NULL;
+	GError *ierror = NULL;
 	gboolean res;
 
 	g_assert(slot_name == NULL || *slot_name == NULL);
 	g_assert(message != NULL && *message == NULL);
 
-	slot = get_slot_by_identifier(slot_identifier, &error);
-	if (error) {
+	res = determine_slot_states(&ierror);
+	if (!res) {
+		g_printerr("Failed to determine slot states: %s\n", ierror->message);
+		g_clear_error(&ierror);
+		goto out;
+	}
+
+	slot = get_slot_by_identifier(slot_identifier, &ierror);
+	if (ierror) {
 		res = FALSE;
-		*message = g_strdup(error->message);
-		g_error_free(error);
+		*message = g_strdup(ierror->message);
+		g_error_free(ierror);
 		goto out;
 	}
 
