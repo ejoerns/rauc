@@ -292,8 +292,8 @@ activate-installed=false\n";
 
 static void config_file_test3(void)
 {
-	RaucSlotStatus *ss;
-	g_assert_true(read_slot_status("test/rootfs.raucs", &ss, NULL));
+	RaucSlotStatus *ss = g_new0(RaucSlotStatus, 1);
+	g_assert_true(read_slot_status("test/rootfs.raucs", ss, NULL));
 	g_assert_nonnull(ss);
 	g_assert_cmpstr(ss->status, ==, "ok");
 	g_assert_cmpint(ss->checksum.type, ==, G_CHECKSUM_SHA256);
@@ -315,8 +315,9 @@ static void config_file_test5(void)
 	write_slot_status("test/savedslot.raucs", ss, NULL);
 
 	free_slot_status(ss);
+	ss = g_new0(RaucSlotStatus, 1);
 
-	read_slot_status("test/savedslot.raucs", &ss, NULL);
+	read_slot_status("test/savedslot.raucs", ss, NULL);
 
 	g_assert_nonnull(ss);
 	g_assert_cmpstr(ss->status, ==, "ok");
