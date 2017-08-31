@@ -671,7 +671,8 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		r_context_begin_step("check_slot", g_strdup_printf("Checking slot %s", dest_slot->name), 0);
 
-		load_slot_status(dest_slot, &slot_state);
+		load_slot_status(dest_slot);
+		slot_state = dest_slot->status;
 
 		/* In case we failed unmounting while reading status
 		 * file, abort here */
@@ -681,7 +682,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 					"Slot '%s' still mounted", dest_slot->device);
 			r_context_end_step("check_slot", FALSE);
 
-			g_clear_pointer(&slot_state, free_slot_status);
 			goto out;
 		}
 
@@ -695,7 +695,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			r_context_begin_step("skip_image", "Copying image skipped", 0);
 			r_context_end_step("skip_image", TRUE);
 
-			g_clear_pointer(&slot_state, free_slot_status);
 			goto image_out;
 		}
 
@@ -703,7 +702,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		slot_state->status = g_strdup("update");
 
 		g_message("Slot needs to be updated with %s", mfimage->filename);
-		g_clear_pointer(&slot_state, free_slot_status);
 
 		r_context_end_step("check_slot", TRUE);
 
