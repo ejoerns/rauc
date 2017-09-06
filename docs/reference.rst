@@ -304,7 +304,11 @@ section :ref:`Manifest <sec_ref_manifest>`.
 
 RAUC also stores the point in time of installing the image to the slot in
 ``installed.timestamp`` as well as the number of updates so far in
-``installed.count``.
+``installed.count``. Additionally RAUC tracks the point in time when a bootable
+slot is activated in ``activated.timestamp`` and the number of activations in
+``activated.count``, see section :ref:`mark-active`. Comparing both timestamps
+allows drawing conclusions about the question if an installed slot has ever been
+activated or if its activation is still due.
 
 
 Command Line Tool

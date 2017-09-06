@@ -168,7 +168,9 @@ do so by using its slot name which has the form ``<slot-class>.<idx>`` (e.g.
 :ref:`System Configuration File <sec_ref_slot_config>`. Last but not least,
 after switching to a different slot by mistake, this can be remedied by choosing
 ``booted`` as the argument which is, by the way, the default if the optional
-argument has been omitted.
+argument has been omitted. The time and date of activation as well as the number
+of activations is part of the slot's metadata that get logged in the slot
+status, see section :ref:`slot-status`.
 
 Customizing the Update
 ----------------------

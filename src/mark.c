@@ -1,5 +1,6 @@
 #include "bootchooser.h"
 #include "context.h"
+#include "install.h"
 #include "mark.h"
 
 static RaucSlot* get_slot_by_identifier(const gchar *identifier, GError **error)
@@ -75,6 +76,40 @@ static RaucSlot* get_slot_by_identifier(const gchar *identifier, GError **error)
 	return slot;
 }
 
+void mark_active(RaucSlot *slot, GError **error)
+{
+	RaucSlotStatus *slot_state;
+	GError *ierror = NULL;
+	GDateTime *now;
+	gboolean res;
+
+	g_return_if_fail(slot);
+	g_return_if_fail(error == NULL || *error == NULL);
+
+	load_slot_status(slot);
+	slot_state = slot->status;
+
+	res = r_boot_set_primary(slot);
+	if (!res) {
+		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_MARK_BOOTABLE,
+			"failed to activate slot %s", slot->name);
+		return;
+	}
+
+	g_free(slot_state->activated_timestamp);
+	now = g_date_time_new_now_utc();
+	slot_state->activated_timestamp = g_date_time_format(now, "%Y-%m-%dT%H:%M:%SZ");
+	slot_state->activated_count++;
+	g_date_time_unref(now);
+
+	res = save_slot_status(slot, &ierror);
+	if (!res) {
+		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_FAILED, "%s", ierror->message);
+		g_error_free(ierror);
+		return;
+	}
+}
+
 gboolean mark_run(const gchar *state,
 		  const gchar *slot_identifier,
 		  gchar **slot_name,
@@ -102,8 +137,19 @@ gboolean mark_run(const gchar *state,
 		res = r_boot_set_state(slot, FALSE);
 		*message = g_strdup_printf((res) ? "marked slot %s as bad" : "failed to mark slot %s as bad", slot->name);
 	} else if (!g_strcmp0(state, "active")) {
-		res = r_boot_set_primary(slot);
-		*message = g_strdup_printf((res) ? "activated slot %s" : "failed to activate slot %s", slot->name);
+		mark_active(slot, &ierror);
+		if (g_error_matches(ierror, R_INSTALL_ERROR, R_INSTALL_ERROR_MARK_BOOTABLE)) {
+			res = FALSE;
+			*message = g_strdup_printf("failed to activate slot %s", slot->name);
+		} else if (g_error_matches(ierror, R_INSTALL_ERROR, R_INSTALL_ERROR_FAILED)) {
+			res = TRUE;
+			*message = g_strdup_printf("activated slot %s, but failed to write status file: %s",
+					slot->name, ierror->message);
+		} else {
+			res = TRUE;
+			*message = g_strdup_printf("activated slot %s", slot->name);
+		}
+		g_clear_error(&ierror);
 	} else {
 		res = FALSE;
 		*message = g_strdup_printf("unknown subcommand %s", state);
