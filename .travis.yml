@@ -1,4 +1,4 @@
-group: deprecated-2017Q2
+#group: deprecated-2017Q2
 filter_secrest: false
 language: c
 sudo: required
