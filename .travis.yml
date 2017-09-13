@@ -35,4 +35,5 @@ script:
 after_success:
   - coveralls --build-root '.' --exclude tests --exclude rauc-installer-generated.c
 after_failure:
-  - cat test/*.log
+  - for i in $(find . -name rauc.log); do cat $i; done
+  #- cat test/*.log
