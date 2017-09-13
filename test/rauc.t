@@ -2,6 +2,8 @@
 
 test_description="rauc binary tests"
 
+set -- --verbose --debug
+
 . ./sharness.sh
 
 # Provide functions to start and stop a dedicated session bus
