@@ -4,9 +4,9 @@ language: c
 sudo: required
 compiler: gcc
 dist: trusty
-env:
-  global:
-     - DISPLAY=99:0
+#env:
+#  global:
+#     - DISPLAY=99:0
 #    - DBUS_SESSION_BUS_ADDRESS=/dev/null
 before_install:
   - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/
@@ -20,6 +20,7 @@ before_install:
   - sudo apt-get install -qq user-mode-linux grub-common
   - sudo pip install cpp-coveralls
   - echo $DBUS_SESSION_BUS_ADDRESS
+  - unset DISPLAY
 addons:
   coverity_scan:
     project:
