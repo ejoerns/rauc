@@ -4,8 +4,9 @@ language: c
 sudo: required
 compiler: gcc
 dist: trusty
-#env:
-#  global:
+env:
+  global:
+     - DISPLAY=99:0
 #    - DBUS_SESSION_BUS_ADDRESS=/dev/null
 before_install:
   - sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu/
