@@ -227,7 +227,7 @@ test_expect_success SERVICE "rauc status mark-active: via D-Bus" "
     status mark-active
 "
 
-test_expect_fail "rauc install invalid local paths" "
+test_expect_success "rauc install invalid local paths" "
   test_must_fail rauc install foo &&
   test_must_fail rauc install foo.raucb &&
   test_must_fail rauc install /path/to/foo.raucb
