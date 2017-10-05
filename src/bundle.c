@@ -458,20 +458,21 @@ out:
 static gboolean convert_to_casync_bundle(RaucBundle *bundle, const gchar *outbundle, GError **error) {
 	GError *ierror = NULL;
 	gboolean res = FALSE;
-	gchar *tmpdir, *contentdir, *mfpath, *bundleidxpath, *storepath;
+	gchar *tmpdir, *contentdir, *mfpath, *bundleidxpath, *storepath, *basepath;
 	RaucManifest *mf = NULL;
 	GFile *bundlefile = NULL, *manifestfile = NULL, *caidxfile = NULL;
 	GFileOutputStream *bundlestream = NULL;
 	gssize writesize;
 	GInputStream *manifeststream, *idxinstream = NULL;
 
-	storepath = g_strndup(outbundle, strlen(outbundle) - 6);
-	storepath = g_strconcat(storepath, ".castr", NULL);
+	basepath = g_strndup(outbundle, strlen(outbundle) - 6);
+	bundleidxpath = g_strconcat(basepath, ".caidx", NULL);
+	storepath = g_strconcat(basepath, ".castr", NULL);
+	g_free(basepath);
 
 	tmpdir = g_build_filename(g_get_tmp_dir(), "_rauc_casync", NULL);
 	contentdir = g_build_filename(tmpdir, "content", NULL);
 	mfpath = g_build_filename(contentdir, "manifest.raucm", NULL);
-	bundleidxpath = g_build_filename(tmpdir, "bundle.caidx", NULL);
 
 	if (g_mkdir(tmpdir, 0777) != 0) {
 		g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED, "Failed to create tmp dir %s", tmpdir);
