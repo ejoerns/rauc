@@ -444,6 +444,12 @@ gboolean cms_verify_file(const gchar *filename, GBytes *sig, gsize limit, CMS_Co
 	GBytes *content = NULL;
 	gboolean res = FALSE;
 
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(sig, FALSE);
+	g_return_val_if_fail (cms == NULL || *cms == NULL, NULL);
+	g_return_val_if_fail (store == NULL || *store == NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
 	file = g_mapped_file_new(filename, FALSE, &ierror);
 	if (file == NULL) {
 		g_propagate_error(error, ierror);
