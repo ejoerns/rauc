@@ -755,6 +755,8 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
 
 	r_context_begin_step("extract_bundle", "Extracting bundle", 1);
 
+	g_debug("extracting bundle content to %s", outputdir);
+
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		res = unsquashfs(bundle->path, outputdir, NULL, &ierror);
 		if (!res) {
@@ -1023,7 +1025,7 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 	}
 	g_clear_object(&tmpidxstream);
 
-	g_debug("Wrote idx to %s", g_file_get_path(tmpidx));
+	g_debug("Wrote idx to %s, using store path: %s", g_file_get_path(tmpidx), storepath);
 
 	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, &ierror);
 	if (!res) {

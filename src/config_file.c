@@ -76,6 +76,8 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 
 	key_file = g_key_file_new();
 
+	g_debug("Loading system configuration from %s", filename);
+
 	res = g_key_file_load_from_file(key_file, filename, G_KEY_FILE_NONE, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
