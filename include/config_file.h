@@ -19,6 +19,7 @@ typedef struct {
 	gchar *system_bootloader;
 	/* path prefix where rauc may create mount directories */
 	gchar *mount_prefix;
+	gchar *store_prefix;
 	gchar *grubenv_path;
 	gboolean activate_installed;
 	gchar *keyring_path;

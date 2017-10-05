@@ -125,6 +125,8 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 		c->mount_prefix = g_strdup("/mnt/rauc/");
 	}
 
+	c->store_prefix = g_key_file_get_string(key_file, "system", "storeprefix", NULL);
+
 	if (g_strcmp0(c->system_bootloader, "grub") == 0) {
 		c->grubenv_path = resolve_path(filename,
 			g_key_file_get_string(key_file, "system", "grubenv", NULL));
@@ -303,6 +305,7 @@ void free_config(RaucConfig *config) {
 	g_free(config->system_compatible);
 	g_free(config->system_bootloader);
 	g_free(config->mount_prefix);
+	g_free(config->store_prefix);
 	g_free(config->grubenv_path);
 	g_free(config->keyring_path);
 	g_free(config->autoinstall_path);
