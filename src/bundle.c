@@ -465,6 +465,10 @@ static gboolean convert_to_casync_bundle(RaucBundle *bundle, const gchar *outbun
 	gssize writesize;
 	GInputStream *manifeststream, *idxinstream = NULL;
 
+	g_return_val_if_fail(bundle, FALSE);
+	g_return_val_if_fail(outbundle, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	basepath = g_strndup(outbundle, strlen(outbundle) - 6);
 	bundleidxpath = g_strconcat(basepath, ".caidx", NULL);
 	storepath = g_strconcat(basepath, ".castr", NULL);
