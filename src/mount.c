@@ -101,7 +101,7 @@ out:
 	return res;
 }
 
-gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gchar *store, GError **error) {
+gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gchar *store, const gchar **seeds, GError **error) {
 	GSubprocess *sproc = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
@@ -120,6 +120,12 @@ gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gcha
 	if (store) {
 		g_ptr_array_add(args, g_strdup("--store"));
 		g_ptr_array_add(args, g_strdup(store));
+	}
+	if (seeds) {
+		for (gchar **seed = seeds; *seed != NULL; seed++) {
+			g_ptr_array_add(args, g_strdup("--seed"));
+			g_ptr_array_add(args, g_strdup(*seed));
+		}
 	}
 	g_ptr_array_add(args, g_strdup(source));
 	g_ptr_array_add(args, g_strdup(mountpoint));

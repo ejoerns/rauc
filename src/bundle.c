@@ -1027,7 +1027,7 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 
 	g_debug("Wrote idx to %s, using store path: %s", g_file_get_path(tmpidx), storepath);
 
-	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, &ierror);
+	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, NULL, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
