@@ -1069,6 +1069,9 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 			storepath = g_strndup(bundle->origpath, strlen(bundle->origpath) - 6);
 		else
 			storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
+		/* storepath can be overridden by system configuration */
+		if (r_context()->config->store_prefix)
+			storepath = r_context()->config->store_prefix;
 		storepath = g_strconcat(storepath, ".castr", NULL);
 
 		res = mount_bundle_casync(bundle, mount_point, storepath, &ierror);
