@@ -15,11 +15,14 @@ G_DEFINE_QUARK(r-slot-error-quark, r_slot_error)
 void r_free_slot(gpointer value) {
 	RaucSlot *slot = (RaucSlot*)value;
 
-	g_clear_pointer(&slot->description, g_free);
-	g_clear_pointer(&slot->device, g_free);
-	g_clear_pointer(&slot->type, g_free);
-	g_clear_pointer(&slot->bootname, g_free);
-	g_clear_pointer(&slot->mount_point, g_free);
+	g_return_if_fail(slot);
+
+	g_free(slot->description);
+	g_free(slot->device);
+	g_free(slot->type);
+	g_free(slot->bootname);
+	g_free(slot->mount_point);
+	g_free(slot);
 }
 
 gboolean default_config(RaucConfig **config) {
@@ -295,16 +298,17 @@ out:
 }
 
 void free_config(RaucConfig *config) {
-	g_assert_nonnull(config);
-	g_clear_pointer(&config->system_compatible, g_free);
-	g_clear_pointer(&config->system_bootloader, g_free);
-	g_clear_pointer(&config->mount_prefix, g_free);
-	g_clear_pointer(&config->grubenv_path, g_free);
-	g_clear_pointer(&config->keyring_path, g_free);
-	g_clear_pointer(&config->autoinstall_path, g_free);
-	g_clear_pointer(&config->systeminfo_handler, g_free);
-	g_clear_pointer(&config->preinstall_handler, g_free);
-	g_clear_pointer(&config->postinstall_handler, g_free);
+	g_return_if_fail(config);
+
+	g_free(config->system_compatible);
+	g_free(config->system_bootloader);
+	g_free(config->mount_prefix);
+	g_free(config->grubenv_path);
+	g_free(config->keyring_path);
+	g_free(config->autoinstall_path);
+	g_free(config->systeminfo_handler);
+	g_free(config->preinstall_handler);
+	g_free(config->postinstall_handler);
 	g_clear_pointer(&config->slots, g_hash_table_destroy);
 	g_free(config);
 }
@@ -446,8 +450,9 @@ free:
 }
 
 void free_slot_status(RaucSlotStatus *slotstatus) {
-	g_assert_nonnull(slotstatus);
-	g_clear_pointer(&slotstatus->status, g_free);
-	g_clear_pointer(&slotstatus->checksum.digest, g_free);
+	g_return_if_fail(slotstatus);
+
+	g_free(slotstatus->status);
+	g_free(slotstatus->checksum.digest);
 	g_free(slotstatus);
 }
