@@ -701,7 +701,6 @@ static gboolean info_start(int argc, char **argv)
 	gchar* tmpdir = NULL;
 	gchar* bundledir = NULL;
 	gchar* manifestpath = NULL;
-	RaucManifest *manifest = NULL;
 	RaucBundle *bundle = NULL;
 	GError *error = NULL;
 	gboolean res = FALSE;
@@ -739,14 +738,14 @@ static gboolean info_start(int argc, char **argv)
 		goto out;
 	}
 
-	res = extract_manifest_from_bundle(bundle, &manifest, &error);
+	res = extract_manifest_from_bundle(bundle, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
 		g_clear_error(&error);
 		goto out;
 	}
 
-	text = formatter(manifest);
+	text = formatter(bundle->manifest);
 	g_print("%s\n", text);
 	g_free(text);
 

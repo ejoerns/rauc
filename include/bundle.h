@@ -28,6 +28,7 @@ typedef struct {
 	gchar *mount_point;
 	BundleType type;
 	STACK_OF(X509) *verified_chain;
+	RaucManifest *manifest;
 } RaucBundle;
 
 /**
@@ -94,18 +95,17 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
 /**
  * Extract manifest from a bundle.
  *
- * This will extract a single file into a given directory.
+ * This will load the bundle manifest into the provided RaucBundle struct.
  *
  * Note that check_bundle() must be called prior to this, to obtain a
  * RaucBundle struct.
  *
  * @param bundle RaucBundle struct as returned by check_bundle()
- * @param manifest Return location for manifest
  * @param error Return location for a GError
  *
  * @return TRUE on success, FALSE if an error occurred
  */
-gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error);
+gboolean extract_manifest_from_bundle(RaucBundle *bundle, GError **error);
 
 /**
  * Create casync bundle.

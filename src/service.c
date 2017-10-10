@@ -94,7 +94,6 @@ static gboolean r_on_handle_info(RInstaller *interface,
 				 GDBusMethodInvocation  *invocation,
 				 const gchar *arg_bundle)
 {
-	RaucManifest *manifest = NULL;
 	RaucBundle *bundle = NULL;
 	GError *error = NULL;
 	gboolean res = TRUE;
@@ -112,7 +111,7 @@ static gboolean r_on_handle_info(RInstaller *interface,
 		goto out;
 	}
 
-	res = extract_manifest_from_bundle(bundle, &manifest, &error);
+	res = extract_manifest_from_bundle(bundle, &error);
 	if (!res) {
 		g_warning("%s", error->message);
 		g_clear_error(&error);
@@ -125,8 +124,8 @@ out:
 		r_installer_complete_info(
 				interface,
 				invocation,
-				manifest->update_compatible,
-				manifest->update_version ? manifest->update_version : "");
+				bundle->manifest->update_compatible,
+				bundle->manifest->update_version ? bundle->manifest->update_version : "");
 	} else {
 		g_dbus_method_invocation_return_error(invocation,
 						      G_IO_ERROR,

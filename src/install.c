@@ -1188,7 +1188,6 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 	const gchar* bundlefile = args->name;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
-	RaucManifest *manifest = NULL;
 	RaucBundle *bundle = NULL;
 	GHashTable *target_group;
 
@@ -1224,7 +1223,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	r_context()->install_info->mounted_bundle = bundle;
 
-	res = extract_manifest_from_bundle(bundle, &manifest, &ierror);
+	res = extract_manifest_from_bundle(bundle, &ierror);
 	if (!res) {
 		g_propagate_prefixed_error(
 				error,
@@ -1233,7 +1232,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 		goto umount;
 	}
 
-	res = verify_manifest_checksums(manifest, bundle->mount_point, &ierror);
+	res = verify_manifest_checksums(bundle->manifest, bundle->mount_point, &ierror);
 	if (!res) {
 		g_propagate_prefixed_error(
 				error,
@@ -1254,7 +1253,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	if (r_context()->config->preinstall_handler) {
 		g_print("Starting pre install handler: %s\n", r_context()->config->preinstall_handler);
-		res = launch_and_wait_handler(bundle->mount_point, r_context()->config->preinstall_handler, manifest, target_group, &ierror);
+		res = launch_and_wait_handler(bundle->mount_point, r_context()->config->preinstall_handler, bundle->manifest, target_group, &ierror);
 		if (!res) {
 			g_propagate_prefixed_error(error, ierror, "Pre-install handler error: ");
 			goto umount;
@@ -1262,12 +1261,12 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 	}
 
 
-	if (manifest->handler_name) {
-		g_print("Using custom handler: %s\n", manifest->handler_name);
-		res = launch_and_wait_custom_handler(args, bundle->mount_point, manifest, target_group, &ierror);
+	if (bundle->manifest->handler_name) {
+		g_print("Using custom handler: %s\n", bundle->manifest->handler_name);
+		res = launch_and_wait_custom_handler(args, bundle->mount_point, bundle->manifest, target_group, &ierror);
 	} else {
 		g_print("Using default handler\n");
-		res = launch_and_wait_default_handler(args, bundle->mount_point, manifest, target_group, &ierror);
+		res = launch_and_wait_default_handler(args, bundle->mount_point, bundle->manifest, target_group, &ierror);
 	}
 
 	if (!res) {
@@ -1277,7 +1276,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	if (r_context()->config->postinstall_handler) {
 		g_print("Starting post install handler: %s\n", r_context()->config->postinstall_handler);
-		res = launch_and_wait_handler(bundle->mount_point, r_context()->config->postinstall_handler, manifest, target_group, &ierror);
+		res = launch_and_wait_handler(bundle->mount_point, r_context()->config->postinstall_handler, bundle->manifest, target_group, &ierror);
 		if (!res) {
 			g_propagate_prefixed_error(error, ierror, "Post-install handler error: ");
 			goto umount;
@@ -1295,7 +1294,6 @@ umount:
 
 out:
 	g_clear_pointer(&bundle, free_bundle);
-	g_clear_pointer(&manifest, free_manifest);
 	r_context_end_step("do_install_bundle", res);
 
 	return res;
