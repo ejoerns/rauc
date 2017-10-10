@@ -894,7 +894,7 @@ static gboolean is_remote_scheme(const gchar *scheme) {
 		(g_strcmp0(scheme, "ftp") == 0);
 }
 
-gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifest, GError **error) {
+gboolean extract_manifest_from_bundle(RaucBundle *bundle, GError **error) {
 	gchar *bundlescheme, *origpath = NULL;
 	gchar* manifestpath = NULL;
 	GError *ierror = NULL;
@@ -944,7 +944,7 @@ gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifes
 			goto out;
 		}
 
-		res = load_manifest_file(manifestpath, manifest, &ierror);
+		res = load_manifest_file(manifestpath, &bundle->manifest, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
 			goto out;
@@ -960,7 +960,7 @@ gboolean extract_manifest_from_bundle(RaucBundle *bundle, RaucManifest **manifes
 			goto out;
 		}
 
-		res = load_manifest_mem(mfdata, manifest, &ierror);
+		res = load_manifest_mem(mfdata, &bundle->manifest, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
 			goto out;
@@ -1157,5 +1157,7 @@ void free_bundle(RaucBundle *bundle) {
 	g_free(bundle->mount_point);
 	if (bundle->verified_chain)
 		sk_X509_pop_free(bundle->verified_chain, X509_free);
+	if (bundle->manifest)
+		free_manifest(bundle->manifest);
 	g_free(bundle);
 }
