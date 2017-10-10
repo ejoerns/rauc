@@ -504,7 +504,7 @@ static gboolean update_manifest_checksums(RaucManifest *manifest, const gchar *d
 	return res;
 }
 
-static gboolean verify_manifest_checksums(RaucManifest *manifest, const gchar *dir, GError **error) {
+gboolean verify_manifest_checksums(RaucManifest *manifest, const gchar *dir, GError **error) {
 	GError *ierror = NULL;
 	gboolean res = TRUE;
 	gboolean had_errors = FALSE;
@@ -615,64 +615,5 @@ static gboolean check_compatible(RaucManifest *manifest, GError **error) {
 				r_context()->config->system_compatible);
 	}
 
-	return res;
-}
-
-gboolean verify_manifest(const gchar *dir, RaucManifest **output, gboolean signature, GError **error) {
-	GError *ierror = NULL;
-	gchar* manifestpath = g_build_filename(dir, "manifest.raucm", NULL);
-	gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
-	RaucManifest *manifest = NULL;
-	GBytes *sig = NULL;
-	gboolean res = FALSE;
-
-	r_context_begin_step("verify_manifest", "Verifying manifest",
-			     2 + signature);
-
-	if (signature) {
-		sig = read_file(signaturepath, &ierror);
-		if (sig == NULL) {
-			g_propagate_error(error, ierror);
-			goto out;
-		}
-
-		res = cms_verify_file(manifestpath, sig, 0, NULL, NULL, &ierror);
-		if (!res) {
-			g_propagate_error(error, ierror);
-			goto out;
-		}
-
-	}
-
-	res = load_manifest_file(manifestpath, &manifest, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(error, ierror, "Failed opening manifest: ");
-		goto out;
-	}
-
-	res = check_compatible(manifest, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(error, ierror, "Invalid compatible: ");
-		goto out;
-	}
-
-	res = verify_manifest_checksums(manifest, dir, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(error, ierror, "Invalid checksums: ");
-		goto out;
-	}
-
-	if (output != NULL) {
-		*output = manifest;
-		manifest = NULL;
-	}
-
-
-out:
-	g_clear_pointer(&sig, g_bytes_unref);
-	g_clear_pointer(&manifest, free_manifest);
-	g_free(signaturepath);
-	g_free(manifestpath);
-	r_context_end_step("verify_manifest", res);
 	return res;
 }

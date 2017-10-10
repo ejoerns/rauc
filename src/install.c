@@ -1155,7 +1155,16 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	r_context()->install_info->mounted_bundle = bundle;
 
-	res = verify_manifest(bundle->mount_point, &manifest, FALSE, &ierror);
+	res = extract_manifest_from_bundle(bundle, &manifest, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed extracting manifest: ");
+		goto umount;
+	}
+
+	res = verify_manifest_checksums(manifest, bundle->mount_point, &ierror);
 	if (!res) {
 		g_propagate_prefixed_error(
 				error,
