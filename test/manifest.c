@@ -383,7 +383,7 @@ compatible=SuperBazzer\n\
 	g_clear_pointer(&data, g_byte_array_free);
 }
 
-static void manifest_test_verify(ManifestFixture *fixture,
+static void manifest_test_verify_checksums(ManifestFixture *fixture,
 		gconstpointer user_data)
 {
 	gchar *appfsimage;
@@ -392,8 +392,8 @@ static void manifest_test_verify(ManifestFixture *fixture,
 	g_assert_nonnull(appfsimage);
 
 	g_assert_true(update_manifest(fixture->contentdir, TRUE, NULL));
-	g_assert_true(verify_manifest(fixture->contentdir, NULL, FALSE, NULL));
-	g_assert_true(verify_manifest(fixture->contentdir, NULL, TRUE, NULL));
+	g_assert_true(load_manifest_mem(data, &rm, &error));
+	g_assert_true(verify_manifest_checksums(rm, fixture->contentdir, NULL));
 
 	/* Test with invalid checksum */
 	g_assert(test_prepare_dummy_file(fixture->tmpdir, "content/appfs.ext4",
@@ -401,12 +401,7 @@ static void manifest_test_verify(ManifestFixture *fixture,
 	g_test_expect_message (G_LOG_DOMAIN,
 			G_LOG_LEVEL_WARNING,
 			"Failed verifying checksum: Digests do not match");
-	g_assert_false(verify_manifest(fixture->contentdir, NULL, FALSE, NULL));
-
-	g_test_expect_message (G_LOG_DOMAIN,
-			G_LOG_LEVEL_WARNING,
-			"Failed verifying checksum: Digests do not match");
-	g_assert_false(verify_manifest(fixture->contentdir, NULL, TRUE, NULL));
+	g_assert_false(verify_manifest_checksums(rm, fixture->contentdir, NULL));
 
 	/* Test with non-existing image */
 	g_assert_cmpint(g_unlink(appfsimage), ==, 0);
@@ -414,11 +409,7 @@ static void manifest_test_verify(ManifestFixture *fixture,
 	g_test_expect_message (G_LOG_DOMAIN,
 			G_LOG_LEVEL_WARNING,
 			"Failed verifying checksum: Failed to open file * No such file or directory");
-	g_assert_false(verify_manifest(fixture->contentdir, NULL, FALSE, NULL));
-	g_test_expect_message (G_LOG_DOMAIN,
-			G_LOG_LEVEL_WARNING,
-			"Failed verifying checksum: Failed to open file * No such file or directory");
-	g_assert_false(verify_manifest(fixture->contentdir, NULL, TRUE, NULL));
+	g_assert_false(verify_manifest_checksums(rm, fixture->contentdir, NULL));
 	g_test_assert_expected_messages();
 
 	g_free(appfsimage);

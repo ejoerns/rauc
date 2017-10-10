@@ -118,18 +118,13 @@ gboolean update_manifest(const gchar *dir, gboolean signature, GError **error);
  * The manifest itself must be named 'manifest.raucm'.
  * An optional signature file must be named 'manifest.raucm.sig'
  *
+ * @param manifest Manifest to check
  * @param dir Directory the manifest is located in
- * @param output Returns newly allocated manifest if RaucManifest pointerpointer
- *        is provided.
- *        If output is NULL, manifest will be freed an nothing returned.
- * @param signature If true, manifest ist validated using the provided signature
- *        file.
- *        If false, no further signature validation is performed.
  * @param error return location for a GError, or NULL
  *
  * @return TRUE on success, FALSE if an error occurred
  */
-gboolean verify_manifest(const gchar *dir, RaucManifest **output, gboolean signature, GError **error);
+gboolean verify_manifest_checksums(RaucManifest *manifest, const gchar *dir, GError **error);
 
 /**
  * Frees a rauc image
