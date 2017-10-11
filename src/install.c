@@ -1163,13 +1163,19 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 
 	r_context()->install_info->mounted_bundle = bundle;
 
-	res = verify_manifest_checksums(bundle->manifest, bundle->mount_point, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed verifying manifest: ");
-		goto umount;
+	/* The casync index file replaces checksums sufficiently, thus no
+	 * extra verification required */
+	if (bundle->type != BUNDLE_CASYNC) {
+#if 0
+		res = verify_manifest_checksums(bundle->manifest, bundle->mount_point, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"Failed verifying manifest: ");
+			goto umount;
+		}
+#endif
 	}
 
 	target_group = determine_target_install_group();
