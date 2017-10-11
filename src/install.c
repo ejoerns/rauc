@@ -1152,7 +1152,9 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 		goto umount;
 	}
 
+	r_context_begin_step("mount_bundle", "Mounting bundle", 0);
 	res = mount_bundle(bundle, &ierror);
+	r_context_end_step("mount_bundle", res);
 	if (!res) {
 		g_propagate_prefixed_error(
 				error,
