@@ -1212,6 +1212,15 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 	}
 	r_context_end_step("check_bundle", res);
 
+	res = extract_manifest_from_bundle(bundle, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed extracting manifest: ");
+		goto umount;
+	}
+
 	res = mount_bundle(bundle, &ierror);
 	if (!res) {
 		g_propagate_prefixed_error(
@@ -1222,15 +1231,6 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 	}
 
 	r_context()->install_info->mounted_bundle = bundle;
-
-	res = extract_manifest_from_bundle(bundle, &ierror);
-	if (!res) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed extracting manifest: ");
-		goto umount;
-	}
 
 	res = verify_manifest_checksums(bundle->manifest, bundle->mount_point, &ierror);
 	if (!res) {

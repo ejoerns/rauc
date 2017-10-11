@@ -997,6 +997,7 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 	GFile *tmpidx = NULL;
 	GFileIOStream *iostream = NULL;
 	GOutputStream *tmpidxstream = NULL;
+	GPtrArray *seeds = g_ptr_array_new_full(2, g_free);
 
 	/* extract idx file from bundle */
 	mfdata = read_casync_bundle(bundle->path, BUNDLE_CASYNC_READ_IDX, &ierror);
@@ -1025,7 +1026,35 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 
 	g_debug("Wrote idx to %s, using store path: %s", g_file_get_path(tmpidx), storepath);
 
-	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, NULL, &ierror);
+	{
+		GHashTableIter iter;
+		RaucSlot *iterslot = NULL;
+
+		/* iterate over all active slots */
+		g_hash_table_iter_init(&iter, r_context()->config->slots);
+		while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&iterslot)) {
+
+			if (!(iterslot->state & ST_ACTIVE))
+				continue;
+
+			/* if there is an image for it in the bundle, take slot as seed */
+			for (GList *l = bundle->manifest->images; l != NULL; l = l->next) {
+				RaucImage *image = l->data;
+
+				if (g_str_equal(iterslot->sclass, image->slotclass)) {
+					/* FIXME: we need to add the slots
+					 * mount point here if casync uses
+					 * diectories! */
+					g_debug("Adding as casync seed: %s", iterslot->device);
+					g_ptr_array_add(seeds, g_strdup(iterslot->device));
+					break;
+				}
+			}
+		}
+		g_ptr_array_add(seeds, NULL);
+	}
+
+	res = r_mount_casync(g_file_get_path(tmpidx), mountpoint, storepath, (const gchar**) seeds->pdata, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
@@ -1033,6 +1062,7 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 
 	res = TRUE;
 out:
+	g_ptr_array_free(seeds, TRUE);
 	g_clear_object(&tmpidx);
 	return res;
 }
