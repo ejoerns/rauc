@@ -2,6 +2,7 @@ Integration
 ===========
 
 we add a useless line here.
+and another one here.
 
 .. contents::
    :local:
