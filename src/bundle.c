@@ -758,6 +758,8 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
 
 	r_context_begin_step("extract_bundle", "Extracting bundle", 1);
 
+	g_debug("extracting bundle content to %s", outputdir);
+
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		res = unsquashfs(bundle->path, outputdir, NULL, &ierror);
 		if (!res) {
