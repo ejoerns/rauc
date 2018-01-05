@@ -1208,6 +1208,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error) {
 	res = check_bundle(bundlefile, &bundle, TRUE, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		r_context_end_step("check_bundle", res);
 		goto out;
 	}
 	r_context_end_step("check_bundle", res);

@@ -120,7 +120,7 @@ gboolean download_file(const gchar *target, const gchar *url, gsize limit, GErro
 
 	xfer.dl = fopen(target, "wbx");
 	if (xfer.dl == NULL) {
-		g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed opening target file");
+		g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed opening target file '%s'", target);
 		goto out;
 	}
 

@@ -499,6 +499,7 @@ static gboolean convert_to_casync_bundle(RaucBundle *bundle, const gchar *outbun
 		goto out;
 	}
 
+	g_message("Converting bundle... ");
 	/* Generate catar for content dir */
 	res = casync_make(bundleidxpath, contentdir, storepath, &ierror);
 	if (!res) {
@@ -643,18 +644,20 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 
 	if (verify && !r_context()->config->keyring_path) {
 		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_KEYRING, "No keyring file provided");
+		res = FALSE;
 		goto out;
 	}
 
-	g_message("Reading bundle: %s", bundlename);
+	g_message("Reading bundle: %s", ibundle->path);
 
-	bundlefile = g_file_new_for_path(bundlename);
+	bundlefile = g_file_new_for_path(ibundle->path);
 	bundlestream = g_file_read(bundlefile, NULL, &ierror);
 	if (bundlestream == NULL) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"Failed to open bundle for reading: ");
+		res = FALSE;
 		goto out;
 	}
 
@@ -748,7 +751,7 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 
 		g_message("Verifying bundle... ");
 		/* the squashfs image size is in offset */
-		res = cms_verify_file(bundlename, sig, offset, &cms, &store, &ierror);
+		res = cms_verify_file(ibundle->path, sig, offset, &cms, &store, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
 			goto out;
@@ -786,6 +789,7 @@ gboolean extract_bundle(RaucBundle *bundle, const gchar *outputdir, GError **err
 	r_context_begin_step("extract_bundle", "Extracting bundle", 1);
 
 	g_debug("extracting bundle content to %s", outputdir);
+	g_message("Extracting bundle... ");
 
 	if (bundle->type == BUNDLE_SQUASHFS) {
 		res = unsquashfs(bundle->path, outputdir, NULL, &ierror);
@@ -1099,9 +1103,12 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error) {
 			storepath = g_strndup(bundle->origpath, strlen(bundle->origpath) - 6);
 		else
 			storepath = g_strndup(bundle->path, strlen(bundle->path) - 6);
+
 		/* storepath can be overridden by system configuration */
-		if (r_context()->config->store_prefix)
+		if (r_context()->config->store_prefix) {
+			g_warning("override storepath by prefix");
 			storepath = r_context()->config->store_prefix;
+		}
 		storepath = g_strconcat(storepath, ".castr", NULL);
 
 		res = mount_bundle_casync(bundle, mount_point, storepath, &ierror);
