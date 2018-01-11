@@ -101,6 +101,10 @@ out:
 	return res;
 }
 
+static void print_subprocess_call(GPtrArray *args) {
+	g_message("%s", g_strjoinv(" ", args->pdata));
+}
+
 gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gchar *store, const gchar **seeds, GError **error) {
 	GSubprocess *sproc = NULL;
 	GError *ierror = NULL;
@@ -130,6 +134,8 @@ gboolean r_mount_casync(const gchar *source, const gchar *mountpoint, const gcha
 	g_ptr_array_add(args, g_strdup(source));
 	g_ptr_array_add(args, g_strdup(mountpoint));
 	g_ptr_array_add(args, NULL);
+
+	print_subprocess_call(args);
 
 	sproc = g_subprocess_newv((const gchar * const *)args->pdata,
 				  G_SUBPROCESS_FLAGS_STDOUT_PIPE, &ierror);

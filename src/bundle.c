@@ -197,7 +197,7 @@ static gboolean input_stream_read_bundle_identifier(GInputStream *stream, Bundle
 		g_set_error(error,
 				G_IO_ERROR,
 				G_IO_ERROR_PARTIAL_INPUT,
-				"Only %lu of %lu bytes read",
+				"Only %"G_GSIZE_FORMAT" of %u bytes read",
 				bytes_read,
 				sizeof(squashfs_id));
 		return FALSE;
@@ -225,7 +225,7 @@ static gboolean input_stream_read_bundle_identifier(GInputStream *stream, Bundle
 		g_set_error(error,
 				G_IO_ERROR,
 				G_IO_ERROR_PARTIAL_INPUT,
-				"Only %lu of %lu bytes read",
+				"Only %"G_GSIZE_FORMAT" of %u bytes read",
 				bytes_read,
 				sizeof(rauc_casync_id));
 		return FALSE;
@@ -629,7 +629,7 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 		ibundle->path = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
 
 		g_message("Remote URI detected, downloading bundle to %s...", ibundle->path);
-		res = download_file(ibundle->path, ibundle->origpath, 64*1024, &ierror);
+		res = download_file(ibundle->path, ibundle->origpath, 256*1024, &ierror);
 		if (!res) {
 			g_propagate_prefixed_error(error, ierror, "Failed to download bundle %s: ", ibundle->origpath);
 			goto out;
@@ -994,6 +994,15 @@ out:
 	return res;
 }
 
+static gboolean image_is_archive(RaucImage* image) {
+	if (g_pattern_match_simple("*.tar*", image->filename) ||
+			g_pattern_match_simple("*.catar", image->filename)) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint, const gchar* storepath, GError **error) {
 	GError *ierror = NULL;
 	gboolean res = FALSE;
@@ -1049,8 +1058,23 @@ static gboolean mount_bundle_casync(RaucBundle *bundle, const gchar *mountpoint,
 					/* FIXME: we need to add the slots
 					 * mount point here if casync uses
 					 * diectories! */
-					g_debug("Adding as casync seed: %s", iterslot->device);
-					g_ptr_array_add(seeds, g_strdup(iterslot->device));
+					if (image_is_archive(image)) {
+						if (iterslot->mount_point) {
+							g_warning("DAMN! it's already mounted!");
+						}
+						// XXX bind mount
+						res = r_mount_slot(iterslot, &ierror);
+						if (!res) {
+							g_warning("Failed mounting for seed: %s", ierror->message);
+							g_clear_error(&ierror);
+						}
+						g_debug("Adding as casync seed: %s", iterslot->mount_point);
+						g_ptr_array_add(seeds, g_strdup(iterslot->mount_point));
+					} else {
+						g_debug("Adding as casync seed: %s", iterslot->device);
+						g_ptr_array_add(seeds, g_strdup(iterslot->device));
+					}
+
 					break;
 				}
 			}
