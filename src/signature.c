@@ -191,7 +191,8 @@ gchar* get_pubkey_hash(X509 *cert)
 {
 	gchar *data = NULL;
 	GString *string;
-	unsigned char *der_buf, *tmp_buf = NULL;
+	g_autofree unsigned char *der_buf = NULL;
+	unsigned char *tmp_buf = NULL;
 	unsigned int len = 0;
 	unsigned int n = 0;
 	unsigned char md[SHA256_DIGEST_LENGTH];
@@ -227,7 +228,6 @@ gchar* get_pubkey_hash(X509 *cert)
 
 	data = g_string_free(string, FALSE);
 out:
-	g_clear_pointer(&der_buf, g_free);
 	return data;
 }
 
@@ -277,7 +277,7 @@ gchar* print_signer_cert(STACK_OF(X509) *verified_chain)
 
 gchar* print_cert_chain(STACK_OF(X509) *verified_chain)
 {
-	GString *text = g_string_new(NULL);
+	g_autoptr(GString) text = g_string_new(NULL);
 	char buf[BUFSIZ];
 
 	g_return_val_if_fail(verified_chain != NULL, NULL);
@@ -293,7 +293,7 @@ gchar* print_cert_chain(STACK_OF(X509) *verified_chain)
 		g_string_append_printf(text, "   SPKI sha256: %s\n", get_pubkey_hash(sk_X509_value(verified_chain, i)));
 	}
 
-	return g_string_free(text, FALSE);
+	return g_string_free(g_steal_pointer(&text), FALSE);
 }
 
 gboolean cms_get_cert_chain(CMS_ContentInfo *cms, X509_STORE *store, STACK_OF(X509) **verified_chain, GError **error)
@@ -467,8 +467,8 @@ out:
 GBytes *cms_sign_file(const gchar *filename, const gchar *certfile, const gchar *keyfile, gchar **interfiles, GError **error)
 {
 	GError *ierror = NULL;
-	GMappedFile *file;
-	GBytes *content = NULL;
+	g_autoptr(GMappedFile) file = NULL;
+	g_autoptr(GBytes) content = NULL;
 	GBytes *sig = NULL;
 
 	g_return_val_if_fail(filename != NULL, FALSE);
@@ -491,16 +491,14 @@ GBytes *cms_sign_file(const gchar *filename, const gchar *certfile, const gchar 
 	}
 
 out:
-	g_clear_pointer(&content, g_bytes_unref);
-	g_clear_pointer(&file, g_mapped_file_unref);
 	return sig;
 }
 
 gboolean cms_verify_file(const gchar *filename, GBytes *sig, gsize limit, CMS_ContentInfo **cms, X509_STORE **store, GError **error)
 {
 	GError *ierror = NULL;
-	GMappedFile *file;
-	GBytes *content = NULL;
+	g_autoptr(GMappedFile) file;
+	g_autoptr(GBytes) content = NULL;
 	gboolean res = FALSE;
 
 	g_return_val_if_fail(filename != NULL, FALSE);
@@ -529,7 +527,5 @@ gboolean cms_verify_file(const gchar *filename, GBytes *sig, gsize limit, CMS_Co
 	}
 
 out:
-	g_clear_pointer(&content, g_bytes_unref);
-	g_clear_pointer(&file, g_mapped_file_unref);
 	return res;
 }
