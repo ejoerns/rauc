@@ -74,8 +74,8 @@ static gchar * manifest_consume_string(
 
 static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **image, GError **error)
 {
-	RaucImage *iimage = g_new0(RaucImage, 1);
-	gchar **groupsplit = NULL;
+	g_autoptr(RaucImage) iimage = g_new0(RaucImage, 1);
+	g_auto(GStrv) groupsplit = NULL;
 	gchar *value;
 	gchar **hooks;
 	gsize entries;
@@ -136,12 +136,9 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	g_key_file_remove_group(key_file, group, NULL);
 
 	res = TRUE;
-	*image = iimage;
+	*image = g_steal_pointer(&iimage);
 
 out:
-	if (!image)
-		g_clear_pointer(&iimage, r_free_image);
-	g_strfreev(groupsplit);
 	return res;
 }
 
@@ -299,20 +296,15 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 	g_strfreev(groups);
 
 	res = TRUE;
+	*manifest = g_steal_pointer(&raucm);
 free:
-	if (res) {
-		*manifest = raucm;
-	} else {
-		free_manifest(raucm);
-	}
-
 	return res;
 }
 
 gboolean load_manifest_mem(GBytes *mem, RaucManifest **manifest, GError **error)
 {
 	GError *ierror = NULL;
-	GKeyFile *key_file = NULL;
+	g_autoptr(GKeyFile) key_file = NULL;
 	const gchar *data;
 	gsize length;
 	gboolean res = FALSE;
@@ -338,14 +330,13 @@ gboolean load_manifest_mem(GBytes *mem, RaucManifest **manifest, GError **error)
 	}
 
 out:
-	g_clear_pointer(&key_file, g_key_file_free);
 	return res;
 }
 
 gboolean load_manifest_file(const gchar *filename, RaucManifest **manifest, GError **error)
 {
 	GError *ierror = NULL;
-	GKeyFile *key_file = NULL;
+	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean res = FALSE;
 
 	r_context_begin_step("load_manifest_file", "Loading manifest file", 0);
@@ -365,14 +356,13 @@ gboolean load_manifest_file(const gchar *filename, RaucManifest **manifest, GErr
 	}
 
 out:
-	g_clear_pointer(&key_file, g_key_file_free);
 	r_context_end_step("load_manifest_file", res);
 	return res;
 }
 
 gboolean save_manifest_file(const gchar *filename, RaucManifest *mf, GError **error)
 {
-	GKeyFile *key_file = NULL;
+	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean res = FALSE;
 	GPtrArray *hooks = g_ptr_array_new_full(3, g_free);
 
@@ -482,8 +472,6 @@ gboolean save_manifest_file(const gchar *filename, RaucManifest *mf, GError **er
 		goto free;
 
 free:
-	g_key_file_free(key_file);
-
 	return res;
 }
 
@@ -528,7 +516,6 @@ void free_manifest(RaucManifest *manifest)
 	g_list_free_full(manifest->files, r_free_file);
 	g_free(manifest);
 }
-
 
 static gboolean update_manifest_checksums(RaucManifest *manifest, const gchar *dir, GError **error)
 {
@@ -616,10 +603,10 @@ static gboolean verify_manifest_checksums(RaucManifest *manifest, const gchar *d
 gboolean update_manifest(const gchar *dir, gboolean signature, GError **error)
 {
 	GError *ierror = NULL;
-	gchar* manifestpath = g_build_filename(dir, "manifest.raucm", NULL);
-	gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
-	RaucManifest *manifest = NULL;
-	GBytes *sig = NULL;
+	g_autofree gchar* manifestpath = g_build_filename(dir, "manifest.raucm", NULL);
+	g_autofree gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
+	g_autoptr(RaucManifest) manifest = NULL;
+	g_autoptr(GBytes) sig = NULL;
 	gboolean res = FALSE;
 
 	if (signature) {
@@ -664,20 +651,16 @@ gboolean update_manifest(const gchar *dir, gboolean signature, GError **error)
 	}
 
 out:
-	g_clear_pointer(&sig, g_bytes_unref);
-	g_clear_pointer(&manifest, free_manifest);
-	g_free(signaturepath);
-	g_free(manifestpath);
 	return res;
 }
 
 gboolean verify_manifest(const gchar *dir, RaucManifest **output, GError **error)
 {
 	GError *ierror = NULL;
-	gchar* manifestpath = g_build_filename(dir, "manifest.raucm", NULL);
-	gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
-	RaucManifest *manifest = NULL;
-	GBytes *sig = NULL;
+	g_autofree gchar* manifestpath = g_build_filename(dir, "manifest.raucm", NULL);
+	g_autofree gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
+	g_autoptr(RaucManifest) manifest = NULL;
+	g_autoptr(GBytes) sig = NULL;
 	gboolean res = FALSE;
 
 	r_context_begin_step("verify_manifest", "Verifying manifest", 2);
@@ -699,12 +682,7 @@ gboolean verify_manifest(const gchar *dir, RaucManifest **output, GError **error
 		manifest = NULL;
 	}
 
-
 out:
-	g_clear_pointer(&sig, g_bytes_unref);
-	g_clear_pointer(&manifest, free_manifest);
-	g_free(signaturepath);
-	g_free(manifestpath);
 	r_context_end_step("verify_manifest", res);
 	return res;
 }
