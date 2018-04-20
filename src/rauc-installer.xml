@@ -3,6 +3,7 @@
     <!--
          Install:
          @source: Path to bundle to be installed
+         @options: Additional options to pass
          @result: return code (0 for success)
 
          Triggers an installation.
@@ -73,5 +74,13 @@
     <method name="mark-active">
       <arg name="slot" type="s" direction="in" />
     </method>
+  </interface>
+  <interface name="de.pengutronix.Rauc1.Slot">
+    <method name="write">
+      <arg name="image" type="s" direction="in" />
+    </method>
+    <property name="checksum" type="s" access="read"/>
+    <property name="mountpoint" type="s" access="read"/>
+    <property name="xxx" type="s" access="read"/>
   </interface>
 </node>
