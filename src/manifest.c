@@ -22,7 +22,6 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	gchar **hooks;
 	gsize entries;
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 	g_return_val_if_fail(group != NULL, FALSE);
@@ -52,7 +51,7 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	iimage->filename = key_file_consume_string(key_file, group, "filename", &ierror);
 	if (iimage->filename == NULL) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
 	hooks = g_key_file_get_string_list(key_file, group, "hooks", &entries, NULL);
@@ -73,15 +72,13 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 
 	if (!check_remaining_keys(key_file, group, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 	g_key_file_remove_group(key_file, group, NULL);
 
-	res = TRUE;
 	*image = g_steal_pointer(&iimage);
 
-out:
-	return res;
+	return TRUE;
 }
 
 /* Parses key_file into RaucManifest structure
@@ -98,7 +95,6 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 {
 	GError *ierror = NULL;
 	RaucManifest *raucm = g_new0(RaucManifest, 1);
-	gboolean res = FALSE;
 	gchar **groups;
 	gsize group_count;
 	gchar **bundle_hooks;
@@ -110,14 +106,14 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 	raucm->update_compatible = key_file_consume_string(key_file, "update", "compatible", &ierror);
 	if (!raucm->update_compatible) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 	raucm->update_version = key_file_consume_string(key_file, "update", "version", NULL);
 	raucm->update_description = key_file_consume_string(key_file, "update", "description", NULL);
 	raucm->update_build = key_file_consume_string(key_file, "update", "build", NULL);
 	if (!check_remaining_keys(key_file, "update", &ierror)) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 	g_key_file_remove_group(key_file, "update", NULL);
 
@@ -125,7 +121,7 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 	raucm->keyring = key_file_consume_string(key_file, "keyring", "archive", NULL);
 	if (!check_remaining_keys(key_file, "keyring", &ierror)) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 	g_key_file_remove_group(key_file, "keyring", NULL);
 
@@ -142,7 +138,7 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 	}
 	if (!check_remaining_keys(key_file, "handler", &ierror)) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 	g_key_file_remove_group(key_file, "handler", NULL);
 
@@ -161,7 +157,7 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 
 	if (!check_remaining_keys(key_file, "hooks", &ierror)) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 	g_key_file_remove_group(key_file, "hooks", NULL);
 
@@ -173,7 +169,7 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 
 			if (!parse_image(key_file, groups[i], &image, &ierror)) {
 				g_propagate_error(error, ierror);
-				goto free;
+				return FALSE;
 			}
 
 			raucm->images = g_list_append(raucm->images, image);
@@ -212,14 +208,14 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 			file->filename = key_file_consume_string(key_file, groups[i], "filename", &ierror);
 			if (file->filename == NULL) {
 				g_propagate_error(error, ierror);
-				goto free;
+				return FALSE;
 			}
 
 			raucm->files = g_list_append(raucm->files, file);
 
 			if (!check_remaining_keys(key_file, groups[i], &ierror)) {
 				g_propagate_error(error, ierror);
-				goto free;
+				return FALSE;
 			}
 			g_key_file_remove_group(key_file, groups[i], NULL);
 		}
@@ -227,15 +223,14 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 
 	if (!check_remaining_groups(key_file, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto free;
+		return FALSE;
 	}
 
 	g_strfreev(groups);
 
-	res = TRUE;
 	*manifest = g_steal_pointer(&raucm);
-free:
-	return res;
+
+	return TRUE;
 }
 
 gboolean load_manifest_mem(GBytes *mem, RaucManifest **manifest, GError **error)
@@ -244,30 +239,26 @@ gboolean load_manifest_mem(GBytes *mem, RaucManifest **manifest, GError **error)
 	g_autoptr(GKeyFile) key_file = NULL;
 	const gchar *data;
 	gsize length;
-	gboolean res = FALSE;
 
 	data = g_bytes_get_data(mem, &length);
 	if (data == NULL) {
 		g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_NO_DATA, "No data available");
-		goto out;
+		return FALSE;
 	}
 
 	key_file = g_key_file_new();
 
-	res = g_key_file_load_from_data(key_file, data, length, G_KEY_FILE_NONE, &ierror);
-	if (!res) {
+	if (!g_key_file_load_from_data(key_file, data, length, G_KEY_FILE_NONE, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
-	res = parse_manifest(key_file, manifest, &ierror);
-	if (!res) {
+	if (!parse_manifest(key_file, manifest, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
-out:
-	return res;
+	return TRUE;
 }
 
 gboolean load_manifest_file(const gchar *filename, RaucManifest **manifest, GError **error)
@@ -300,7 +291,6 @@ out:
 gboolean save_manifest_file(const gchar *filename, RaucManifest *mf, GError **error)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
-	gboolean res = FALSE;
 	GPtrArray *hooks = g_ptr_array_new_full(3, g_free);
 
 	key_file = g_key_file_new();
@@ -399,12 +389,10 @@ gboolean save_manifest_file(const gchar *filename, RaucManifest *mf, GError **er
 			g_key_file_set_string(key_file, group, "filename", file->filename);
 	}
 
-	res = g_key_file_save_to_file(key_file, filename, NULL);
-	if (!res)
-		goto free;
+	if (!g_key_file_save_to_file(key_file, filename, NULL))
+		return FALSE;
 
-free:
-	return res;
+	return TRUE;
 }
 
 void r_free_image(gpointer data)
@@ -495,29 +483,25 @@ gboolean update_manifest(const gchar *dir, gboolean signature, GError **error)
 	g_autofree gchar* signaturepath = g_build_filename(dir, "manifest.raucm.sig", NULL);
 	g_autoptr(RaucManifest) manifest = NULL;
 	g_autoptr(GBytes) sig = NULL;
-	gboolean res = FALSE;
 
 	if (signature) {
 		g_assert_nonnull(r_context()->certpath);
 		g_assert_nonnull(r_context()->keypath);
 	}
 
-	res = load_manifest_file(manifestpath, &manifest, &ierror);
-	if (!res) {
+	if (!load_manifest_file(manifestpath, &manifest, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
-	res = update_manifest_checksums(manifest, dir, &ierror);
-	if (!res) {
+	if (!update_manifest_checksums(manifest, dir, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
-	res = save_manifest_file(manifestpath, manifest, &ierror);
-	if (!res) {
+	if (!save_manifest_file(manifestpath, manifest, &ierror)) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
 	if (signature) {
@@ -528,16 +512,14 @@ gboolean update_manifest(const gchar *dir, gboolean signature, GError **error)
 				&ierror);
 		if (sig == NULL) {
 			g_propagate_error(error, ierror);
-			goto out;
+			return FALSE;
 		}
 
-		res = write_file(signaturepath, sig, &ierror);
-		if (!res) {
+		if (!write_file(signaturepath, sig, &ierror)) {
 			g_propagate_error(error, ierror);
-			goto out;
+			return FALSE;
 		}
 	}
 
-out:
-	return res;
+	return TRUE;
 }
