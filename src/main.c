@@ -315,26 +315,26 @@ static gboolean bundle_start(int argc, char **argv)
 	if (argc < 3) {
 		g_printerr("An input directory name must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 4) {
 		g_printerr("An output bundle name must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc > 4) {
 		g_printerr("Excess argument: %s\n", argv[4]);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (r_context()->certpath == NULL ||
 	    r_context()->keypath == NULL) {
 		g_printerr("Cert and key files must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	inpath = resolve_path(NULL, argv[2]);
@@ -343,7 +343,7 @@ static gboolean bundle_start(int argc, char **argv)
 	if (!g_file_test(inpath, G_FILE_TEST_IS_DIR)) {
 		g_printerr("Input path must point to a directory!\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	/* strip trailing slash for comparison */
@@ -355,7 +355,7 @@ static gboolean bundle_start(int argc, char **argv)
 	if (g_str_has_prefix(outdir, inpath)) {
 		g_printerr("Bundle path must be located outside input directory!\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	g_debug("input directory: %s", inpath);
@@ -365,17 +365,16 @@ static gboolean bundle_start(int argc, char **argv)
 		g_printerr("Failed to update manifest: %s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (!create_bundle(argv[3], argv[2], &ierror)) {
 		g_printerr("Failed to create bundle: %s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
-out:
 	return TRUE;
 }
 
@@ -394,19 +393,19 @@ static gboolean write_slot_start(int argc, char **argv)
 	if (argc < 3) {
 		g_printerr("A target slot name must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 4) {
 		g_printerr("An image must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc > 4) {
 		g_printerr("Excess argument: %s\n", argv[4]);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	/* construct RaucImage with required attributes */
@@ -416,7 +415,7 @@ static gboolean write_slot_start(int argc, char **argv)
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	info = g_file_input_stream_query_info(G_FILE_INPUT_STREAM(instream),
@@ -425,7 +424,7 @@ static gboolean write_slot_start(int argc, char **argv)
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	image->checksum.size = g_file_info_get_size(info);
@@ -436,13 +435,13 @@ static gboolean write_slot_start(int argc, char **argv)
 	if (slot == NULL) {
 		g_printerr("No matching slot found for given slot name\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (slot->readonly) {
 		g_printerr("Reject writing to readonly slot\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	/* retrieve update handler */
@@ -450,7 +449,7 @@ static gboolean write_slot_start(int argc, char **argv)
 	if (update_handler == NULL) {
 		g_printerr("%s\n", ierror->message);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	/* call update handler */
@@ -458,12 +457,11 @@ static gboolean write_slot_start(int argc, char **argv)
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	g_message("Slot written successfully");
 
-out:
 	return TRUE;
 }
 
@@ -477,19 +475,19 @@ static gboolean resign_start(int argc, char **argv)
 	if (argc < 3) {
 		g_printerr("An input bundle must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 4) {
 		g_printerr("An output bundle must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc > 4) {
 		g_printerr("Excess argument: %s\n", argv[4]);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (r_context()->certpath == NULL ||
@@ -497,24 +495,23 @@ static gboolean resign_start(int argc, char **argv)
 	    r_context()->keyringpath == NULL) {
 		g_printerr("Cert, key and keyring files must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (!check_bundle(argv[2], &bundle, !verification_disabled, &ierror)) {
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (!resign_bundle(bundle, argv[3], &ierror)) {
 		g_printerr("Failed to resign bundle: %s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
-out:
 	return TRUE;
 }
 
@@ -527,19 +524,19 @@ static gboolean extract_start(int argc, char **argv)
 	if (argc < 3) {
 		g_printerr("An input bundle must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 4) {
 		g_printerr("An output directory must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc > 4) {
 		g_printerr("Excess argument: %s\n", argv[4]);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	g_debug("input bundle: %s", argv[2]);
@@ -549,17 +546,16 @@ static gboolean extract_start(int argc, char **argv)
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (!extract_bundle(bundle, argv[3], &ierror)) {
 		g_printerr("Failed to extract bundle: %s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
-out:
 	return TRUE;
 }
 
@@ -574,25 +570,25 @@ static gboolean convert_start(int argc, char **argv)
 	    r_context()->keypath == NULL) {
 		g_printerr("Cert and key files must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 3) {
 		g_printerr("An input bundle must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc < 4) {
 		g_printerr("An output bundle name must be provided\n");
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (argc > 4) {
 		g_printerr("Excess argument: %s\n", argv[4]);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	g_debug("input bundle: %s", argv[2]);
@@ -602,19 +598,18 @@ static gboolean convert_start(int argc, char **argv)
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	if (!create_casync_bundle(bundle, argv[3], &ierror)) {
 		g_printerr("Failed to create bundle: %s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
-		goto out;
+		return TRUE;
 	}
 
 	g_print("Bundle written to %s\n", argv[3]);
 
-out:
 	return TRUE;
 }
 
