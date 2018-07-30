@@ -280,6 +280,58 @@ parent=invalid\n\
 	g_clear_error(&ierror);
 }
 
+const gchar *base_cfg_file = "\
+[system]\n\
+compatible=FooCorp Super BarBazzer\n\
+bootloader=barebox\n\
+mountprefix=/mnt/myrauc/";
+
+#define BASE_CONFIG "\
+[system]\n\
+compatible=FooCorp Super BarBazzer\n\
+bootloader=barebox\n\
+mountprefix=/mnt/myrauc/\n"
+
+#define test_config_bool_key(tmpdir, key_name, member_name) \
+	RaucConfig *config; \
+	GError *ierror = NULL; \
+	gchar* pathname; \
+ \
+	const gchar *true_cfg_file = BASE_CONFIG "\
+" key_name "=true\n"; \
+	const gchar *false_cfg_file = BASE_CONFIG "\
+" key_name "=false\n"; \
+	const gchar *invalid_cfg_file = BASE_CONFIG "\
+" key_name "=invalid\n"; \
+ \
+	pathname = write_tmp_file(tmpdir, "test_config_key.conf", true_cfg_file, NULL); \
+	g_assert_nonnull(pathname); \
+ \
+	g_assert_true(load_config(pathname, &config, &ierror)); \
+	g_assert_null(ierror); \
+	g_assert_nonnull(config); \
+	g_assert_true(config->member_name); \
+ \
+	g_clear_pointer(&config, free_config); \
+ \
+	pathname = write_tmp_file(tmpdir, "test_config_key.conf", false_cfg_file, NULL); \
+	g_assert_nonnull(pathname); \
+ \
+	g_assert_true(load_config(pathname, &config, &ierror)); \
+	g_assert_null(ierror); \
+	g_assert_nonnull(config); \
+	g_assert_false(config->member_name); \
+ \
+	g_clear_pointer(&config, free_config); \
+ \
+	pathname = write_tmp_file(tmpdir, "test_config_key.conf", invalid_cfg_file, NULL); \
+	g_assert_nonnull(pathname); \
+ \
+	g_assert_false(load_config(pathname, &config, &ierror)); \
+	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE); \
+	g_assert_null(config); \
+
+
 static void config_file_typo_in_boolean_readonly_key(ConfigFileFixture *fixture,
 		gconstpointer user_data)
 {
@@ -367,30 +419,6 @@ ignore-checksum=typo\n";
 	g_clear_error(&ierror);
 }
 
-static void config_file_typo_in_boolean_activate_installed_key(ConfigFileFixture *fixture,
-		gconstpointer user_data)
-{
-	RaucConfig *config;
-	GError *ierror = NULL;
-	gchar* pathname;
-
-	const gchar *cfg_file = "\
-[system]\n\
-compatible=FooCorp Super BarBazzer\n\
-bootloader=barebox\n\
-mountprefix=/mnt/myrauc/\n\
-activate-installed=typo\n";
-
-
-	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
-	g_assert_nonnull(pathname);
-
-	g_assert_false(load_config(pathname, &config, &ierror));
-	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE);
-	g_assert_null(config);
-	g_clear_error(&ierror);
-}
-
 static void config_file_no_max_bundle_download_size(ConfigFileFixture *fixture,
 		gconstpointer user_data)
 {
@@ -460,56 +488,10 @@ max-bundle-download-size=no-uint64\n";
 	g_clear_error(&ierror);
 }
 
-static void config_file_activate_installed_set_to_true(ConfigFileFixture *fixture,
+static void config_file_activate_installed(ConfigFileFixture *fixture,
 		gconstpointer user_data)
 {
-	RaucConfig *config;
-	GError *ierror = NULL;
-	gchar* pathname;
-
-	const gchar *cfg_file = "\
-[system]\n\
-compatible=FooCorp Super BarBazzer\n\
-bootloader=barebox\n\
-mountprefix=/mnt/myrauc/\n\
-activate-installed=true\n";
-
-
-	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
-	g_assert_nonnull(pathname);
-
-	g_assert_true(load_config(pathname, &config, &ierror));
-	g_assert_null(ierror);
-	g_assert_nonnull(config);
-	g_assert_true(config->activate_installed);
-
-	free_config(config);
-}
-
-static void config_file_activate_installed_set_to_false(ConfigFileFixture *fixture,
-		gconstpointer user_data)
-{
-	RaucConfig *config;
-	GError *ierror = NULL;
-	gchar* pathname;
-
-	const gchar *cfg_file = "\
-[system]\n\
-compatible=FooCorp Super BarBazzer\n\
-bootloader=barebox\n\
-mountprefix=/mnt/myrauc/\n\
-activate-installed=false\n";
-
-
-	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
-	g_assert_nonnull(pathname);
-
-	g_assert_true(load_config(pathname, &config, &ierror));
-	g_assert_null(ierror);
-	g_assert_nonnull(config);
-	g_assert_false(config->activate_installed);
-
-	free_config(config);
+	test_config_bool_key(fixture->tmpdir, "activate-installed", activate_installed);
 }
 
 static void config_file_system_variant(ConfigFileFixture *fixture,
@@ -825,9 +807,6 @@ int main(int argc, char *argv[])
 	g_test_add("/config-file/typo-in-boolean-ignore-checksum-key", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_typo_in_boolean_ignore_checksum_key,
 			config_file_fixture_tear_down);
-	g_test_add("/config-file/typo-in-boolean-activate-installed-key", ConfigFileFixture, NULL,
-			config_file_fixture_set_up, config_file_typo_in_boolean_activate_installed_key,
-			config_file_fixture_tear_down);
 	g_test_add("/config-file/no-max-bundle-download-size", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_no_max_bundle_download_size,
 			config_file_fixture_tear_down);
@@ -837,11 +816,8 @@ int main(int argc, char *argv[])
 	g_test_add("/config-file/typo-in-uint64-max-bundle-download-size", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_typo_in_uint64_max_bundle_download_size,
 			config_file_fixture_tear_down);
-	g_test_add("/config-file/activate-installed-key-set-to-true", ConfigFileFixture, NULL,
-			config_file_fixture_set_up, config_file_activate_installed_set_to_true,
-			config_file_fixture_tear_down);
-	g_test_add("/config-file/activate-installed-key-set-to-false", ConfigFileFixture, NULL,
-			config_file_fixture_set_up, config_file_activate_installed_set_to_false,
+	g_test_add("/config-file/activate-installed-key", ConfigFileFixture, NULL,
+			config_file_fixture_set_up, config_file_activate_installed,
 			config_file_fixture_tear_down);
 	g_test_add("/config-file/system-variant", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_system_variant,
