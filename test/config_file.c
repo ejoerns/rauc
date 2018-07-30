@@ -292,16 +292,30 @@ compatible=FooCorp Super BarBazzer\n\
 bootloader=barebox\n\
 mountprefix=/mnt/myrauc/\n"
 
+#define BASE_SLOT_CONFIG BASE_CONFIG "\
+\n\
+[slot.rescue.0]\n\
+description=Rescue partition\n\
+device=/dev/mtd4\n\
+type=raw\n\
+bootname=factory0\n"
+
+#define test_config_slot_bool_key(tmpdir, key_name, member_name) \
+	_test_config_bool_key(tmpdir, BASE_SLOT_CONFIG, key_name, member_name) \
+
 #define test_config_bool_key(tmpdir, key_name, member_name) \
+	_test_config_bool_key(tmpdir, BASE_CONFIG, key_name, member_name) \
+
+#define _test_config_bool_key(tmpdir, template, key_name, member_name) \
 	RaucConfig *config; \
 	GError *ierror = NULL; \
 	gchar* pathname; \
  \
-	const gchar *true_cfg_file = BASE_CONFIG "\
+	const gchar *true_cfg_file = template "\
 " key_name "=true\n"; \
-	const gchar *false_cfg_file = BASE_CONFIG "\
+	const gchar *false_cfg_file = template "\
 " key_name "=false\n"; \
-	const gchar *invalid_cfg_file = BASE_CONFIG "\
+	const gchar *invalid_cfg_file = template "\
 " key_name "=invalid\n"; \
  \
 	pathname = write_tmp_file(tmpdir, "test_config_key.conf", true_cfg_file, NULL); \
@@ -361,33 +375,10 @@ readonly=typo\n";
 	g_clear_error(&ierror);
 }
 
-static void config_file_typo_in_boolean_force_install_same_key(ConfigFileFixture *fixture,
+static void config_file_force_install_same_key(ConfigFileFixture *fixture,
 		gconstpointer user_data)
 {
-	RaucConfig *config;
-	GError *ierror = NULL;
-	gchar* pathname;
-
-	const gchar *cfg_file = "\
-[system]\n\
-compatible=FooCorp Super BarBazzer\n\
-bootloader=barebox\n\
-mountprefix=/mnt/myrauc/\n\
-\n\
-[slot.rescue.0]\n\
-description=Rescue partition\n\
-device=/dev/mtd4\n\
-type=raw\n\
-bootname=factory0\n\
-force-install-same=typo\n";
-
-
-	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
-	g_assert_nonnull(pathname);
-
-	g_assert_false(load_config(pathname, &config, &ierror));
-	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE);
-	g_clear_error(&ierror);
+	test_config_slot_bool_key(fixture->tmpdir, "force-install-same", force_install_same);
 }
 
 static void config_file_typo_in_boolean_ignore_checksum_key(ConfigFileFixture *fixture,
@@ -801,8 +792,8 @@ int main(int argc, char *argv[])
 	g_test_add("/config-file/typo-in-boolean-readonly-key", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_typo_in_boolean_readonly_key,
 			config_file_fixture_tear_down);
-	g_test_add("/config-file/typo-in-boolean-force-install-same-key", ConfigFileFixture, NULL,
-			config_file_fixture_set_up, config_file_typo_in_boolean_force_install_same_key,
+	g_test_add("/config-file/force-install-same-key", ConfigFileFixture, NULL,
+			config_file_fixture_set_up, config_file_force_install_same_key,
 			config_file_fixture_tear_down);
 	g_test_add("/config-file/typo-in-boolean-ignore-checksum-key", ConfigFileFixture, NULL,
 			config_file_fixture_set_up, config_file_typo_in_boolean_ignore_checksum_key,
