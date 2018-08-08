@@ -130,6 +130,8 @@ static gboolean copy_raw_image(RaucImage *image, GUnixOutputStream *outstream, G
 		goto out;
 	}
 
+	g_unix_output_stream_set_close_fd(outstream, FALSE);
+
 	size = g_output_stream_splice((GOutputStream *) outstream, instream,
 			G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
 			NULL,
