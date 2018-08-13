@@ -427,15 +427,15 @@ static void parse_handler_output(gchar* line)
 		return;
 
 	if (g_strcmp0(split[1], "handler") == 0) {
-		g_print("Handler status: %s\n", split[2]);
+		g_message("Handler status: %s", split[2]);
 	} else if (g_strcmp0(split[1], "image") == 0) {
-		g_print("Image '%s' status: %s\n", split[2], split[3]);
+		g_message("Image '%s' status: %s", split[2], split[3]);
 	} else if (g_strcmp0(split[1], "error") == 0) {
-		g_print("error: '%s'\n", split[2]);
+		g_warning("error: '%s'", split[2]);
 	} else if (g_strcmp0(split[1], "bootloader") == 0) {
-		g_print("error: '%s'\n", split[2]);
+		g_warning("error: '%s'", split[2]);
 	} else {
-		g_print("Unknown command: %s\n", split[1]);
+		g_warning("Unknown command: %s", split[1]);
 	}
 }
 
