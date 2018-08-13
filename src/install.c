@@ -452,14 +452,18 @@ static gchar* parse_handler_output(gchar* line)
 	g_assert_nonnull(line);
 
 	if (!g_str_has_prefix(line, "<< ")) {
-		g_print("# %s\n", line);
+		g_print("%s", line);
 		return NULL;
 	}
 
-	split = g_strsplit(line, " ", 5);
+	/* split into '<<', 'command', 'text' */
+	split = g_strsplit(line, " ", 3);
 
-	if (!split[1])
+	/* If no command specified, simply dump message */
+	if (!split[1]) {
+		g_message("%s", split[1]);
 		return NULL;
+	}
 
 	if (g_strcmp0(split[1], "handler") == 0) {
 		message = g_strdup_printf("Handler status: %s", split[2]);
@@ -473,6 +477,15 @@ static gchar* parse_handler_output(gchar* line)
 	} else if (g_strcmp0(split[1], "debug") == 0) {
 		g_autofree gchar *joined = g_strjoinv(" ", &split[2]);
 		message = g_strdup_printf("Debug: %s", joined);
+	} else if (g_strcmp0(split[1], "info") == 0) {
+		g_autofree gchar *joined = g_strjoinv(" ", &split[2]);
+		message = g_strdup_printf("Info: %s", joined);
+	} else if (g_strcmp0(split[1], "warning") == 0) {
+		g_autofree gchar *joined = g_strjoinv(" ", &split[2]);
+		message = g_strdup_printf("Warning: %s", joined);
+	} else if (g_strcmp0(split[1], "fatal") == 0) {
+		g_autofree gchar *joined = g_strjoinv(" ", &split[2]);
+		message = g_strdup_printf("Fatal: %s", joined);
 	} else {
 		message = g_strdup_printf("Unknown handler output: %s", line);
 	}

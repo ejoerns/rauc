@@ -1128,6 +1128,29 @@ The following environment variables will be passed to the hook executable:
   Both halves in the region will be written by RAUC.
   ``boot-raw-fallback`` slot type only.
 
+Printing Status Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, RAUC will print every line the handler outputs directly while
+bypassing the default output handler.
+
+If desired, one can explicitly tell RAUC to output lines using its default 
+output handlers.
+The interface is quite simple: A line that should be emitted using a log
+handler must have the following form: ``<< [LEVEL:] message to print``::
+
+  echo "<< This is a simple message"
+  echo "<< debug: This is a debug message"
+  echo "<< info: This is an info message"
+  echo "<< warning: This is a warning message"
+  echo "<< error: This is an error message"
+  echo "<< fatal: This is a fatal message"
+
+Note that fatal messages will be printed using ``g_error()`` which will result
+in a core dump with the default log handler.
+Thus, for reporting expected errors during execution use only
+``<< error: Text``.
+
 .. _sec_ref_dbus-api:
 
 D-Bus API
