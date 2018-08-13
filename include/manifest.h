@@ -16,6 +16,7 @@ GQuark r_manifest_error_quark(void);
 
 typedef struct {
 	gboolean install_check;
+	gboolean post_install;
 } InstallHooks;
 
 typedef struct {
