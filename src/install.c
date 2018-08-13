@@ -417,25 +417,40 @@ static void parse_handler_output(gchar* line)
 	g_assert_nonnull(line);
 
 	if (!g_str_has_prefix(line, "<< ")) {
-		g_print("# %s\n", line);
+		g_print("%s", line);
 		return;
 	}
 
-	split = g_strsplit(line, " ", 5);
+	/* split into '<<', 'command', 'text' */
+	split = g_strsplit(line, " ", 3);
 
-	if (!split[1])
+	/* If no command specified, simply dump message */
+	if (!split[1]) {
+		g_message("%s", split[1]);
 		return;
+	}
 
-	if (g_strcmp0(split[1], "handler") == 0) {
+	if (g_strcmp0(split[1], "debug:") == 0) {
+		g_debug("%s", split[2]);
+	} else if (g_strcmp0(split[1], "info:") == 0) {
+		g_message("%s", split[2]);
+	} else if (g_strcmp0(split[1], "warning:") == 0) {
+		g_warning("%s", split[2]);
+	} else if (g_strcmp0(split[1], "error:") == 0) {
+		g_warning("Error: %s", split[2]);
+	} else if (g_strcmp0(split[1], "fatal:") == 0) {
+		g_error("%s", split[2]);
+	/* Note that these are only left for backward compatiblity */
+	} else if (g_strcmp0(split[1], "handler") == 0) {
 		g_message("Handler status: %s", split[2]);
 	} else if (g_strcmp0(split[1], "image") == 0) {
-		g_message("Image '%s' status: %s", split[2], split[3]);
+		g_auto(GStrv) imagesplit = NULL;
+		imagesplit = g_strsplit(split[2], " ", 2);
+		g_message("Image '%s' status: %s", imagesplit[0], imagesplit[1]);
 	} else if (g_strcmp0(split[1], "error") == 0) {
 		g_warning("error: '%s'", split[2]);
-	} else if (g_strcmp0(split[1], "bootloader") == 0) {
-		g_warning("error: '%s'", split[2]);
 	} else {
-		g_warning("Unknown command: %s", split[1]);
+		g_warning("Unknown log command: %s", split[1]);
 	}
 }
 
