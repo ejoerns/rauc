@@ -1,3 +1,10 @@
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "lComv6Tb9XuvZr7GRlnjvS5hAtY1sa+Fgl9MI8Nz0oPUcJEZRnu+zp+EheEvDCJAwjTW9p2QKQ+vdQ9FK8JNoCG2F0Bh8WhW7qSMM9SrzdAGZAxbhGb7VP7xL5iGDrR8rbdfqeryPeTlsAN8GrHKfU6SRGk+etmtZmo7exTdoIbLXM16X123AtHThOtmxjgADkPjcHSfOwDxraonq84Ms56BkHDor8XQyBpWkuNiXSh0Ev6yQCBcyL9hPaIrBkJAyPITETzC6qRMuIdcvldUQpBfk0avKvCjjJn9+Z7dwqT7y7BMLc5YwHxSQG1KellpWG46LW+oXkIASnKNfdDUNuO45JIuPrbfrKeJ0EVskLacdF7A3TpCOzpNcUPCfkNMcyOJRO1Cn/DR9Omwr4pDZypuHkJ9urO5+ddgPDqiDcSXkKv8CmH2r34jc3KNwEdPinerfz3DVjVrcz51kQr0eegvxKtfNbp4srwjT5KqeaJDdZws+ghnEPovJwelwpC4QKP8dCjsD/xAKsJi0fXQa8/8EXzXwk20fDMi7bNGqDM+DD74+eYW6w3gJheXJhgEUp96RYnknjRk9K28FUQzwJM4yDQIUJoyUMtmameNnmeYerltrB51njGn2IkZVTbX5kIQp0llUoi/2/EpnZ78JYQdA+umUjoiMrJsfWZXuE0="
+
+
 language: c
 sudo: required
 compiler: gcc-7
