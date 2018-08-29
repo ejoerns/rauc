@@ -55,7 +55,7 @@ addons:
     notification_email: ejo@pengutronix.de
     build_command_prepend: "cov-configure --comptype gcc --compiler gcc-7 --template && ./autogen.sh && ./configure"
     build_command: "make -j2"
-    branch_pattern: coverity-debug
+    branch_pattern: coverity_scan
 before_script:
   - ./build-uncrustify.sh
 script:
