@@ -51,6 +51,8 @@ addons:
 before_script:
   - ./build-uncrustify.sh
 script:
+  - cat /home/travis/build/rauc/rauc/cov-int/build-log.txt | true
+  - cat /home/travis/build/rauc/rauc/cov-int/scm_log.txt | true
   - ./autogen.sh
   - ./configure --enable-code-coverage
   - make clean
