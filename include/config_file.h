@@ -118,7 +118,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @return TRUE if the configuration was successfully loaded. FALSE if there were errors.
  */
-gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
+gboolean r_config_file_load(const gchar *filename, RaucConfig **config, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
@@ -126,7 +126,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @param config a location to place the new config
  */
-void default_config(RaucConfig **config);
+void r_config_file_new_default(RaucConfig **config);
 
 /**
  * Finds a config slot given the device path.
@@ -158,9 +158,9 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @param config a RaucConfig
  */
-void free_config(RaucConfig *config);
+void r_config_file_free(RaucConfig *config);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucConfig, free_config);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucConfig, r_config_file_free);
 
 /**
  * Load a single slot status from a file into a pre-allocated status structure.

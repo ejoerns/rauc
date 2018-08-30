@@ -231,7 +231,7 @@ gboolean r_context_configure(GError **error)
 	g_assert_nonnull(context);
 	g_assert_false(context->busy);
 
-	g_clear_pointer(&context->config, free_config);
+	g_clear_pointer(&context->config, r_config_file_free);
 	configmode = context->configmode;
 	if (context->configpath) {
 		/* explicitly set on the command line */
@@ -243,10 +243,10 @@ gboolean r_context_configure(GError **error)
 	}
 	switch (configmode) {
 		case R_CONTEXT_CONFIG_MODE_NONE:
-			default_config(&context->config);
+			r_config_file_new_default(&context->config);
 			break;
 		case R_CONTEXT_CONFIG_MODE_AUTO:
-			if (load_config(configpath, &context->config, &ierror)) {
+			if (r_config_file_load(configpath, &context->config, &ierror)) {
 				g_message("valid %s found, using it", configpath);
 				if (!context->configpath)
 					context->configpath = g_strdup(configpath);
@@ -255,11 +255,11 @@ gboolean r_context_configure(GError **error)
 				return FALSE;
 			} else {
 				/* This is a hack as we cannot get rid of config easily */
-				default_config(&context->config);
+				r_config_file_new_default(&context->config);
 			}
 			break;
 		case R_CONTEXT_CONFIG_MODE_REQUIRED:
-			if (!load_config(configpath, &context->config, &ierror)) {
+			if (!r_config_file_load(configpath, &context->config, &ierror)) {
 				g_propagate_prefixed_error(error, ierror, "Failed to load system config (%s): ", configpath);
 				return FALSE;
 			}
