@@ -214,12 +214,12 @@ static void r_context_configure(void)
 	g_assert_nonnull(context);
 	g_assert_false(context->busy);
 
-	g_clear_pointer(&context->config, free_config);
-	res = load_config(context->configpath, &context->config, &error);
+	g_clear_pointer(&context->config, r_config_file_free);
+	res = r_config_file_load(context->configpath, &context->config, &error);
 	if (!res && error->domain==g_file_error_quark()) {
 		g_debug("system config not found, using default values");
 		g_clear_error(&error);
-		res = default_config(&context->config);
+		res = r_config_file_new_default(&context->config);
 	}
 	if (!res) {
 		g_error("failed to initialize context: %s", error->message);

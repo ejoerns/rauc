@@ -12,7 +12,7 @@ G_DEFINE_QUARK(r-slot-error-quark, r_slot_error)
 
 #define RAUC_SLOT_PREFIX	"slot"
 
-gboolean default_config(RaucConfig **config)
+gboolean r_config_file_new_default(RaucConfig **config)
 {
 	RaucConfig *c = g_new0(RaucConfig, 1);
 
@@ -155,7 +155,7 @@ out:
 	return res;
 }
 
-gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
+gboolean r_config_file_load(const gchar *filename, RaucConfig **config, GError **error)
 {
 	GError *ierror = NULL;
 	g_autoptr(RaucConfig) c = g_new0(RaucConfig, 1);
@@ -747,7 +747,7 @@ RaucSlot *find_config_slot_by_name(RaucConfig *config, const gchar *name)
 	return g_hash_table_lookup(config->slots, name);
 }
 
-void free_config(RaucConfig *config)
+void r_config_file_free(RaucConfig *config)
 {
 	g_return_if_fail(config);
 

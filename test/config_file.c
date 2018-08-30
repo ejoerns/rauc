@@ -109,7 +109,7 @@ install-same=false\n";
 	gchar* pathname = write_tmp_file(fixture->tmpdir, "full_config.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
@@ -185,7 +185,7 @@ install-same=false\n";
 
 	g_assert(find_config_slot_by_device(config, "/dev/xxx0") == NULL);
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_invalid_items(ConfigFileFixture *fixture,
@@ -215,7 +215,7 @@ foo=bar\n\
 	pathname = write_tmp_file(fixture->tmpdir, "unknown_group.conf", unknown_group_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_PARSE);
 	g_assert_cmpstr(ierror->message, ==, "Invalid group '[unknown]'");
 	g_clear_error(&ierror);
@@ -224,7 +224,7 @@ foo=bar\n\
 	pathname = write_tmp_file(fixture->tmpdir, "unknown_key.conf", unknown_key_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_PARSE);
 	g_assert_cmpstr(ierror->message, ==, "Invalid key 'foo' in group '[system]'");
 	g_clear_error(&ierror);
@@ -251,7 +251,7 @@ mountprefix=/mnt/myrauc/\n";
 	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", boot_inval_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_cmpstr(ierror->message, ==, "Unsupported bootloader 'superloader2000' selected in system config");
 	g_clear_error(&ierror);
 
@@ -259,7 +259,7 @@ mountprefix=/mnt/myrauc/\n";
 	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", boot_missing_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_cmpstr(ierror->message, ==, "No bootloader selected in system config");
 	g_clear_error(&ierror);
 }
@@ -285,7 +285,7 @@ parent=invalid\n\
 	pathname = write_tmp_file(fixture->tmpdir, "nonexisting_bootloader.conf", nonexisting_parent, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_PARENT);
 	g_assert_cmpstr(ierror->message, ==, "Parent slot 'invalid' not found!");
 	g_clear_error(&ierror);
@@ -318,7 +318,7 @@ parent=child.0\n";
 	pathname = write_tmp_file(fixture->tmpdir, "parent_has_parent.conf", contents, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_true(load_config(pathname, &config, NULL));
+	g_assert_true(r_config_file_load(pathname, &config, NULL));
 	g_assert_nonnull(config);
 
 	parentslot = g_hash_table_lookup(config->slots, "rootfs.0");
@@ -350,7 +350,7 @@ parent=rootfs.0\n";
 	pathname = write_tmp_file(fixture->tmpdir, "parent_loop.conf", contents, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_PARENT_LOOP);
 	g_clear_error(&ierror);
 }
@@ -378,7 +378,7 @@ bootname=slotchild0\n";
 	pathname = write_tmp_file(fixture->tmpdir, "bootname_set_on_child.conf", contents, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_CHILD_HAS_BOOTNAME);
 	g_assert_cmpstr(ierror->message, ==, "Child slot 'child.0' has bootname set");
 	g_clear_error(&ierror);
@@ -406,7 +406,7 @@ bootname=theslot\n";
 	pathname = write_tmp_file(fixture->tmpdir, "duplicate_bootname.conf", contents, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_DUPLICATE_BOOTNAME);
 	g_assert_cmpstr(ierror->message, ==, "Bootname 'theslot' is set on more than one slot");
 	g_clear_error(&ierror);
@@ -421,7 +421,7 @@ static void config_file_typo(ConfigFileFixture *fixture, const gchar *cfg_file)
 	pathname = write_tmp_file(fixture->tmpdir, "typo.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE);
 	g_assert_null(config);
 	g_clear_error(&ierror);
@@ -555,13 +555,13 @@ bootloader=barebox\n";
 	pathname = write_tmp_file(fixture->tmpdir, "no_max_bundle_download_size.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_cmpuint(config->max_bundle_download_size, ==, DEFAULT_MAX_BUNDLE_DOWNLOAD_SIZE);
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_zero_max_bundle_download_size(ConfigFileFixture *fixture,
@@ -580,7 +580,7 @@ max-bundle-download-size=0\n";
 	pathname = write_tmp_file(fixture->tmpdir, "zero_max_bundle_download_size.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_MAX_BUNDLE_DOWNLOAD_SIZE);
 	g_assert_null(config);
 
@@ -616,13 +616,13 @@ activate-installed=true\n";
 	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_true(config->activate_installed);
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_activate_installed_set_to_false(ConfigFileFixture *fixture,
@@ -644,13 +644,13 @@ activate-installed=false\n";
 	pathname = write_tmp_file(fixture->tmpdir, "invalid_bootloader.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_false(config->activate_installed);
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_system_variant(ConfigFileFixture *fixture,
@@ -699,7 +699,7 @@ variant-name=xxx";
 	pathname = write_tmp_file(fixture->tmpdir, "no_variant.conf", cfg_file_no_variant, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_free(pathname);
@@ -707,12 +707,12 @@ variant-name=xxx";
 	g_assert_nonnull(config);
 	g_assert_null(config->system_variant);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "name_variant.conf", cfg_file_name_variant, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_free(pathname);
@@ -721,12 +721,12 @@ variant-name=xxx";
 	g_assert(config->system_variant_type == R_CONFIG_SYS_VARIANT_NAME);
 	g_assert_cmpstr(config->system_variant, ==, "variant-name");
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "dtb_variant.conf", cfg_file_dtb_variant, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_free(pathname);
@@ -735,12 +735,12 @@ variant-name=xxx";
 	g_assert(config->system_variant_type == R_CONFIG_SYS_VARIANT_DTB);
 	g_assert_null(config->system_variant);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "file_variant.conf", cfg_file_file_variant, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_free(pathname);
@@ -752,7 +752,7 @@ variant-name=xxx";
 	pathname = write_tmp_file(fixture->tmpdir, "conflict_variant.conf", cfg_file_conflicting_variants, NULL);
 	g_assert_nonnull(pathname);
 
-	g_assert_false(load_config(pathname, &config, &ierror));
+	g_assert_false(r_config_file_load(pathname, &config, &ierror));
 	g_free(pathname);
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_INVALID_FORMAT);
 	g_assert_null(config);
@@ -781,7 +781,7 @@ device=/dev/null\n";
 	pathname = write_tmp_file(fixture->tmpdir, "extra_mount.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
@@ -791,7 +791,7 @@ device=/dev/null\n";
 	g_assert_nonnull(slot);
 	g_assert_cmpstr(slot->extra_mount_opts, ==, NULL);
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 
@@ -819,7 +819,7 @@ extra-mount-opts=ro,noatime\n";
 	pathname = write_tmp_file(fixture->tmpdir, "extra_mount.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
@@ -828,7 +828,7 @@ extra-mount-opts=ro,noatime\n";
 	g_assert_nonnull(slot);
 	g_assert_cmpstr(slot->extra_mount_opts, ==, "ro,noatime");
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_statusfile_missing(ConfigFileFixture *fixture,
@@ -849,14 +849,14 @@ mountprefix=/mnt/myrauc/\n";
 	pathname = write_tmp_file(fixture->tmpdir, "valid_bootloader.conf", cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_nonnull(config->statusfile_path);
 	g_assert_cmpstr(config->statusfile_path, ==, "per-slot");
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 
@@ -988,26 +988,26 @@ check-purpose=codesign\n";
 	pathname = write_tmp_file(fixture->tmpdir, "simple.conf", simple_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_false(config->keyring_check_crl);
 	g_assert_cmpstr(config->keyring_check_purpose, ==, NULL);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "checking.conf", checking_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_true(config->keyring_check_crl);
 	g_assert_cmpstr(config->keyring_check_purpose, ==, "codesign");
 
-	free_config(config);
+	r_config_file_free(config);
 }
 
 static void config_file_bundle_formats(ConfigFileFixture *fixture,
@@ -1041,40 +1041,40 @@ bundle-formats=-plain -verity\n";
 	pathname = write_tmp_file(fixture->tmpdir, "default.conf", default_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_cmphex(config->bundle_formats_mask, ==, 0x3);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "set.conf", set_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_cmphex(config->bundle_formats_mask, ==, 0x1);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "modify.conf", modify_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(config);
 	g_assert_cmphex(config->bundle_formats_mask, ==, 0x2);
 
-	free_config(config);
+	r_config_file_free(config);
 
 	pathname = write_tmp_file(fixture->tmpdir, "none.conf", none_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
-	res = load_config(pathname, &config, &ierror);
+	res = r_config_file_load(pathname, &config, &ierror);
 	g_assert_error(ierror, R_CONFIG_ERROR, R_CONFIG_ERROR_INVALID_FORMAT);
 	g_assert_cmpstr(ierror->message, ==, "Invalid bundle format configuration '-plain -verity', no remaining formats");
 	g_assert_false(res);
