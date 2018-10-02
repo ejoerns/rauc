@@ -330,18 +330,16 @@ static GVariant* create_slotstatus_array(void)
 static gboolean r_on_handle_get_slot_status(RInstaller *interface,
 		GDBusMethodInvocation  *invocation)
 {
-	gboolean res;
 
-	res = !r_context_get_busy();
-
-	if (res) {
-		r_installer_complete_get_slot_status(interface, invocation, create_slotstatus_array());
-	} else {
+	if(r_context_get_busy()) {
 		g_dbus_method_invocation_return_error(invocation,
 				G_IO_ERROR,
 				G_IO_ERROR_FAILED_HANDLED,
 				"already processing a different method");
+		return TRUE;
 	}
+
+	r_installer_complete_get_slot_status(interface, invocation, create_slotstatus_array());
 
 	return TRUE;
 }
