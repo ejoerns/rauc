@@ -12,6 +12,10 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 	GError *ierror = NULL;
 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
 
+	g_return_val_if_fail(source, FALSE);
+	g_return_val_if_fail(mountpoint, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	if (getuid() != 0) {
 		g_ptr_array_add(args, g_strdup("sudo"));
 		g_ptr_array_add(args, g_strdup("--non-interactive"));
@@ -65,6 +69,9 @@ gboolean r_umount(const gchar *filename, GError **error)
 	GError *ierror = NULL;
 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
 
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	if (getuid() != 0) {
 		g_ptr_array_add(args, g_strdup("sudo"));
 		g_ptr_array_add(args, g_strdup("--non-interactive"));
@@ -99,6 +106,9 @@ gchar* r_create_mount_point(const gchar *name, GError **error)
 {
 	g_autofree gchar *mountpoint = NULL;
 
+	g_return_val_if_fail(name, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
+
 	mountpoint = g_build_filename(r_context()->config->mount_prefix, name, NULL);
 
 	if (g_file_test(mountpoint, G_FILE_TEST_IS_DIR))
@@ -122,7 +132,9 @@ gboolean r_mount_slot(RaucSlot *slot, GError **error)
 	GError *ierror = NULL;
 	gchar *mount_point = NULL;
 
-	g_assert_nonnull(slot);
+	g_return_val_if_fail(slot, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	g_assert_null(slot->mount_point);
 
 	if (!g_file_test(slot->device, G_FILE_TEST_EXISTS)) {
@@ -163,7 +175,9 @@ gboolean r_umount_slot(RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
 
-	g_assert_nonnull(slot);
+	g_return_val_if_fail(slot, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	g_assert_nonnull(slot->mount_point);
 
 	if (!r_umount(slot->mount_point, &ierror)) {
