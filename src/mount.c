@@ -128,7 +128,7 @@ gchar* r_create_mount_point(const gchar *name, GError **error)
 gboolean r_mount_slot(RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
-	gchar *mount_point = NULL;
+	g_autofree gchar *mount_point = NULL;
 
 	g_return_val_if_fail(slot, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
@@ -160,11 +160,10 @@ gboolean r_mount_slot(RaucSlot *slot, GError **error)
 				ierror,
 				"failed to mount slot: ");
 		g_rmdir(mount_point);
-		g_free(mount_point);
 		return FALSE;
 	}
 
-	slot->mount_point = mount_point;
+	slot->mount_point = g_steal_pointer(&mount_point);
 
 	return TRUE;
 }
