@@ -684,6 +684,7 @@ static gboolean mount_and_run_slot_hook(const gchar *hook_name, const gchar *hoo
 	res = run_slot_hook(hook_name, hook_cmd, NULL, slot, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		ierror = NULL;
 	}
 
 	/* finally umount slot */
@@ -844,6 +845,7 @@ static gboolean archive_to_ubifs_handler(RaucImage *image, RaucSlot *dest_slot, 
 	res = unpack_archive(image, dest_slot->mount_point, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		ierror = NULL;
 		goto unmount_out;
 	}
 
@@ -852,6 +854,7 @@ static gboolean archive_to_ubifs_handler(RaucImage *image, RaucSlot *dest_slot, 
 		res = run_slot_hook(hook_name, R_SLOT_HOOK_POST_INSTALL, NULL, dest_slot, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
+			ierror = NULL;
 			goto unmount_out;
 		}
 	}
@@ -911,6 +914,7 @@ static gboolean archive_to_ext4_handler(RaucImage *image, RaucSlot *dest_slot, c
 	res = unpack_archive(image, dest_slot->mount_point, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		ierror = NULL;
 		goto unmount_out;
 	}
 
@@ -919,6 +923,7 @@ static gboolean archive_to_ext4_handler(RaucImage *image, RaucSlot *dest_slot, c
 		res = run_slot_hook(hook_name, R_SLOT_HOOK_POST_INSTALL, NULL, dest_slot, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
+			ierror = NULL;
 			goto unmount_out;
 		}
 	}
@@ -978,6 +983,7 @@ static gboolean archive_to_vfat_handler(RaucImage *image, RaucSlot *dest_slot, c
 	res = unpack_archive(image, dest_slot->mount_point, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		ierror = NULL;
 		goto unmount_out;
 	}
 
@@ -986,6 +992,7 @@ static gboolean archive_to_vfat_handler(RaucImage *image, RaucSlot *dest_slot, c
 		res = run_slot_hook(hook_name, R_SLOT_HOOK_POST_INSTALL, NULL, dest_slot, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
+			ierror = NULL;
 			goto unmount_out;
 		}
 	}
