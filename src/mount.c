@@ -10,7 +10,6 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 {
 	g_autoptr(GSubprocess) sproc = NULL;
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
 
 	if (getuid() != 0) {
@@ -40,21 +39,18 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 				error,
 				ierror,
 				"failed to start mount: ");
-		goto out;
+		return FALSE;
 	}
 
-	res = g_subprocess_wait_check(sproc, NULL, &ierror);
-	if (!res) {
+	if (!g_subprocess_wait_check(sproc, NULL, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed to run mount: ");
-		goto out;
+		return FALSE;
 	}
 
-	res = TRUE;
-out:
-	return res;
+	return TRUE;
 }
 
 
@@ -67,7 +63,6 @@ gboolean r_umount(const gchar *filename, GError **error)
 {
 	g_autoptr(GSubprocess) sproc = NULL;
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
 
 	if (getuid() != 0) {
@@ -84,58 +79,47 @@ gboolean r_umount(const gchar *filename, GError **error)
 				error,
 				ierror,
 				"failed to start umount: ");
-		goto out;
+		return FALSE;
 	}
 
-	res = g_subprocess_wait_check(sproc, NULL, &ierror);
-	if (!res) {
+	if (!g_subprocess_wait_check(sproc, NULL, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed to run umount: ");
-		goto out;
+		return FALSE;
 	}
 
-	res = TRUE;
-out:
-	return res;
+	return TRUE;
 }
 
 
 /* Creates a mount subdir in mount path prefix */
 gchar* r_create_mount_point(const gchar *name, GError **error)
 {
-	gchar* prefix;
-	gchar* mountpoint = NULL;
+	g_autofree gchar *mountpoint = NULL;
 
-	prefix = r_context()->config->mount_prefix;
-	mountpoint = g_build_filename(prefix, name, NULL);
+	mountpoint = g_build_filename(r_context()->config->mount_prefix, name, NULL);
 
-	if (!g_file_test(mountpoint, G_FILE_TEST_IS_DIR)) {
-		gint ret;
-		ret = g_mkdir_with_parents(mountpoint, 0700);
+	if (g_file_test(mountpoint, G_FILE_TEST_IS_DIR))
+		return g_steal_pointer(&mountpoint);
 
-		if (ret != 0) {
-			g_set_error(
-					error,
-					G_FILE_ERROR,
-					G_FILE_ERROR_FAILED,
-					"Failed creating mount path '%s'",
-					mountpoint);
-			g_free(mountpoint);
-			mountpoint = NULL;
-			goto out;
-		}
+	if (g_mkdir_with_parents(mountpoint, 0700) != 0) {
+		g_set_error(
+				error,
+				G_FILE_ERROR,
+				G_FILE_ERROR_FAILED,
+				"Failed creating mount path '%s'",
+				mountpoint);
+		return NULL;
 	}
 
-out:
-	return mountpoint;
+	return g_steal_pointer(&mountpoint);
 }
 
 gboolean r_mount_slot(RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 	gchar *mount_point = NULL;
 
 	g_assert_nonnull(slot);
@@ -148,58 +132,50 @@ gboolean r_mount_slot(RaucSlot *slot, GError **error)
 				G_FILE_ERROR_NOENT,
 				"Slot device '%s' not found",
 				slot->device);
-		goto out;
+		return FALSE;
 	}
 
 	mount_point = r_create_mount_point(slot->name, &ierror);
 	if (!mount_point) {
-		res = FALSE;
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed to create mount point: ");
-		goto out;
+		return FALSE;
 	}
 
-	res = r_mount_full(slot->device, mount_point, slot->type, 0, slot->extra_mount_opts, &ierror);
-	if (!res) {
-		res = FALSE;
+	if (!r_mount_full(slot->device, mount_point, slot->type, 0, slot->extra_mount_opts, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed to mount slot: ");
 		g_rmdir(mount_point);
 		g_free(mount_point);
-		goto out;
+		return FALSE;
 	}
 
 	slot->mount_point = mount_point;
 
-out:
-	return res;
+	return TRUE;
 }
 
 gboolean r_umount_slot(RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 
 	g_assert_nonnull(slot);
 	g_assert_nonnull(slot->mount_point);
 
-	res = r_umount(slot->mount_point, &ierror);
-	if (!res) {
-		res = FALSE;
+	if (!r_umount(slot->mount_point, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed to unmount slot: ");
-		goto out;
+		return FALSE;
 	}
 
 	g_rmdir(slot->mount_point);
 	g_clear_pointer(&slot->mount_point, g_free);
 
-out:
-	return res;
+	return TRUE;
 }
