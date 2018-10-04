@@ -441,39 +441,28 @@ void free_manifest(RaucManifest *manifest)
 static gboolean update_manifest_checksums(RaucManifest *manifest, const gchar *dir, GError **error)
 {
 	GError *ierror = NULL;
-	gboolean res = TRUE;
-	gboolean had_errors = FALSE;
 
 	for (GList *elem = manifest->images; elem != NULL; elem = elem->next) {
 		RaucImage *image = elem->data;
 		g_autofree gchar *filename = g_build_filename(dir, image->filename, NULL);
-		res = compute_checksum(&image->checksum, filename, &ierror);
-		if (!res) {
-			g_warning("Failed updating checksum: %s", ierror->message);
-			g_clear_error(&ierror);
-			had_errors = TRUE;
-			break;
+		if (!compute_checksum(&image->checksum, filename, &ierror)) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_CHECKSUM, "Failed updating checksum: %s", ierror->message);
+			g_error_free(ierror);
+			return FALSE;
 		}
 	}
 
 	for (GList *elem = manifest->files; elem != NULL; elem = elem->next) {
 		RaucFile *file = elem->data;
 		g_autofree gchar *filename = g_build_filename(dir, file->filename, NULL);
-		res = compute_checksum(&file->checksum, filename, &ierror);
-		if (!res) {
-			g_warning("Failed updating checksum: %s", ierror->message);
-			g_clear_error(&ierror);
-			had_errors = TRUE;
-			break;
+		if (!compute_checksum(&file->checksum, filename, &ierror)) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_CHECKSUM, "Failed updating checksum: %s", ierror->message);
+			g_error_free(ierror);
+			return FALSE;
 		}
 	}
 
-	if (had_errors) {
-		res = FALSE;
-		g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_CHECKSUM, "Failed updating all checksums");
-	}
-
-	return res;
+	return TRUE;
 }
 
 gboolean update_manifest(const gchar *dir, gboolean signature, GError **error)
