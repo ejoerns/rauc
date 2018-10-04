@@ -100,7 +100,9 @@ static gboolean parse_manifest(GKeyFile *key_file, RaucManifest **manifest, GErr
 	gchar **bundle_hooks;
 	gsize hook_entries;
 
-	g_assert_null(*manifest);
+	g_return_val_if_fail(key_file != NULL, FALSE);
+	g_return_val_if_fail(manifest == NULL || *manifest == NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	/* parse [update] section */
 	raucm->update_compatible = key_file_consume_string(key_file, "update", "compatible", &ierror);
@@ -240,6 +242,10 @@ gboolean load_manifest_mem(GBytes *mem, RaucManifest **manifest, GError **error)
 	const gchar *data;
 	gsize length;
 
+	g_return_val_if_fail(mem != NULL, FALSE);
+	g_return_val_if_fail(manifest == NULL || *manifest == NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	data = g_bytes_get_data(mem, &length);
 	if (data == NULL) {
 		g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_NO_DATA, "No data available");
@@ -266,6 +272,10 @@ gboolean load_manifest_file(const gchar *filename, RaucManifest **manifest, GErr
 	GError *ierror = NULL;
 	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean res = FALSE;
+
+	g_return_val_if_fail(filename != NULL, FALSE);
+	g_return_val_if_fail(manifest == NULL || *manifest == NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	r_context_begin_step("load_manifest_file", "Loading manifest file", 0);
 
