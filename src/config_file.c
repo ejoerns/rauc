@@ -171,6 +171,10 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 	gchar *variant_data;
 	g_autofree gchar *bundle_formats = NULL;
 
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(config != NULL && *config == NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	key_file = g_key_file_new();
 
 	res = g_key_file_load_from_file(key_file, filename, G_KEY_FILE_NONE, &ierror);
@@ -883,6 +887,10 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 	gchar *digest;
 	guint64 count;
 
+	g_return_if_fail(key_file);
+	g_return_if_fail(group);
+	g_return_if_fail(slotstatus);
+
 	if (!g_key_file_has_group(key_file, group))
 		g_debug("Group %s not found in key file.", group);
 
@@ -943,6 +951,10 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 
 static void status_file_set_string_or_remove_key(GKeyFile *key_file, const gchar *group, const gchar *key, gchar *string)
 {
+	g_return_if_fail(key_file);
+	g_return_if_fail(group);
+	g_return_if_fail(key);
+
 	if (string)
 		g_key_file_set_string(key_file, group, key, string);
 	else
@@ -951,6 +963,10 @@ static void status_file_set_string_or_remove_key(GKeyFile *key_file, const gchar
 
 static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, RaucSlotStatus *slotstatus)
 {
+	g_return_if_fail(key_file);
+	g_return_if_fail(group);
+	g_return_if_fail(slotstatus);
+
 	status_file_set_string_or_remove_key(key_file, group, "bundle.compatible", slotstatus->bundle_compatible);
 	status_file_set_string_or_remove_key(key_file, group, "bundle.version", slotstatus->bundle_version);
 	status_file_set_string_or_remove_key(key_file, group, "bundle.description", slotstatus->bundle_description);
@@ -1014,6 +1030,10 @@ gboolean write_slot_status(const gchar *filename, RaucSlotStatus *ss, GError **e
 	GError *ierror = NULL;
 	g_autoptr(GKeyFile) key_file = NULL;
 	gboolean res = FALSE;
+
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(ss, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	key_file = g_key_file_new();
 
