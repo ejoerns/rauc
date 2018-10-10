@@ -172,6 +172,10 @@ gboolean r_config_file_load(const gchar *filename, RaucConfig **config, GError *
 	gchar *variant_data;
 	g_autofree gchar *bundle_formats = NULL;
 
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(config != NULL && *config == NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	key_file = g_key_file_new();
 
 	res = g_key_file_load_from_file(key_file, filename, G_KEY_FILE_NONE, &ierror);
@@ -883,6 +887,10 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 	GError *ierror = NULL;
 	gchar *digest;
 	guint64 count;
+
+	g_return_if_fail(key_file);
+	g_return_if_fail(group);
+	g_return_if_fail(slotstatus);
 
 	if (!g_key_file_has_group(key_file, group))
 		g_debug("Group %s not found in key file.", group);
