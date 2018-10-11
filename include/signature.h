@@ -36,7 +36,7 @@ typedef enum {
 /**
  * Initialization routine.
  *
- * Sets up OpenSSL (libcrypto).
+ * Sets up OpenSSL (libcrypto) and must be called before using crypto.
  *
  * @param error return location for a GError, or NULL
  *
@@ -69,7 +69,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param keyfile private key file name
  * @param interfiles NULL-terminated array of intermediate certificate file
  *                   name strings to include in the bundle signature
- * @param error return location for a GError, or NULL
+ * @param[out] error return location for a GError, or NULL
  *
  * @return signature bytes, NULL if failed
  */
@@ -84,7 +84,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param keyfile private key file name
  * @param interfiles NULL-terminated array of intermediate certificate file
  *                   name strings to include in the bundle signature
- * @param error return location for a GError, or NULL
+ * @param[out] error return location for a GError, or NULL
  *
  * @return signature bytes, NULL if failed
  */
@@ -148,9 +148,9 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param content content to verify against signature, or NULL (for inline signature)
  * @param sig signature used to verify
  * @param store X509 store to use for verification
- * @param cms Return location for the CMS_ContentInfo used for verification
+ * @param[out] cms Return location for the CMS_ContentInfo used for verification
  * @param manifest return location for included manifest, or NULL (for detached signature)
- * @param error return location for a GError, or NULL
+ * @param[out] error return location for a GError, or NULL
  *
  * @return TRUE if succeeded, FALSE if failed
  */
@@ -164,8 +164,8 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param sig signature used to verify
  * @param limit size of content to use, 0 if all should be included
  * @param store X509 store to use for verification
- * @param cms Return location for the CMS_ContentInfo used for verification
- * @param error return location for a GError, or NULL
+ * @param[out] cms Return location for the CMS_ContentInfo used for verification
+ * @param[out] error return location for a GError, or NULL
  *
  * @return TRUE if succeeded, FALSE if failed
  */
