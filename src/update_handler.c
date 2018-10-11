@@ -414,6 +414,10 @@ out:
 	return res;
 }
 
+static gsize get_device_size()
+{
+}
+
 static gboolean write_image_to_dev(RaucImage *image, RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
