@@ -281,7 +281,7 @@ static GVariant* create_slotstatus_array(void)
 	GHashTableIter iter;
 	RaucSlot *slot;
 
-	g_return_val_if_fail(r_installer, NULL);
+	g_assert(r_installer != NULL);
 
 	slot_status_tuples = g_new(GVariant*, slot_number);
 
