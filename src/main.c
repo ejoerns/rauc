@@ -902,6 +902,7 @@ out:
 }
 
 typedef struct {
+	/* Reference to primary slot (must not be freed) */
 	RaucSlot *primary;
 	gchar *compatible;
 	gchar *variant;
@@ -913,7 +914,6 @@ static void free_status_print(RaucStatusPrint *status)
 {
 	g_return_if_fail(status);
 
-	r_free_slot(status->primary);
 	g_free(status->compatible);
 	g_free(status->variant);
 	g_free(status->bootslot);
