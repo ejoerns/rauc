@@ -1387,10 +1387,16 @@ static gboolean retrieve_status_via_dbus(RaucStatusPrint **status_print, GError 
 	istatus->variant = r_installer_dup_variant(proxy);
 	istatus->compatible = r_installer_dup_compatible(proxy);
 	istatus->bootslot = r_installer_dup_boot_slot(proxy);
-	istatus->slots = NULL;
-	/* Add an empty dummy slot only containing name of primary */
-	istatus->primary = g_new0(RaucSlot, 1);
-	istatus->primary->name = primary;
+
+	/* Obtain configured slots and their state */
+	if (!retrieve_slot_states_via_dbus(&istatus->slots, &ierror)) {
+		g_propagate_prefixed_error(error, ierror, "rauc status: error retrieving slot status via D-Bus: ");
+		g_error_free(ierror);
+		return FALSE;
+	}
+
+	/* Finally, we get the right primary slot reference from the list */
+	istatus->primary = g_hash_table_lookup(istatus->slots, primary);
 
 	*status_print = g_steal_pointer(&istatus);
 
@@ -1476,14 +1482,6 @@ static gboolean status_start(int argc, char **argv)
 		if (!retrieve_status_via_dbus(&status_print, &ierror)) {
 			message = g_strdup_printf(
 					"rauc status: error retrieving slot status via D-Bus: %s",
-					ierror->message);
-			g_error_free(ierror);
-			r_exit_status = 1;
-			goto out;
-		}
-
-		if (!retrieve_slot_states_via_dbus(&status_print->slots, &ierror)) {
-			message = g_strdup_printf("rauc status: error retrieving slot status via D-Bus: %s",
 					ierror->message);
 			g_error_free(ierror);
 			r_exit_status = 1;
