@@ -41,9 +41,6 @@ script:
     # Make sure Coverity script is executable
   - docker cp test/run-coverity.sh rauc-ci:/usr/local/bin
 
-    # Coverity works correctly with gcc-6
-  - docker exec -it -u root rauc-ci apt install -y gcc-6
-
     # Run Coverity Analysis
   - docker exec -it rauc-ci run-coverity.sh build
   - docker exec -it rauc-ci run-coverity.sh upload
