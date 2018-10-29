@@ -25,6 +25,7 @@ script:
     # Get Coverity tool
   - echo "COVERITY_SCAN_TOKEN: " $COVERITY_SCAN_TOKEN
   - echo "CODECOV_TOKEN: " $CODECOV_TOKEN
+  - echo "TOOL_ARCHIVE: " $TOOL_ARCHIVE
   - test/get-coverity.sh
   - TOOL_DIR="$(find $TOOL_BASE -type d -name 'cov-analysis*')"
 
