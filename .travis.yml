@@ -12,7 +12,7 @@ env:
     - COVERITY_SCAN_BUILD_COMMAND="make V=1"
 
 before_script:
-  - docker pull rauc/testing:latest
+  - docker pull ejoerns/rauc-testing:latest
 
 script:
     # Prepare environment for Coverity tool
@@ -36,7 +36,7 @@ script:
       --tmpfs /tmp:exec \
       -v ${TOOL_BASE}:${TOOL_BASE} \
       -u travis $ci_env \
-      --name rauc-ci rauc/testing:latest bash
+      --name rauc-ci ejoerns/rauc-testing:latest bash
 
     # Make sure Coverity script is executable
   - docker cp test/run-coverity.sh rauc-ci:/usr/local/bin
