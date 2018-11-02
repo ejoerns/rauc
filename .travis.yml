@@ -5,9 +5,9 @@ services:
 env:
   global:
     - ci_env=`bash <(curl -s https://codecov.io/env)`
-    - COVERITY_SCAN_PROJECT_NAME="jluebbe/rauc"
-    - COVERITY_SCAN_NOTIFICATION_EMAIL="jlu@pengutronix.de"
-    - COVERITY_SCAN_BRANCH_PATTERN="master"
+    - COVERITY_SCAN_PROJECT_NAME="ejoerns/rauc"
+    - COVERITY_SCAN_NOTIFICATION_EMAIL="ejo@pengutronix.de"
+    - COVERITY_SCAN_BRANCH_PATTERN="topic/travis-docker-testing"
     - COVERITY_SCAN_BUILD_COMMAND_PREPEND="cov-configure --comptype gcc --compiler gcc-6 --template && ./autogen.sh && ./configure CC=gcc-6"
     - COVERITY_SCAN_BUILD_COMMAND="make V=1"
 
