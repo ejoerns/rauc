@@ -169,13 +169,14 @@ Building from Sources
    tool (service). Therefore it is fully prepared for `automake cross-compilation
    <https://www.gnu.org/software/automake/manual/html_node/Cross_002dCompilation.html>`_
 
-::
+.. code-block:: sh
 
     git clone https://github.com/rauc/rauc
     cd rauc
     ./autogen.sh
     ./configure
     make
+    make install
 
 Manual Installation
 -------------------
@@ -194,7 +195,7 @@ properly::
 Running the Test Suite
 ----------------------
 
-::
+.. code-block:: sh
 
     sudo apt-get install qemu-system-x86 time squashfs-tools
     # Optional to run all tests:
@@ -205,7 +206,9 @@ Running the Test Suite
 Creating a Bundle (Host)
 ------------------------
 
-Create a directory with the content that should be installed::
+Create a directory with the content that should be installed
+
+.. code-block:: sh
 
     mkdir content-dir/
     cp $SOURCE/rootfs.ext4 content-dir/
