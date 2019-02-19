@@ -67,8 +67,13 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 
 	iimage->filename = key_file_consume_string(key_file, group, "filename", &ierror);
 	if (iimage->filename == NULL) {
-		g_propagate_error(error, ierror);
-		goto out;
+		if (iimage->hooks.install) {
+			/* We allow entries without filenames for install hooks only */
+			g_clear_error(&ierror);
+		} else {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 	}
 
 	if (!check_remaining_keys(key_file, group, &ierror)) {
