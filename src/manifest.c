@@ -677,6 +677,10 @@ gboolean update_manifest_checksums(RaucManifest *manifest, const gchar *dir, GEr
 	for (GList *elem = manifest->images; elem != NULL; elem = elem->next) {
 		RaucImage *image = elem->data;
 		g_autofree gchar *filename = g_build_filename(dir, image->filename, NULL);
+
+		if (!image->filename)
+			continue;
+
 		res = compute_checksum(&image->checksum, filename, &ierror);
 		if (!res) {
 			g_warning("Failed updating checksum: %s", ierror->message);
