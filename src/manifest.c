@@ -40,21 +40,6 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	else
 		iimage->variant = NULL;
 
-	value = key_file_consume_string(key_file, group, "sha256", NULL);
-	if (value) {
-		iimage->checksum.type = G_CHECKSUM_SHA256;
-		iimage->checksum.digest = value;
-	}
-	iimage->checksum.size = g_key_file_get_uint64(key_file,
-			group, "size", NULL);
-	g_key_file_remove_key(key_file, group, "size", NULL);
-
-	iimage->filename = key_file_consume_string(key_file, group, "filename", &ierror);
-	if (iimage->filename == NULL) {
-		g_propagate_error(error, ierror);
-		goto out;
-	}
-
 	hooks = g_key_file_get_string_list(key_file, group, "hooks", &entries, NULL);
 	for (gsize j = 0; j < entries; j++) {
 		if (g_strcmp0(hooks[j], "pre-install") == 0) {
@@ -70,6 +55,21 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	g_key_file_remove_key(key_file, group, "hooks", NULL);
 
 	g_strfreev(hooks);
+
+	value = key_file_consume_string(key_file, group, "sha256", NULL);
+	if (value) {
+		iimage->checksum.type = G_CHECKSUM_SHA256;
+		iimage->checksum.digest = value;
+	}
+	iimage->checksum.size = g_key_file_get_uint64(key_file,
+			group, "size", NULL);
+	g_key_file_remove_key(key_file, group, "size", NULL);
+
+	iimage->filename = key_file_consume_string(key_file, group, "filename", &ierror);
+	if (iimage->filename == NULL) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
 
 	if (!check_remaining_keys(key_file, group, &ierror)) {
 		g_propagate_error(error, ierror);
