@@ -791,6 +791,14 @@ gboolean cms_verify(GBytes *content, GBytes *sig, CMS_ContentInfo **cms, X509_ST
 		X509_VERIFY_PARAM_free(param);
 	}
 
+	// TODO: check purpose manually to be either mail (CMS) or code-signing
+
+	// Then we simply accept 'any' purpose
+	verify_params = X509_STORE_CTX_get0_param(ctx);
+	purpose = X509_PURPOSE_get_by_sname("any");
+	X509_VERIFY_PARAM_set_purpose(verify_params, purpose);
+	X509_STORE_set1_param(trusted_store, verify_params);
+
 	if (!CMS_verify(icms, NULL, istore, incontent, NULL, CMS_DETACHED | CMS_BINARY)) {
 		unsigned long err;
 		const gchar *data;
