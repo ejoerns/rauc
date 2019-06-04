@@ -98,13 +98,12 @@ static gboolean r_on_handle_install_bundle(
 		args->status_result = 1;
 		goto out;
 	}
-	args = NULL;
+
+	r_installer_complete_install(interface, invocation);
 
 out:
-	g_clear_pointer(&args, install_args_free);
-	if (res) {
-		r_installer_complete_install(interface, invocation);
-	} else {
+	if (!res) {
+		g_clear_pointer(&args, install_args_free);
 		r_installer_set_operation(r_installer, "idle");
 		g_dbus_method_invocation_return_error(invocation,
 				G_IO_ERROR,
