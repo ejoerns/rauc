@@ -167,6 +167,10 @@ gboolean create_casync_bundle(RaucBundle *bundle, const gchar *outbundle, GError
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
+ */
+gboolean create_delta_bundle(RaucBundle *basebundle, RaucBundle *bundle, const gchar *outbundle, GError **error);
+
+/**
  * Mount a bundle.
  *
  * Note that check_bundle() must be called prior to this, to obtain a

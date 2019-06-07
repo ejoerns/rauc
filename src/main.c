@@ -612,6 +612,73 @@ out:
 	return TRUE;
 }
 
+static gboolean delta_start(int argc, char **argv)
+{
+	RaucBundle *basebundle = NULL, *bundle = NULL;
+	GError *ierror = NULL;
+	g_debug("delta start");
+
+	if (r_context()->certpath == NULL ||
+	    r_context()->keypath == NULL) {
+		g_printerr("Cert and key files must be provided\n");
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (argc < 3) {
+		g_printerr("A base bundle must be provided\n");
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (argc < 4) {
+		g_printerr("A target bundle must be provided\n");
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (argc < 5) {
+		g_printerr("An output bundle name must be provided\n");
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (argc > 5) {
+		g_printerr("Excess argument: %s\n", argv[4]);
+		r_exit_status = 1;
+		goto out;
+	}
+
+	g_debug("input bundle: %s", argv[2]);
+	g_debug("output bundle: %s", argv[3]);
+
+	if (!check_bundle(argv[2], &basebundle, TRUE, &ierror)) {
+		g_printerr("%s\n", ierror->message);
+		g_clear_error(&ierror);
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (!check_bundle(argv[3], &bundle, TRUE, &ierror)) {
+		g_printerr("%s\n", ierror->message);
+		g_clear_error(&ierror);
+		r_exit_status = 1;
+		goto out;
+	}
+
+	if (!create_delta_bundle(basebundle, bundle, argv[4], &ierror)) {
+		g_printerr("Failed to create bundle: %s\n", ierror->message);
+		g_clear_error(&ierror);
+		r_exit_status = 1;
+		goto out;
+	}
+
+	g_print("Bundle written to %s\n", argv[4]);
+
+out:
+	return TRUE;
+}
+
 /* Takes a shell variable and its desired argument as input and appends it to
  * the provided text with taking care of correct shell quoting */
 static void formatter_shell_append(GString* text, const gchar* varname, const gchar* argument)
@@ -1686,6 +1753,7 @@ typedef enum  {
 	RESIGN,
 	EXTRACT,
 	CONVERT,
+	DELTA,
 	STATUS,
 	INFO,
 	WRITE_SLOT,
@@ -1816,6 +1884,7 @@ static void cmdline_handler(int argc, char **argv)
 		{CONVERT, "convert", "convert <INBUNDLE> <OUTBUNDLE>", "Convert to casync index bundle and store", convert_start, convert_group, FALSE},
 #endif
 		{EXTRACT, "extract", "extract <BUNDLENAME> <OUTPUTDIR>", "Extract the bundle content", extract_start, NULL, FALSE},
+		{DELTA, "delta", "delta <BASEBUNDLE> <INBUNDLE> <OUTBUNDLE>", "Create a delta bundle", delta_start, NULL, FALSE},
 		{INFO, "info", "info <FILE>", "Print bundle info", info_start, info_group, FALSE},
 		{STATUS, "status", "status",
 		 "Show system status\n\n"

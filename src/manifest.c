@@ -765,3 +765,21 @@ gboolean sync_manifest_with_contentdir(RaucManifest *manifest, const gchar *dir,
 
 	return update_manifest_checksums(manifest, dir, error);
 }
+
+RaucImage* r_manifest_find_image_by_name(const gchar *imgname, RaucManifest *manifest, GError **error)
+{
+
+	g_return_val_if_fail(imgname, FALSE);
+	g_return_val_if_fail(manifest, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/* Iterate over each image and search */
+	for (GList *l = manifest->images; l != NULL; l = l->next) {
+		RaucImage *image = l->data;
+
+		if (g_strcmp0(imgname, image->filename) == 0)
+			return image;
+	}
+
+	return NULL;
+}

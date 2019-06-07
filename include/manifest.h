@@ -195,3 +195,5 @@ static inline const gchar *r_manifest_bundle_format_to_str(RManifestBundleFormat
 			return "invalid";
 	}
 }
+
+RaucImage* r_manifest_find_image_by_name(const gchar *imgname, RaucManifest *manifest, GError **error);

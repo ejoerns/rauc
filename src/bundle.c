@@ -950,6 +950,146 @@ out:
 	return res;
 }
 
+static gboolean convert_to_delta_bundle(RaucBundle *basebundle, RaucBundle *bundle, const gchar *outbundle, GError **error)
+{
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+	g_autofree gchar *tmpdir = NULL;
+	g_autofree gchar *basecontentdir = NULL, *contentdir = NULL;
+	g_autofree gchar *basemfpath = NULL, *mfpath = NULL;
+	g_autoptr(RaucManifest) basemanifest = NULL, manifest = NULL;
+
+	g_return_val_if_fail(basebundle, FALSE);
+	g_return_val_if_fail(bundle, FALSE);
+	g_return_val_if_fail(outbundle, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/* Assure bundle destination path doe not already exist */
+	if (g_file_test(outbundle, G_FILE_TEST_EXISTS)) {
+		g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_EXIST, "Destination bundle '%s' already exists", outbundle);
+		res = FALSE;
+		goto out;
+	}
+
+	/* Set up tmp dir for conversion */
+	tmpdir = g_dir_make_tmp("rauc-casync-XXXXXX", &ierror);
+	if (tmpdir == NULL) {
+		g_propagate_prefixed_error(error, ierror,
+				"Failed to create tmp dir: ");
+		res = FALSE;
+		goto out;
+	}
+
+	basecontentdir = g_build_filename(tmpdir, "content_base", NULL);
+	basemfpath = g_build_filename(basecontentdir, "manifest.raucm", NULL);
+	contentdir = g_build_filename(tmpdir, "content_new", NULL);
+	mfpath = g_build_filename(contentdir, "manifest.raucm", NULL);
+
+	/* Extract base input bundle to content/ dir */
+	res = extract_bundle(basebundle, basecontentdir, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Load basemanifest from content/ dir */
+	res = load_manifest_file(basemfpath, &basemanifest, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Extract new input bundle to content/ dir */
+	res = extract_bundle(bundle, contentdir, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Load manifest from content/ dir */
+	res = load_manifest_file(mfpath, &manifest, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	/* Iterate over each image and check for (image) delta */
+	for (GList *l = manifest->images; l != NULL; l = l->next) {
+		RaucImage *image = l->data;
+		g_autofree gchar *imgpath = NULL;
+		RaucImage *baseimg = NULL;
+		
+		baseimg = r_manifest_find_image_by_name(image->filename, manifest, NULL);
+
+		if (!baseimg) {
+			g_warning("No image found for %s", image->filename);
+			continue;
+		}
+
+		/* do nothing if checksum differs */
+		if (g_strcmp0(image->checksum.digest, baseimg->checksum.digest) != 0)
+			continue;
+
+		imgpath = g_build_filename(contentdir, image->filename, NULL);
+
+		/* Remove image file */
+		g_message("Removing unchanged image %s from delta bundle", imgpath);
+		if (g_remove(imgpath) != 0) {
+			g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_KEYRING, "Failed removing %s", imgpath);
+			res = FALSE;
+			goto out;
+		}
+
+		/* Clear filename entry in manifest */
+		g_clear_pointer(&image->filename, g_free);
+		image->filename = g_strdup("virtual");
+	}
+
+	/* Rewrite manifest to content/ dir */
+	res = save_manifest_file(mfpath, manifest, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = create_bundle(outbundle, contentdir, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	/* Remove temporary bundle creation directory */
+	if (tmpdir)
+		rm_tree(tmpdir, NULL);
+	return res;
+
+	return TRUE;
+}
+
+gboolean create_delta_bundle(RaucBundle *basebundle, RaucBundle *bundle, const gchar *outbundle, GError **error)
+{
+	GError *ierror = NULL;
+	gboolean res = FALSE;
+
+	res = convert_to_delta_bundle(basebundle, bundle, outbundle, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = sign_bundle(outbundle, NULL, &ierror);
+	if (!res) {
+		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	res = TRUE;
+out:
+	return res;
+}
+
 static gboolean is_remote_scheme(const gchar *scheme)
 {
 	return (g_strcmp0(scheme, "http") == 0) ||
