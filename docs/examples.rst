@@ -38,8 +38,9 @@ easy-rsa_ is a good first step. See :ref:`sec-security` for more details.
 RAUC Configuration
 ~~~~~~~~~~~~~~~~~~
 
-We need a RAUC system configuration file to describe the slots which can be
-updated
+We need to place a RAUC system configuration file in the targets root file
+to describe the redundancy setup for RAUC. It should be located at
+`/etc/rauc/system.conf`.
 
 .. code-block:: cfg
 
@@ -62,8 +63,9 @@ updated
   type=ext4
   bootname=B
 
-In this case, we need to place the signing certificate into
-``/etc/rauc/demo.cert.pem``, so that it is used by RAUC for verification.
+In this case, we also need to place the signing certificate into
+``/etc/rauc/demo.cert.pem``, so that it is used by RAUC as the keyring for
+verification.
 
 GRUB Configuration
 ~~~~~~~~~~~~~~~~~~
