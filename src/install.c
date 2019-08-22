@@ -351,7 +351,7 @@ static RaucSlot *select_inactive_slot_class_member(const gchar *rootclass)
  */
 GHashTable* determine_target_install_group(void)
 {
-	g_autofree gchar **rootclasses = NULL;
+	g_auto(GStrv) rootclasses = NULL;
 	GHashTable *targetgroup = NULL;
 	GHashTableIter iter;
 	RaucSlot *iterslot = NULL;
@@ -411,7 +411,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(RImageInstallPlan, r_image_install_plan_free);
 GPtrArray* r_install_make_plans(const RaucManifest *manifest, GHashTable *target_group, GError **error)
 {
 	GError *ierror = NULL;
-	g_autofree gchar **slotclasses = NULL;
+	g_auto(GStrv) slotclasses = NULL;
 	g_autoptr(GPtrArray) install_plans = g_ptr_array_new_with_free_func(r_image_install_plan_free);
 
 	g_return_val_if_fail(manifest != NULL, NULL);
