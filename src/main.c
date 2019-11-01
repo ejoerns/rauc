@@ -27,7 +27,7 @@
 GMainLoop *r_loop = NULL;
 int r_exit_status = 0;
 
-gboolean install_ignore_compatible, install_progressbar = FALSE;
+gboolean install_ignore_compatible, install_progressbar = FALSE, install_dry_run = FALSE;
 gboolean verification_disabled = FALSE;
 gboolean info_dumpcert = FALSE;
 gboolean status_detailed = FALSE;
@@ -1709,6 +1709,7 @@ static GOptionEntry entries_install[] = {
 #else
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra handler arguments", "ARGS"},
 #endif
+	{"dry-run", '\0', 0, G_OPTION_ARG_NONE, &install_dry_run, "Do not perform any changes on the target", NULL},
 	{0}
 };
 
@@ -1965,6 +1966,8 @@ static void cmdline_handler(int argc, char **argv)
 			r_context_conf()->bootslot = bootslot;
 		if (handler_args)
 			r_context_conf()->handlerextra = handler_args;
+		if (install_dry_run)
+			r_context_conf()->dry_run = install_dry_run;
 	} else {
 		if (confpath != NULL ||
 		    certpath != NULL ||

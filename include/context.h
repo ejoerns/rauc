@@ -27,6 +27,8 @@ typedef struct {
 
 	GList *progress;
 	progress_callback progress_callback;
+	
+	gboolean dry_run;
 
 	/* signing data */
 	gchar *certpath;

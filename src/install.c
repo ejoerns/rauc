@@ -909,6 +909,9 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
+		/* skip this on a dry run */
+		if(r_context()->dry_run)
+			goto out;
 		res = update_handler(
 				mfimage,
 				dest_slot,
