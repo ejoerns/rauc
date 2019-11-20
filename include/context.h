@@ -20,6 +20,7 @@ typedef struct {
 	/* a busy context must not be reconfigured */
 	gboolean busy;
 	gboolean pending;
+	gboolean loadconfig;
 
 	/* system configuration data */
 	gchar *configpath;

@@ -249,6 +249,8 @@ static gboolean install_start(int argc, char **argv)
 			goto out_loop;
 		}
 	} else {
+		r_context_conf()->loadconfig = TRUE;
+
 		install_run(args);
 	}
 
@@ -1648,6 +1650,8 @@ static gboolean status_start(int argc, char **argv)
 			goto out;
 		}
 	} else {
+		r_context_conf()->loadconfig = TRUE;
+
 		r_exit_status = mark_run(state, slot_identifier, NULL, &message) ? 0 : 1;
 	}
 
@@ -1663,6 +1667,8 @@ out:
 static gboolean service_start(int argc, char **argv)
 {
 	g_debug("service start");
+
+	r_context_conf()->loadconfig = TRUE;
 
 	r_exit_status = r_service_run() ? 0 : 1;
 

@@ -277,7 +277,8 @@ static void r_context_configure(void)
 	g_assert_nonnull(context);
 	g_assert_false(context->busy);
 
-	r_context_configure_service();
+	if (context->loadconfig)
+		r_context_configure_service();
 
 	if (context->keyringpath) {
 		context->config->keyring_path = g_strdup(context->keyringpath);
