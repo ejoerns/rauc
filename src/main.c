@@ -30,7 +30,6 @@ int r_exit_status = 0;
 gboolean install_ignore_compatible, install_progressbar = FALSE;
 gboolean info_noverify, info_dumpcert = FALSE;
 gboolean status_detailed = FALSE;
-gchar *confpath = NULL;
 gchar *output_format = NULL;
 gchar *signing_keyring = NULL;
 
@@ -1714,9 +1713,6 @@ typedef struct {
 } RaucCommand;
 
 GOptionEntry entries_install[] = {
-#if ENABLE_SERVICE == 1
-	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
-#endif
 	{"ignore-compatible", '\0', 0, G_OPTION_ARG_NONE, &install_ignore_compatible, "disable compatible check", NULL},
 	{"progress", '\0', 0, G_OPTION_ARG_NONE, &install_progressbar, "show progress bar", NULL},
 	{0}
@@ -1745,27 +1741,24 @@ GOptionEntry entries_info[] = {
 };
 
 GOptionEntry entries_status[] = {
-#if ENABLE_SERVICE == 1
-	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
-#endif
 	{"detailed", '\0', 0, G_OPTION_ARG_NONE, &status_detailed, "show more status details", NULL},
 	{"output-format", '\0', 0, G_OPTION_ARG_STRING, &output_format, "output format", "FORMAT"},
 	{0}
 };
 
 GOptionEntry entries_service[] = {
-	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
 	{0}
 };
 
 static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, debug = FALSE, version = FALSE;
-	gchar *certpath = NULL, *keypath = NULL, *keyring = NULL, **intermediate = NULL, *mount = NULL,
+	gchar *confpath = NULL, *certpath = NULL, *keypath = NULL, *keyring = NULL, **intermediate = NULL, *mount = NULL,
 	      *handlerextra = NULL, *bootslot = NULL;
 	char *cmdarg = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	GOptionEntry entries[] = {
+		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
 		{"cert", '\0', 0, G_OPTION_ARG_FILENAME, &certpath, "cert file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		{"key", '\0', 0, G_OPTION_ARG_FILENAME, &keypath, "key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		{"keyring", '\0', 0, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
