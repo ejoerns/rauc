@@ -1741,6 +1741,10 @@ GOptionEntry entries_status[] = {
 	{0}
 };
 
+GOptionEntry entries_service[] = {
+	{0}
+};
+
 static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, debug = FALSE, version = FALSE;
@@ -1768,6 +1772,7 @@ static void cmdline_handler(int argc, char **argv)
 	GOptionGroup *convert_group = g_option_group_new("convert", "Convert options:", "help dummy", NULL, NULL);
 	GOptionGroup *info_group = g_option_group_new("info", "Info options:", "help dummy", NULL, NULL);
 	GOptionGroup *status_group = g_option_group_new("status", "Status options:", "help dummy", NULL, NULL);
+	GOptionGroup *service_group = g_option_group_new("service ", "Service options:", "help dummy", NULL, NULL);
 
 	GError *error = NULL;
 	g_autofree gchar *text = NULL;
@@ -1784,7 +1789,7 @@ static void cmdline_handler(int argc, char **argv)
 		{STATUS, "status", "status", "Show system status", status_start, status_group, TRUE},
 		{WRITE_SLOT, "write-slot", "write-slot <SLOTNAME> <IMAGE>", "Write image to slot and bypass all update logic", write_slot_start, NULL, FALSE},
 #if ENABLE_SERVICE == 1
-		{SERVICE, "service", "service", "Start RAUC service", service_start, NULL, TRUE},
+		{SERVICE, "service", "service", "Start RAUC service", service_start, service_group, TRUE},
 #endif
 		{0}
 	};
@@ -1797,6 +1802,7 @@ static void cmdline_handler(int argc, char **argv)
 	g_option_group_add_entries(convert_group, entries_convert);
 	g_option_group_add_entries(info_group, entries_info);
 	g_option_group_add_entries(status_group, entries_status);
+	g_option_group_add_entries(service_group, entries_service);
 
 	context = g_option_context_new("<COMMAND>");
 	g_option_context_set_help_enabled(context, FALSE);
