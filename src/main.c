@@ -31,6 +31,7 @@ gboolean install_ignore_compatible, install_progressbar = FALSE;
 gboolean verification_disabled = FALSE;
 gboolean info_dumpcert = FALSE;
 gboolean status_detailed = FALSE;
+gchar *confpath = NULL;
 gchar *output_format = NULL;
 gchar *signing_keyring = NULL;
 gchar *mksquashfs_args = NULL;
@@ -1703,6 +1704,9 @@ typedef struct {
 } RaucCommand;
 
 static GOptionEntry entries_install[] = {
+#if ENABLE_SERVICE == 1
+	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
+#endif
 	{"ignore-compatible", '\0', 0, G_OPTION_ARG_NONE, &install_ignore_compatible, "disable compatible check", NULL},
 #if ENABLE_SERVICE == 1
 	{"progress", '\0', 0, G_OPTION_ARG_NONE, &install_progressbar, "show progress bar", NULL},
@@ -1739,6 +1743,9 @@ static GOptionEntry entries_info[] = {
 };
 
 static GOptionEntry entries_status[] = {
+#if ENABLE_SERVICE == 1
+	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
+#endif
 	{"detailed", '\0', 0, G_OPTION_ARG_NONE, &status_detailed, "show more status details", NULL},
 	{"output-format", '\0', 0, G_OPTION_ARG_STRING, &output_format, "output format", "FORMAT"},
 	{0}
@@ -1746,6 +1753,7 @@ static GOptionEntry entries_status[] = {
 
 static GOptionEntry entries_service[] = {
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra handler arguments", "ARGS"},
+	{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
 	{0}
 };
 
@@ -1786,12 +1794,12 @@ static void create_option_groups(void)
 static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, debug = FALSE, version = FALSE;
-	gchar *confpath = NULL, *certpath = NULL, *keypath = NULL, *keyring = NULL, **intermediate = NULL, *mount = NULL,
+	gchar *confpath_old = NULL, *certpath = NULL, *keypath = NULL, *keyring = NULL, **intermediate = NULL, *mount = NULL,
 	      *bootslot = NULL;
 	char *cmdarg = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	GOptionEntry entries[] = {
-		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath, "config file", "FILENAME"},
+		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &confpath_old, "config file (deprecated)", "FILENAME"},
 		{"cert", '\0', 0, G_OPTION_ARG_FILENAME, &certpath, "cert file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		{"key", '\0', 0, G_OPTION_ARG_FILENAME, &keypath, "key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		{"keyring", '\0', 0, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
@@ -1943,6 +1951,10 @@ static void cmdline_handler(int argc, char **argv)
 	/* configuration updates are handled here */
 	if (!r_context_get_busy()) {
 		r_context_conf();
+		if (confpath_old) {
+			g_message("Using deprecated global --config option. Use command-specific --config option instead.");
+			r_context_conf()->configpath = confpath_old;
+		}
 		if (confpath)
 			r_context_conf()->configpath = confpath;
 		if (certpath)
