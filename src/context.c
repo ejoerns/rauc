@@ -190,7 +190,7 @@ static gchar* get_variant_from_file(const gchar* filename, GError **error)
 }
 
 
-static void r_context_configure(void)
+static void r_context_configure_service(void)
 {
 	gboolean res = TRUE;
 	GError *error = NULL;
@@ -268,6 +268,16 @@ static void r_context_configure(void)
 		g_free(context->config->mount_prefix);
 		context->config->mount_prefix = g_strdup(context->mountprefix);
 	}
+
+	context->pending = FALSE;
+}
+
+static void r_context_configure(void)
+{
+	g_assert_nonnull(context);
+	g_assert_false(context->busy);
+
+	r_context_configure_service();
 
 	if (context->keyringpath) {
 		context->config->keyring_path = g_strdup(context->keyringpath);
