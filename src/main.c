@@ -22,6 +22,8 @@
 #include "utils.h"
 #include "mark.h"
 
+#define RAUC_DEFAULT_CONFPATH "/etc/rauc/system.conf"
+
 GMainLoop *r_loop = NULL;
 int r_exit_status = 0;
 
@@ -249,7 +251,8 @@ static gboolean install_start(int argc, char **argv)
 			goto out_loop;
 		}
 	} else {
-		r_context_conf()->loadconfig = TRUE;
+		if (!r_context_conf()->configpath)
+			r_context_conf()->configpath = g_strdup(RAUC_DEFAULT_CONFPATH);
 
 		install_run(args);
 	}
@@ -1650,7 +1653,8 @@ static gboolean status_start(int argc, char **argv)
 			goto out;
 		}
 	} else {
-		r_context_conf()->loadconfig = TRUE;
+		if (!r_context_conf()->configpath)
+			r_context_conf()->configpath = g_strdup(RAUC_DEFAULT_CONFPATH);
 
 		r_exit_status = mark_run(state, slot_identifier, NULL, &message) ? 0 : 1;
 	}
@@ -1668,7 +1672,8 @@ static gboolean service_start(int argc, char **argv)
 {
 	g_debug("service start");
 
-	r_context_conf()->loadconfig = TRUE;
+	if (!r_context_conf()->configpath)
+		r_context_conf()->configpath = g_strdup(RAUC_DEFAULT_CONFPATH);
 
 	r_exit_status = r_service_run() ? 0 : 1;
 

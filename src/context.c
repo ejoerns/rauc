@@ -277,8 +277,15 @@ static void r_context_configure(void)
 	g_assert_nonnull(context);
 	g_assert_false(context->busy);
 
-	if (context->loadconfig)
+	/* Really load config only if configpath was set.
+	 * Otherwise we only create a dummy config object to not break the
+	 * existing code.
+	 * A really clean solution should avoid calling config elements in
+	 * cases where no config was given. */
+	if (context->configpath)
 		r_context_configure_service();
+	else
+		context->config = g_new0(RaucConfig, 1);
 
 	if (context->keyringpath) {
 		context->config->keyring_path = g_strdup(context->keyringpath);
@@ -547,7 +554,6 @@ RaucContext *r_context_conf(void)
 		}
 
 		context = g_new0(RaucContext, 1);
-		context->configpath = g_strdup("/etc/rauc/system.conf");
 		context->progress = NULL;
 		context->install_info = g_new0(RContextInstallationInfo, 1);
 	}
