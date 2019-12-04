@@ -1463,6 +1463,8 @@ gboolean cms_verify_fd(gint fd, GBytes *sig, goffset limit, X509_STORE *store, C
 
 	file = g_mapped_file_new_from_fd(fd, FALSE, &ierror);
 	if (file == NULL) {
+		r_context_begin_step("cms_verify", "Verifying signature", 0);
+		r_context_end_step("cms_verify", FALSE);
 		g_propagate_error(error, ierror);
 		goto out;
 	}
