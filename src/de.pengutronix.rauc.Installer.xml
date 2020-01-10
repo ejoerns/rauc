@@ -51,6 +51,16 @@
     </method>
 
     <!--
+         BundleInfo: Obtain information from a RAUC bundle
+         @bundle: full path to the queried bundle.
+         @bundle_info: dictionary containing bundle information
+    -->
+    <method name="BundleInfo">
+      <arg name="bundle" type="s" direction="in" />
+      <arg name="bundle_info" type="a{sv}" direction="out"/>
+    </method>
+
+    <!--
          Mark:
          @state: operation to perform (one out of "good", "bad" or "active")
          @slot_identifier: can be "booted", "other" or <SLOT_NAME> (e.g.
