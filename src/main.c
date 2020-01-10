@@ -1872,6 +1872,128 @@ static gboolean print_status(RaucStatusPrint *status_print)
 	return TRUE;
 }
 
+typedef enum {
+	NONE = 0,
+	MARK,
+	INSTALLED,
+} RaucStatusAction;
+
+typedef struct {
+	gchar *bootslot;
+	gchar *bundle_compatible;
+	gchar *bundle_version;
+	gchar *bundle_description;
+	gchar *bundle_build;
+	gchar *status;
+	RaucChecksum checksum;
+	GDateTime *installed_timestamp;
+	guint32 installed_count;
+	GDateTime *activated_timestamp;
+	guint32 activated_count;
+	GHashTable *slot_checksums;
+} InstallationInfo;
+
+static gboolean retreive_installed_via_dbus(InstallationInfo **installed_info, GError **error) {
+	RInstaller *proxy = NULL;
+	GError *ierror = NULL;
+	GVariant* installed = NULL;
+	GVariant* slot_hashes = NULL;
+	GVariantDict dict;
+	gchar *installed_stamp = NULL;
+	gchar *activated_stamp = NULL;
+	GBusType bus_type = (!g_strcmp0(g_getenv("DBUS_STARTER_BUS_TYPE"), "session"))
+	                    ? G_BUS_TYPE_SESSION : G_BUS_TYPE_SYSTEM;
+	InstallationInfo *info = NULL;
+
+	g_return_val_if_fail(installed_info, FALSE);
+
+	info = g_new0(InstallationInfo, 1);
+
+	proxy = r_installer_proxy_new_for_bus_sync(bus_type,
+			G_DBUS_PROXY_FLAGS_NONE,
+			"de.pengutronix.rauc", "/", NULL, &ierror);
+	if (proxy == NULL) {
+		//g_propagate_error(error, ierror, "Error creating proxy: %s\n", ierror->message);
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	installed = r_installer_get_installed(proxy);
+
+	g_variant_dict_init(&dict, installed);
+
+	g_variant_dict_lookup(&dict, "bootslot", "s", &info->bootslot);
+	g_variant_dict_lookup(&dict, "version", "s", &info->bundle_version);
+	g_variant_dict_lookup(&dict, "build", "s", &info->bundle_build);
+	g_variant_dict_lookup(&dict, "description", "s", &info->bundle_description);
+	g_variant_dict_lookup(&dict, "installed.timestamp", "s", &installed_stamp);
+	if (installed_stamp)
+		info->installed_timestamp = g_date_time_new_from_iso8601(installed_stamp, NULL);
+	g_variant_dict_lookup(&dict, "installed.count", "u", &info->installed_count);
+	g_variant_dict_lookup(&dict, "activated.timestamp", "s", &activated_stamp);
+	if (activated_stamp)
+		info->activated_timestamp = g_date_time_new_from_iso8601(activated_stamp, NULL);
+	g_variant_dict_lookup(&dict, "activated.count", "u", &info->activated_count);
+	g_variant_dict_lookup(&dict, "checksums", "v", &slot_hashes);
+
+	if (!slot_hashes)
+		g_error("oups");
+
+	{
+		GVariantIter *viter;
+		gchar *slot_name;
+		gchar *checksum;
+
+		info->slot_checksums = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, r_slot_free);
+		g_variant_get(slot_hashes, "a(ss)", &viter);
+		while (g_variant_iter_loop(viter, "(ss)", &slot_name, &checksum)) {
+			g_hash_table_insert(info->slot_checksums, g_strdup(slot_name), g_strdup(checksum));
+		}
+	}
+
+	g_variant_unref(g_variant_dict_end(&dict));
+
+	*installed_info = info;
+	
+	return TRUE;
+}
+
+static gboolean retreive_installed(InstallationInfo** info, GError **error) {
+	if (ENABLE_SERVICE) {
+		return retreive_installed_via_dbus(info, error);
+	} else {
+		g_error("Unsupported");
+	}
+}
+
+
+#define RAUC_DATE_FORMAT_READABLE "%a %Y-%m-%d %H:%M:%S %Z"
+
+static gboolean print_installed(InstallationInfo* installed) {
+	GHashTableIter iter;
+	gchar *name, *checksum;
+
+	g_autofree gchar *installed_stamp = g_date_time_format(installed->installed_timestamp, RAUC_DATE_FORMAT_READABLE);
+	g_autofree gchar *activated_stamp = g_date_time_format(installed->activated_timestamp, RAUC_DATE_FORMAT_READABLE);
+	g_print("Currently running Software (on %s)\n\n", installed->bootslot);
+
+	g_print("  Version:     %s\n", installed->bundle_version);
+	g_print("  Build:       %s\n", installed->bundle_build);
+	g_print("  Description: %s\n", installed->bundle_description);
+
+	g_print("  Images:\n");
+	g_hash_table_iter_init(&iter, installed->slot_checksums);
+	while (g_hash_table_iter_next(&iter, (gpointer*) &name, (gpointer*) &checksum)) {
+		g_autofree gchar *shortchecksum = g_strndup(checksum, 8);
+		g_print("      %s: %s\n", name, shortchecksum);
+	}
+
+	g_print("\n  Installed: %s (count: %u)\n", installed_stamp, installed->installed_count);
+	g_print("  Activated: %s (count: %u)\n", activated_stamp, installed->activated_count);
+
+	return TRUE;
+}
+
 static gboolean status_start(int argc, char **argv)
 {
 	GBusType bus_type = (!g_strcmp0(g_getenv("DBUS_STARTER_BUS_TYPE"), "session"))
@@ -1883,6 +2005,8 @@ static gboolean status_start(int argc, char **argv)
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 	g_autoptr(RaucStatusPrint) status_print = NULL;
+	RaucStatusAction action = NONE;
+	InstallationInfo *installed_info = NULL;
 
 	g_debug("status start");
 	r_exit_status = 0;
@@ -1949,11 +2073,17 @@ static gboolean status_start(int argc, char **argv)
 	}
 
 	if (g_strcmp0(argv[2], "mark-good") == 0) {
+		action = MARK;
 		state = "good";
 	} else if (g_strcmp0(argv[2], "mark-bad") == 0) {
+		action = MARK;
 		state = "bad";
 	} else if (g_strcmp0(argv[2], "mark-active") == 0) {
+		action = MARK;
 		state = "active";
+	} else if (g_strcmp0(argv[2], "installed") == 0) {
+		action = INSTALLED;
+		state = "installed";
 	} else {
 		g_printerr("unknown subcommand %s\n", argv[2]);
 		r_exit_status = 1;
@@ -1964,7 +2094,7 @@ static gboolean status_start(int argc, char **argv)
 		g_autoptr(RInstaller) proxy = NULL;
 
 		proxy = r_installer_proxy_new_for_bus_sync(bus_type,
-				G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+				G_DBUS_PROXY_FLAGS_NONE,
 				"de.pengutronix.rauc", "/", NULL, &ierror);
 		if (proxy == NULL) {
 			if (g_dbus_error_is_remote_error(ierror))
@@ -1974,12 +2104,46 @@ static gboolean status_start(int argc, char **argv)
 			r_exit_status = 1;
 			return TRUE;
 		}
-		g_debug("Trying to contact rauc service");
-		if (!r_installer_call_mark_sync(proxy, state, slot_identifier,
-				&slot_name, &message, NULL, &ierror)) {
-			if (g_dbus_error_is_remote_error(ierror))
-				g_dbus_error_strip_remote_error(ierror);
-			g_printerr("rauc mark: %s\n", ierror->message);
+
+		switch (action) {
+			case INSTALLED:
+				if (!retreive_installed(&installed_info, &ierror)) {
+					message = g_strdup(ierror->message);
+					g_error_free(ierror);
+					r_exit_status = 1;
+					return TRUE;
+				}
+				if (!print_installed(installed_info)) {
+					r_exit_status = 1;
+				}
+				break;
+			case MARK:
+				if (!r_installer_call_mark_sync(proxy, state, slot_identifier,
+							&slot_name, &message, NULL, &ierror)) {
+					message = g_strdup(ierror->message);
+					g_error_free(ierror);
+					r_exit_status = 1;
+					return TRUE;
+				}
+				break;
+			case NONE:
+				break;
+			default:
+				g_error("Should not be reached!");
+				break;
+		}
+
+		if (action == INSTALLED) {
+			// FIXME: set error?
+			return TRUE;
+		}
+
+		proxy = r_installer_proxy_new_for_bus_sync(bus_type,
+				G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+				"de.pengutronix.rauc", "/", NULL, &ierror);
+		if (proxy == NULL) {
+			message = g_strdup_printf("rauc mark: error creating proxy: %s",
+					ierror->message);
 			g_error_free(ierror);
 			r_exit_status = 1;
 			return TRUE;
