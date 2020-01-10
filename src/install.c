@@ -914,6 +914,17 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 			/* Dummy step to indicate slot was skipped */
 			r_context_begin_step("skip_image", "Copying image skipped", 0);
+			/* In case of a bootname slot, we have at least to
+			 * write the status down.
+			 */
+			if (dest_slot->bootname) {
+				update_slot_status(slot_state, manifest, mfimage);
+				res = save_slot_status(dest_slot, &ierror);
+				if (!res) {
+					g_propagate_prefixed_error(error, ierror, "Error while writing status file: ");
+					goto out;
+				}
+			}
 			r_context_end_step("skip_image", TRUE);
 
 			goto image_out;
