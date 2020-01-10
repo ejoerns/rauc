@@ -891,6 +891,16 @@ static gboolean handle_slot_install_plan(const RaucManifest *manifest, const RIm
 
 		/* Dummy step to indicate slot was skipped */
 		r_context_begin_step("skip_image", "Copying image skipped", 0);
+		/* In case of a bootname slot, we have at least to
+		 * write the status down.
+		 */
+		if (plan->target_slot->bootname) {
+			update_slot_status(slot_state, manifest, plan);
+			if (!save_slot_status(plan->target_slot, &ierror)) {
+				g_propagate_prefixed_error(error, ierror, "Error while writing status file: ");
+				return FALSE;
+			}
+		}
 		r_context_end_step("skip_image", TRUE);
 
 		return TRUE;
