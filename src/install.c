@@ -840,6 +840,27 @@ skip_filename_checks:
 	return TRUE;
 }
 
+static void update_slot_status(RaucSlotStatus *slot_state, const RaucManifest *manifest, const RImageInstallPlan *plan)
+{
+	g_autoptr(GDateTime) now = NULL;
+
+	r_slot_clear_status(slot_state);
+
+	now = g_date_time_new_now_utc();
+
+	slot_state->bundle_compatible = g_strdup(manifest->update_compatible);
+	slot_state->bundle_version = g_strdup(manifest->update_version);
+	slot_state->bundle_description = g_strdup(manifest->update_description);
+	slot_state->bundle_build = g_strdup(manifest->update_build);
+	slot_state->bundle_hash = g_strdup(manifest->hash);
+	slot_state->status = g_strdup("ok");
+	slot_state->checksum.type = plan->image->checksum.type;
+	slot_state->checksum.digest = g_strdup(plan->image->checksum.digest);
+	slot_state->checksum.size = plan->image->checksum.size;
+	slot_state->installed_timestamp = g_date_time_format(now, "%Y-%m-%dT%H:%M:%SZ");
+	slot_state->installed_count++;
+}
+
 static gboolean handle_slot_install_plan(const RaucManifest *manifest, const RImageInstallPlan *plan, RaucInstallArgs *args, const char *hook_name, GError **error)
 {
 	GError *ierror = NULL;
@@ -901,21 +922,7 @@ static gboolean handle_slot_install_plan(const RaucManifest *manifest, const RIm
 		return FALSE;
 	}
 
-	r_slot_clear_status(slot_state);
-
-	now = g_date_time_new_now_utc();
-
-	slot_state->bundle_compatible = g_strdup(manifest->update_compatible);
-	slot_state->bundle_version = g_strdup(manifest->update_version);
-	slot_state->bundle_description = g_strdup(manifest->update_description);
-	slot_state->bundle_build = g_strdup(manifest->update_build);
-	slot_state->bundle_hash = g_strdup(manifest->hash);
-	slot_state->status = g_strdup("ok");
-	slot_state->checksum.type = plan->image->checksum.type;
-	slot_state->checksum.digest = g_strdup(plan->image->checksum.digest);
-	slot_state->checksum.size = plan->image->checksum.size;
-	slot_state->installed_timestamp = g_date_time_format(now, "%Y-%m-%dT%H:%M:%SZ");
-	slot_state->installed_count++;
+	update_slot_status(slot_state, manifest, plan);
 
 	r_context_end_step("copy_image", TRUE);
 
