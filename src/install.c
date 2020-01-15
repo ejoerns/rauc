@@ -783,7 +783,8 @@ static void update_slot_status(RaucSlotStatus *slot_state, RaucManifest *manifes
 	g_free(slot_state->bundle_build);
 	g_free(slot_state->status);
 	g_free(slot_state->checksum.digest);
-	g_free(slot_state->installed_timestamp);
+	if (slot_state->installed_timestamp)
+		g_date_time_unref(slot_state->installed_timestamp);
 
 	now = g_date_time_new_now_utc();
 
@@ -795,10 +796,8 @@ static void update_slot_status(RaucSlotStatus *slot_state, RaucManifest *manifes
 	slot_state->checksum.type = mfimage->checksum.type;
 	slot_state->checksum.digest = g_strdup(mfimage->checksum.digest);
 	slot_state->checksum.size = mfimage->checksum.size;
-	slot_state->installed_timestamp = g_date_time_format(now, "%Y-%m-%dT%H:%M:%SZ");
+	slot_state->installed_timestamp = now;
 	slot_state->installed_count++;
-
-	g_date_time_unref(now);
 }
 
 static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bundledir, RaucManifest *manifest, GHashTable *target_group, GError **error)

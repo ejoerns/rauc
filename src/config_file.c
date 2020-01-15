@@ -774,6 +774,7 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 	GError *ierror = NULL;
 	gchar *digest;
 	guint64 count;
+	gchar *timestamp;
 
 	if (!g_key_file_has_group(key_file, group))
 		g_debug("Group %s not found in key file.", group);
@@ -784,8 +785,10 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 	g_free(slotstatus->bundle_build);
 	g_free(slotstatus->status);
 	g_clear_pointer(&slotstatus->checksum.digest, g_free);
-	g_free(slotstatus->installed_timestamp);
-	g_free(slotstatus->activated_timestamp);
+	if (slotstatus->installed_timestamp)
+		g_date_time_unref(slotstatus->installed_timestamp);
+	if (slotstatus->activated_timestamp)
+		g_date_time_unref(slotstatus->activated_timestamp);
 
 	slotstatus->bundle_compatible = key_file_consume_string(key_file, group, "bundle.compatible", NULL);
 	slotstatus->bundle_version = key_file_consume_string(key_file, group, "bundle.version", NULL);
@@ -800,7 +803,12 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 		slotstatus->checksum.size = g_key_file_get_uint64(key_file, group, "size", NULL);
 	}
 
-	slotstatus->installed_timestamp = key_file_consume_string(key_file, group, "installed.timestamp", NULL);
+	timestamp = key_file_consume_string(key_file, group, "installed.timestamp", NULL);
+	if (timestamp) {
+		slotstatus->installed_timestamp = g_date_time_new_from_iso8601(timestamp, NULL);
+		if (!slotstatus->installed_timestamp)
+			g_warning("Cannot parse slot 'installed' timestamp '%s'", timestamp);
+	}
 	count = g_key_file_get_uint64(key_file, group, "installed.count", &ierror);
 	if (g_error_matches(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE))
 		g_message("Value of key \"installed.count\" in group [%s] "
@@ -816,7 +824,12 @@ static void status_file_get_slot_status(GKeyFile *key_file, const gchar *group, 
 	}
 	slotstatus->installed_count = count;
 
-	slotstatus->activated_timestamp = key_file_consume_string(key_file, group, "activated.timestamp", NULL);
+	timestamp = key_file_consume_string(key_file, group, "activated.timestamp", NULL);
+	if (timestamp) {
+		slotstatus->activated_timestamp = g_date_time_new_from_iso8601(timestamp, NULL);
+		if (!slotstatus->activated_timestamp)
+			g_warning("Cannot parse slot 'activated' timestamp '%s'", timestamp);
+	}
 	count = g_key_file_get_uint64(key_file, group, "activated.count", &ierror);
 	if (g_error_matches(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE))
 		g_message("Value of key \"activated.count\" in group [%s] "
@@ -858,7 +871,8 @@ static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, 
 	}
 
 	if (slotstatus->installed_timestamp) {
-		g_key_file_set_string(key_file, group, "installed.timestamp", slotstatus->installed_timestamp);
+		g_autofree gchar *stamp = g_date_time_format(slotstatus->installed_timestamp, "%Y-%m-%dT%H:%M:%SZ");
+		g_key_file_set_string(key_file, group, "installed.timestamp", stamp);
 		g_key_file_set_uint64(key_file, group, "installed.count", slotstatus->installed_count);
 	} else {
 		g_key_file_remove_key(key_file, group, "installed.timestamp", NULL);
@@ -866,7 +880,8 @@ static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, 
 	}
 
 	if (slotstatus->activated_timestamp) {
-		g_key_file_set_string(key_file, group, "activated.timestamp", slotstatus->activated_timestamp);
+		g_autofree gchar *stamp = g_date_time_format(slotstatus->activated_timestamp, "%Y-%m-%dT%H:%M:%SZ");
+		g_key_file_set_string(key_file, group, "activated.timestamp", stamp);
 		g_key_file_set_uint64(key_file, group, "activated.count", slotstatus->activated_count);
 	} else {
 		g_key_file_remove_key(key_file, group, "activated.timestamp", NULL);

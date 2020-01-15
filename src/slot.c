@@ -28,8 +28,10 @@ void r_slot_free_status(RaucSlotStatus *slotstatus)
 	g_free(slotstatus->bundle_build);
 	g_free(slotstatus->status);
 	g_free(slotstatus->checksum.digest);
-	g_free(slotstatus->installed_timestamp);
-	g_free(slotstatus->activated_timestamp);
+	if (slotstatus->installed_timestamp)
+		g_date_time_unref(slotstatus->installed_timestamp);
+	if (slotstatus->activated_timestamp)
+		g_date_time_unref(slotstatus->activated_timestamp);
 	g_free(slotstatus);
 }
 
