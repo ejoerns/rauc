@@ -290,21 +290,53 @@ static gchar** get_all_manifest_slot_classes(const RaucManifest *manifest)
 static RaucSlot *select_inactive_slot_class_member(const gchar *rootclass)
 {
 	RaucSlot *iterslot;
+	RaucSlot *selectslot = NULL;
 	GHashTableIter iter;
 
 	g_return_val_if_fail(rootclass, NULL);
 
+	g_message("select_inactive_slot_class_member(%s)", rootclass);
+
 	g_hash_table_iter_init(&iter, r_context()->config->slots);
 	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &iterslot)) {
+		gint comp;
+
 		if (iterslot->state != ST_INACTIVE)
 			continue;
 
-		if (g_strcmp0(iterslot->sclass, rootclass) == 0) {
-			return iterslot;
+		if (g_strcmp0(iterslot->sclass, rootclass) != 0)
+			continue;
+		
+		if (!selectslot) {
+			selectslot = iterslot;
+			continue;
+		}
+
+		g_message("selectslot: %s, iterslot: %s", selectslot ? selectslot->name : NULL, iterslot ? iterslot->name : NULL);
+
+		if (!selectslot->status->installed_timestamp) {
+			g_message("No timestamp, aborting");
+			break;
+		}
+
+		if (!iterslot->status->installed_timestamp) {
+			g_message("No iterslot timestamp, taking");
+			selectslot = iterslot;
+			continue;
+		}
+
+		// iterslot is older than selectslot -> new iterslot
+		comp = g_date_time_compare(iterslot->status->installed_timestamp, selectslot->status->installed_timestamp);
+		if (comp < 0) {
+			gchar *found = g_date_time_format(iterslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+			gchar *current = g_date_time_format(selectslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+			g_message("Found iterslot '%s' being more recent (%s) than selectslot '%s' (%s)", iterslot->name, found, selectslot->name, current);
+
+			selectslot = iterslot;
 		}
 	}
 
-	return NULL;
+	return selectslot;
 }
 
 /* Map each slot class available to a potential target slot.
