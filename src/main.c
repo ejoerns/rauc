@@ -1353,13 +1353,15 @@ static void r_string_append_slot(GString *text, RaucSlot *slot, RaucStatusPrint 
 			g_string_append_printf(text, "\n              size=%s", formatted_size);
 		}
 		if (slot_state->installed_timestamp) {
+			g_autofree gchar *stamp = g_date_time_format(slot_state->installed_timestamp, "%Y-%m-%dT%H:%M:%SZ");
 			g_string_append_printf(text, "\n          installed:");
-			g_string_append_printf(text, "\n              timestamp=%s", slot_state->installed_timestamp);
+			g_string_append_printf(text, "\n              timestamp=%s", stamp);
 			g_string_append_printf(text, "\n              count=%u", slot_state->installed_count);
 		}
 		if (slot_state->activated_timestamp) {
+			g_autofree gchar *stamp = g_date_time_format(slot_state->activated_timestamp, "%Y-%m-%dT%H:%M:%SZ");
 			g_string_append_printf(text, "\n          activated:");
-			g_string_append_printf(text, "\n              timestamp=%s", slot_state->activated_timestamp);
+			g_string_append_printf(text, "\n              timestamp=%s", stamp);
 			g_string_append_printf(text, "\n              count=%u", slot_state->activated_count);
 		}
 		if (slot_state->status)
@@ -1474,6 +1476,8 @@ static gchar* r_status_formatter_shell(RaucStatusPrint *status)
 			formatter_shell_append_n(text, "RAUC_SLOT_BOOT_STATUS", slotcnt, NULL);
 		if (status_detailed && slot_state) {
 			gchar *str;
+			g_autofree gchar *installed_stamp = g_date_time_format(slot_state->installed_timestamp, "%Y-%m-%dT%H:%M:%SZ");
+			g_autofree gchar *activated_stamp = g_date_time_format(slot_state->activated_timestamp, "%Y-%m-%dT%H:%M:%SZ");
 
 			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_BUNDLE_COMPATIBLE", slotcnt, slot_state->bundle_compatible);
 			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_BUNDLE_VERSION", slotcnt, slot_state->bundle_version);
@@ -1484,11 +1488,11 @@ static gchar* r_status_formatter_shell(RaucStatusPrint *status)
 			str = g_strdup_printf("%"G_GOFFSET_FORMAT, slot_state->checksum.size);
 			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_CHECKSUM_SIZE", slotcnt, str);
 			g_free(str);
-			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_INSTALLED_TIMESTAMP", slotcnt, slot_state->installed_timestamp);
+			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_INSTALLED_TIMESTAMP", slotcnt, installed_stamp);
 			str = g_strdup_printf("%u", slot_state->installed_count);
 			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_INSTALLED_COUNT", slotcnt, str);
 			g_free(str);
-			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_ACTIVATED_TIMESTAMP", slotcnt, slot_state->activated_timestamp);
+			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_ACTIVATED_TIMESTAMP", slotcnt, activated_stamp);
 			str = g_strdup_printf("%u", slot_state->activated_count);
 			formatter_shell_append_n(text, "RAUC_SLOT_STATUS_ACTIVATED_COUNT", slotcnt, str);
 			g_free(str);
@@ -1587,19 +1591,21 @@ static gchar* r_status_formatter_json(RaucStatusPrint *status, gboolean pretty)
 				json_builder_end_object(builder);       /* checksum */
 			}
 			if (slot_state->installed_timestamp) {
+				g_autofree gchar *stamp = g_date_time_format(slot_state->installed_timestamp, "%Y-%m-%dT%H:%M:%SZ");
 				json_builder_set_member_name(builder, "installed");
 				json_builder_begin_object(builder);     /* installed */
 				json_builder_set_member_name(builder, "timestamp");
-				json_builder_add_string_value(builder, slot_state->installed_timestamp);
+				json_builder_add_string_value(builder, stamp);
 				json_builder_set_member_name(builder, "count");
 				json_builder_add_int_value(builder, slot_state->installed_count);
 				json_builder_end_object(builder);       /* installed */
 			}
 			if (slot_state->activated_timestamp) {
+				g_autofree gchar *stamp = g_date_time_format(slot_state->activated_timestamp, "%Y-%m-%dT%H:%M:%SZ");
 				json_builder_set_member_name(builder, "activated");
 				json_builder_begin_object(builder);     /* activated */
 				json_builder_set_member_name(builder, "timestamp");
-				json_builder_add_string_value(builder, slot_state->activated_timestamp);
+				json_builder_add_string_value(builder, stamp);
 				json_builder_set_member_name(builder, "count");
 				json_builder_add_int_value(builder, slot_state->activated_count);
 				json_builder_end_object(builder);       /* activated */
@@ -1633,6 +1639,8 @@ static RaucSlotStatus* r_variant_get_slot_state(GVariant *vardict)
 {
 	RaucSlotStatus *slot_state = g_new0(RaucSlotStatus, 1);
 	GVariantDict dict;
+	gchar *installed_stamp = NULL;
+	gchar *activated_stamp = NULL;
 
 	g_variant_dict_init(&dict, vardict);
 
@@ -1645,9 +1653,13 @@ static RaucSlotStatus* r_variant_get_slot_state(GVariant *vardict)
 	if (g_variant_dict_lookup(&dict, "sha256", "s", &slot_state->checksum.digest))
 		slot_state->checksum.type = G_CHECKSUM_SHA256;
 	g_variant_dict_lookup(&dict, "size", "t", &slot_state->checksum.size);
-	g_variant_dict_lookup(&dict, "installed.timestamp", "s", &slot_state->installed_timestamp);
+	g_variant_dict_lookup(&dict, "installed.timestamp", "s", &installed_stamp);
+	if (installed_stamp)
+		slot_state->installed_timestamp = g_date_time_new_from_iso8601(installed_stamp, NULL);
 	g_variant_dict_lookup(&dict, "installed.count", "u", &slot_state->installed_count);
-	g_variant_dict_lookup(&dict, "activated.timestamp", "s", &slot_state->activated_timestamp);
+	g_variant_dict_lookup(&dict, "activated.timestamp", "s", &activated_stamp);
+	if (activated_stamp)
+		slot_state->activated_timestamp = g_date_time_new_from_iso8601(activated_stamp, NULL);
 	g_variant_dict_lookup(&dict, "activated.count", "u", &slot_state->activated_count);
 
 	vardict = g_variant_dict_end(&dict);

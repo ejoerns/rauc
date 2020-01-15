@@ -19,9 +19,9 @@ typedef struct {
 	gchar *bundle_hash;
 	gchar *status;
 	RaucChecksum checksum;
-	gchar *installed_timestamp;
+	GDateTime *installed_timestamp;
 	guint32 installed_count;
-	gchar *activated_timestamp;
+	GDateTime *activated_timestamp;
 	guint32 activated_count;
 } RaucSlotStatus;
 
