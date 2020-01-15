@@ -581,6 +581,53 @@ static GVariant* get_installation_information(void) {
 	return g_variant_dict_end(&dict);
 }
 
+static const gchar* determine_is_expected(void) {
+	RaucSlot *slot;
+	RaucSlot *bootslot = NULL;
+	GHashTableIter iter;
+
+	/* check if booted slot is latest one */
+
+	bootslot = r_slot_find_by_bootname(r_context()->config->slots, r_context()->bootslot);
+	if (!bootslot) {
+		g_warning("Cannot get booted slot. Something is wrong");
+		return "error";
+	}
+
+	if (!bootslot->status->installed_timestamp) {
+		g_message("Cannot get timestamp of booted slot. Assuming being expected one");
+		return "unknown";
+	}
+
+	g_hash_table_iter_init(&iter, r_context()->config->slots);
+	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &slot)) {
+		gint comp;
+
+		/* Skip non-bootname slots */
+		if (!slot->bootname)
+			continue;
+
+		/* Skip self */
+		if (bootslot == slot)
+			continue;
+
+		if (!slot->status->installed_timestamp) {
+			g_message("Cannot get timestamp of slot '%s'. Ignoring.", slot->name);
+			continue;
+		}
+
+		comp = g_date_time_compare(bootslot->status->installed_timestamp, slot->status->installed_timestamp);
+		if (comp < 0) {
+			gchar *found = g_date_time_format(slot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+			gchar *current = g_date_time_format(bootslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);;
+			g_message("Found slot '%s' being more recent (%s) than current '%s' (%s)", slot->name, found, bootslot->name, current);
+			return "no";
+		}
+	}
+
+	return "yes";
+}
+
 static void r_on_bus_acquired(GDBusConnection *connection,
 		const gchar     *name,
 		gpointer user_data)
@@ -634,6 +681,7 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 	r_installer_set_variant(r_installer, r_context()->config->system_variant);
 	r_installer_set_boot_slot(r_installer, r_context()->bootslot);
 	r_installer_set_installed(r_installer, get_installation_information());
+	r_installer_set_is_expected(r_installer, determine_is_expected());
 
 	return;
 }
