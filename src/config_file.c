@@ -967,7 +967,7 @@ static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, 
 	}
 
 	if (slotstatus->installed_timestamp) {
-		g_autofree gchar *stamp = g_date_time_format(slotstatus->installed_timestamp, "%Y-%m-%dT%H:%M:%SZ");
+		g_autofree gchar *stamp = g_date_time_format(slotstatus->installed_timestamp, RAUC_FORMAT_ISO_8601);
 		g_key_file_set_string(key_file, group, "installed.timestamp", stamp);
 	} else {
 		g_key_file_remove_key(key_file, group, "installed.timestamp", NULL);
@@ -980,7 +980,7 @@ static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, 
 	}
 
 	if (slotstatus->activated_timestamp) {
-		g_autofree gchar *stamp = g_date_time_format(slotstatus->activated_timestamp, "%Y-%m-%dT%H:%M:%SZ");
+		g_autofree gchar *stamp = g_date_time_format(slotstatus->activated_timestamp, RAUC_FORMAT_ISO_8601);
 		g_key_file_set_string(key_file, group, "activated.timestamp", stamp);
 	} else {
 		g_key_file_remove_key(key_file, group, "activated.timestamp", NULL);
