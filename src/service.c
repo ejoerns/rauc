@@ -510,6 +510,77 @@ static void send_progress_callback(gint percentage,
 	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_installer));
 }
 
+static GVariant* get_installation_information(void) {
+	RaucSlot *bslot = NULL;
+	GVariantDict dict;
+	GList *children = NULL;
+
+	GVariant **slot_hash_tuples;
+	GVariant *slot_hash_array;
+	gint slot_count = 0;
+	gboolean slot_number = 2; // FIXME
+
+	GVariant* slot_status[2];
+
+	/* We load config of bootslot to obtain information about current
+	 * installation */
+	bslot = r_slot_find_by_bootname(r_context()->config->slots, r_context()->bootslot);
+	if (!bslot) {
+		g_warning("Unable to find booted slot");
+		return NULL;
+	}
+	load_slot_status(bslot);
+
+	if (!bslot->status) {
+		g_warning("No slot status loaded!");
+		return NULL;
+	}
+
+	g_variant_dict_init(&dict, NULL);
+	g_variant_dict_insert(&dict, "bootslot", "s", bslot->name);
+	g_variant_dict_insert(&dict, "version", "s", bslot->status->bundle_version);
+	g_variant_dict_insert(&dict, "build", "s", bslot->status->bundle_build ?: "");
+	g_variant_dict_insert(&dict, "description", "s", bslot->status->bundle_description ?: "");
+	if (bslot->status->installed_timestamp) {
+		g_autofree gchar *stamp = g_date_time_format(bslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+		g_variant_dict_insert(&dict, "installed.timestamp", "s", stamp);
+		g_variant_dict_insert(&dict, "installed.count", "u", bslot->status->installed_count);
+	}
+
+	if (bslot->status->activated_timestamp) {
+		g_autofree gchar *stamp = g_date_time_format(bslot->status->activated_timestamp, RAUC_FORMAT_ISO_8601);
+		g_variant_dict_insert(&dict, "activated.timestamp", "s", stamp);
+		g_variant_dict_insert(&dict, "activated.count", "u", bslot->status->activated_count);
+	}
+
+	slot_hash_tuples = g_new(GVariant*, slot_number);
+
+	slot_status[0] = g_variant_new_string(bslot->sclass);
+	slot_status[1] = g_variant_new_string(bslot->status->checksum.digest);
+
+	slot_hash_tuples[0] = g_variant_new_tuple(slot_status, 2);
+
+	children = r_slot_get_all_children(r_context()->config->slots, bslot);
+	for (GList *cl = children; cl != NULL; cl = cl->next) {
+		RaucSlot *child_slot = cl->data;
+
+		slot_count++;
+
+		slot_status[0] = g_variant_new_string(child_slot->sclass);
+		slot_status[1] = g_variant_new_string(child_slot->status->checksum.digest);
+
+		slot_hash_tuples[slot_count] = g_variant_new_tuple(slot_status, 2);
+	}
+
+	/* it's an array of (slotclass, hash) tuples */
+	slot_hash_array = g_variant_new_array(G_VARIANT_TYPE("(ss)"), slot_hash_tuples, slot_number);
+	g_free(slot_hash_tuples);
+
+	g_variant_dict_insert(&dict, "checksums", "v", slot_hash_array);
+
+	return g_variant_dict_end(&dict);
+}
+
 static void r_on_bus_acquired(GDBusConnection *connection,
 		const gchar     *name,
 		gpointer user_data)
@@ -562,6 +633,7 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 	r_installer_set_compatible(r_installer, r_context()->config->system_compatible);
 	r_installer_set_variant(r_installer, r_context()->config->system_variant);
 	r_installer_set_boot_slot(r_installer, r_context()->bootslot);
+	r_installer_set_installed(r_installer, get_installation_information());
 
 	return;
 }

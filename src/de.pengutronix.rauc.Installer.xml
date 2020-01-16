@@ -81,6 +81,9 @@
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="RaucSlotStatusArray"/>
     </method>
 
+    <!-- Installed: Information about currently installed bundle -->
+    <property name="Installed" type="a{sv}" access="read"/>
+
     <!-- Operation: Represents the current (global) operation rauc performs -->
     <property name="Operation" type="s" access="read"/>
     <!-- LastError: Holds a message describing the last error that occurred -->
