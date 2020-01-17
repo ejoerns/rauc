@@ -680,7 +680,11 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 	r_installer_set_compatible(r_installer, r_context()->config->system_compatible);
 	r_installer_set_variant(r_installer, r_context()->config->system_variant);
 	r_installer_set_boot_slot(r_installer, r_context()->bootslot);
-	r_installer_set_installed(r_installer, get_installation_information());
+	{
+		GVariant* foo = get_installation_information();
+		if (foo)
+			r_installer_set_installed(r_installer, foo);
+	}
 	r_installer_set_is_expected(r_installer, determine_is_expected());
 
 	return;

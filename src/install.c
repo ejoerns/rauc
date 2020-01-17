@@ -314,12 +314,12 @@ static RaucSlot *select_inactive_slot_class_member(const gchar *rootclass)
 
 		g_message("selectslot: %s, iterslot: %s", selectslot ? selectslot->name : NULL, iterslot ? iterslot->name : NULL);
 
-		if (!selectslot->status->installed_timestamp) {
+		if (!selectslot->status || !selectslot->status->installed_timestamp) {
 			g_message("No timestamp, aborting");
 			break;
 		}
 
-		if (!iterslot->status->installed_timestamp) {
+		if (!iterslot->status || !iterslot->status->installed_timestamp) {
 			g_message("No iterslot timestamp, taking");
 			selectslot = iterslot;
 			continue;
