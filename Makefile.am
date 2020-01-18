@@ -170,7 +170,9 @@ librauctest_la_SOURCES = \
 	test/common.c \
 	test/common.h \
 	test/install-fixtures.c \
-	test/install-fixtures.h
+	test/install-fixtures.h \
+	test/builder.c \
+	test/builder.h
 librauctest_la_LIBADD = $(GLIB_LIBS) librauc.la
 
 TESTS = $(check_PROGRAMS) test/rauc.t

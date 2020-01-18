@@ -5,6 +5,7 @@
 
 #include "install-fixtures.h"
 #include "common.h"
+#include "builder.h"
 
 void fixture_helper_fixture_set_up_system_user(gchar *tmpdir,
 		const gchar *configname)
