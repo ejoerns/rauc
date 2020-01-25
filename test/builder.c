@@ -104,7 +104,7 @@ TestSystem* test_system_from_test_config(TestConfig *builder, gboolean root)
 		g_assert(test_prepare_dummy_file(builder->tmpdir, iterslot->device,
 				SLOT_SIZE, "/dev/zero") == 0);
 		if (g_strcmp0(iterslot->type, "ext4") == 0)
-			g_assert_true(test_make_filesystem(builder->tmpdir, iterslot->device));
+			g_assert_true(test_make_filesystem(builder->tmpdir, iterslot->device, NULL));
 		if (root)
 			test_make_slot_user_writable(builder->tmpdir, iterslot->device);
 	}
@@ -333,23 +333,23 @@ BundleContent* bundle_content_from_manifest_builder(ManifestBuilder *builder)
 
 	g_hash_table_iter_init(&iter, builder->images);
 	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &iterimage)) {
+		gchar *rootdir = NULL;
 		g_assert(test_prepare_dummy_file(builder->contentdir, iterimage->filename,
 				SLOT_SIZE, "/dev/zero") == 0);
-		if (g_strcmp0(builder->default_ext, "ext4") == 0)
-			g_assert_true(test_make_filesystem(contentdir, iterimage->filename));
 
-		/* Write test files to images */
+		/* Prepeare test files for image */
 		for (GList *l = iterimage->files; l != NULL; l = l->next) {
 			gchar *filename = l->data;
-			gchar *mountdir;
 
-			mountdir = g_build_filename(builder->tmpdir, "mnt", NULL);
-			g_assert(test_mkdir_relative(builder->tmpdir, "mnt", 0777) == 0);
-			g_assert_true(test_mount(g_build_filename(contentdir, iterimage->filename, NULL), mountdir));
-			g_assert_true(g_file_set_contents(g_build_filename(mountdir, filename, NULL), "0xdeadbeaf", -1, NULL));
-			g_assert_true(r_umount(mountdir, NULL));
-			g_assert(test_rmdir(builder->tmpdir, "mnt") == 0);
+			if (!rootdir)
+				rootdir = g_build_filename(builder->tmpdir, "root", NULL);
+			g_assert(test_mkdir_relative(builder->tmpdir, "root", 0777) == 0);
+			g_assert_true(g_file_set_contents(g_build_filename(rootdir, filename, NULL), "0xdeadbeaf", -1, NULL));
 		}
+
+		if (g_strcmp0(builder->default_ext, "ext4") == 0)
+			g_assert_true(test_make_filesystem(builder->contentdir, iterimage->filename, rootdir));
+
 	}
 
 	return builder;

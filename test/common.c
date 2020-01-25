@@ -204,25 +204,32 @@ int test_prepare_manifest_file(const gchar *dirname, const gchar *filename, gboo
 	return 0;
 }
 
-gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
+gboolean test_make_filesystem(const gchar *dirname, const gchar *filename, const gchar *rootdir)
 {
 	GSubprocess *sub;
 	GError *error = NULL;
 	gchar *path;
 	gboolean res = FALSE;
 
+	GPtrArray *args = g_ptr_array_new_full(10, g_free);
 	path = g_build_filename(dirname, filename, NULL);
-	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_STDOUT_SILENCE,
-			&error,
-			"/sbin/mkfs.ext4",
-			"-F",
-			path,
-			NULL);
+
+	g_ptr_array_add(args, g_strdup("/sbin/mkfs.ext4"));
+	g_ptr_array_add(args, g_strdup("-F"));
+	g_ptr_array_add(args, g_strdup(path));
+	if (rootdir) {
+		g_ptr_array_add(args, g_strdup("-d"));
+		g_ptr_array_add(args, g_strdup(rootdir));
+	}
+	g_ptr_array_add(args, NULL);
+
+	sub = g_subprocess_newv((const gchar * const *)args->pdata,
+			G_SUBPROCESS_FLAGS_STDOUT_SILENCE, &error);
 
 	if (!sub) {
 		g_warning("Making filesystem failed: %s", error->message);
 		g_clear_error(&error);
+		g_ptr_array_unref(args);
 		return FALSE;
 	}
 
@@ -232,6 +239,7 @@ gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
 		g_clear_error(&error);
 	}
 
+	g_ptr_array_unref(args);
 	return TRUE;
 }
 

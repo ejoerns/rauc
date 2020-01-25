@@ -114,7 +114,7 @@ static void update_handler_fixture_set_up(UpdateHandlerFixture *fixture,
 		g_assert(test_prepare_dummy_file(fixture->tmpdir, "rootfs-0",
 				SLOT_SIZE, "/dev/zero") == 0);
 		if (g_strcmp0(test_pair->slottype, "ext4") == 0) {
-			g_assert(test_make_filesystem(fixture->tmpdir, "rootfs-0"));
+			g_assert(test_make_filesystem(fixture->tmpdir, "rootfs-0", NULL));
 		}
 	}
 }
@@ -296,7 +296,7 @@ static void test_update_handler(UpdateHandlerFixture *fixture,
 	} else if (g_strcmp0(test_pair->imagetype, "ext4") == 0) {
 		g_assert(test_prepare_dummy_file(fixture->tmpdir, "image.ext4",
 				IMAGE_SIZE, "/dev/zero") == 0);
-		g_assert(test_make_filesystem(fixture->tmpdir, "image.ext4"));
+		g_assert(test_make_filesystem(fixture->tmpdir, "image.ext4", NULL));
 	} else if (g_strcmp0(test_pair->imagetype, "tar.bz2") == 0) {
 		g_assert_true(test_prepare_dummy_archive(fixture->tmpdir, "image.tar.bz2", "testfile.txt"));
 	} else {

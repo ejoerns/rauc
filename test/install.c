@@ -72,9 +72,6 @@ static void install_fixture_set_up_bundle_custom_handler(InstallFixture *fixture
 	TestConfig *test_config;
 	ManifestBuilder* manifest_builder;
 
-	if (!test_running_as_root())
-		return;
-
 	system_builder = test_config_builder_default();
 	test_config = test_config_builder_end(system_builder);
 	fixture->test_system = test_system_from_test_config(test_config, FALSE);
@@ -94,9 +91,6 @@ static void install_fixture_set_up_bundle_install_check_hook(InstallFixture *fix
 	TestConfig *test_config;
 	ManifestBuilder* bundle_builder;
 	BundleContent* bundle_content;
-
-	if (!test_running_as_root())
-		return;
 
 	system_builder = test_config_builder_default();
 	test_config = test_config_builder_end(system_builder);
