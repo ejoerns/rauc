@@ -13,11 +13,13 @@
 #include "../rauc-installer-generated.h"
 
 #include "common.h"
-#include "install-fixtures.h"
+#include "builder.h"
 
 typedef struct {
 	GTestDBus *dbus;
 	gchar *tmpdir;
+	TestSystem *test_system;
+	TestBundle *test_bundle;
 } ServiceFixture;
 
 GMainLoop *testloop = NULL;
@@ -25,16 +27,28 @@ RInstaller *installer = NULL;
 
 static void service_install_fixture_set_up(ServiceFixture *fixture, gconstpointer user_data)
 {
-	fixture->tmpdir = g_dir_make_tmp("rauc-XXXXXX", NULL);
+	RaucSystemBuilder *system_builder;
+	TestConfig *test_config;
+	ManifestBuilder* manifest_builder;
 
-	fixture_helper_set_up_system(fixture->tmpdir, NULL);
-	fixture_helper_set_up_bundle(fixture->tmpdir, NULL, FALSE, FALSE);
+	if (!test_running_as_root())
+		return;
+
+	system_builder = test_config_builder_default();
+	test_config_set_variant_name(system_builder, "Default Variant");
+	test_config = test_config_builder_end(system_builder);
+	fixture->test_system = test_system_from_test_config(test_config, TRUE);
+
+	manifest_builder = manifest_builder_default();
+	fixture->test_bundle = test_bundle_from_manifest_builder(manifest_builder);
+
+	fixture->tmpdir = g_dir_make_tmp("rauc-XXXXXX", NULL);
 
 	/* Write a D-Bus service file with current tmpdir */
 	write_tmp_file(fixture->tmpdir, "de.pengutronix.rauc.service", g_strdup_printf("\
 [D-BUS Service]\n\
 Name=de.pengutronix.rauc\n\
-Exec="TEST_SERVICES "/rauc -c %s/system.conf --mount=%s/mount --override-boot-slot=system0 service\n", fixture->tmpdir, fixture->tmpdir), NULL);
+Exec="TEST_SERVICES "/rauc -c %s/test.conf --mount=%s/mount --override-boot-slot=system0 service\n", fixture->test_system->tmpdir, fixture->test_system->tmpdir), NULL);
 
 	fixture->dbus = g_test_dbus_new(G_TEST_DBUS_NONE);
 	g_test_dbus_add_service_dir(fixture->dbus, fixture->tmpdir);
@@ -57,8 +71,10 @@ Exec="TEST_SERVICES "/rauc -c test/test.conf service\n", NULL);
 
 static void service_fixture_tear_down(ServiceFixture *fixture, gconstpointer user_data)
 {
-	g_test_dbus_down(fixture->dbus);
-	g_object_unref(fixture->dbus);
+	if (fixture->dbus) {
+		g_test_dbus_down(fixture->dbus);
+		g_object_unref(fixture->dbus);
+	}
 }
 
 static void on_installer_changed(GDBusProxy *proxy, GVariant *changed,
@@ -130,7 +146,6 @@ static void service_test_install(ServiceFixture *fixture, gconstpointer user_dat
 	const gchar *compatible = NULL;
 	const gchar *variant = NULL;
 	const gchar *bootslot = NULL;
-	gchar *bundlepath;
 	GError *error = NULL;
 	gboolean ret = FALSE;
 
@@ -158,14 +173,14 @@ static void service_test_install(ServiceFixture *fixture, gconstpointer user_dat
 	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  60, "Determining target install group", 2));
 	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  80, "Determining target install group done.", 2));
 	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  80, "Updating slots", 2));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  80, "Checking slot rootfs.1", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  85, "Checking slot rootfs.1 done.", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  85, "Copying image to rootfs.1", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  90, "Copying image to rootfs.1 done.", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  90, "Checking slot appfs.1", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  95, "Checking slot appfs.1 done.", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  95, "Copying image to appfs.1", 3));
-	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)", 100, "Copying image to appfs.1 done.", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  80, "Checking slot appfs.1", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  85, "Checking slot appfs.1 done.", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  85, "Copying image to appfs.1", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  90, "Copying image to appfs.1 done.", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  90, "Checking slot rootfs.1", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  95, "Checking slot rootfs.1 done.", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)",  95, "Copying image to rootfs.1", 3));
+	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)", 100, "Copying image to rootfs.1 done.", 3));
 	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)", 100, "Updating slots done.", 2));
 	g_queue_push_tail(args, (gpointer*)g_variant_new("(isi)", 100, "Installing done.", 1));
 
@@ -199,11 +214,8 @@ static void service_test_install(ServiceFixture *fixture, gconstpointer user_dat
 
 	r_context();
 
-	bundlepath = g_build_filename(fixture->tmpdir, "bundle.raucb", NULL);
-	g_assert_nonnull(bundlepath);
-
 	/* Actually install bundle */
-	ret = r_installer_call_install_sync(installer, bundlepath, NULL,
+	ret = r_installer_call_install_sync(installer, fixture->test_bundle->bundlepath, NULL,
 			&error);
 	g_assert_no_error(error);
 	g_assert_true(ret);
