@@ -12,6 +12,7 @@
 #include "rauc-installer-generated.h"
 #include "service.h"
 #include "utils.h"
+#include "signature.h"
 
 GMainLoop *service_loop = NULL;
 RInstaller *r_installer = NULL;
@@ -145,13 +146,14 @@ static gboolean r_on_handle_info(RInstaller *interface,
 	g_print("bundle: %s\n", arg_bundle);
 
 	res = !r_context_get_busy();
-	if (!res)
+	if (!res) {
+		g_set_error(&error, G_IO_ERROR, G_IO_ERROR_FAILED_HANDLED, "Failed to setup context");
 		goto out;
+	}
 
 	res = check_bundle(arg_bundle, &bundle, CHECK_BUNDLE_DEFAULT, NULL, &error);
 	if (!res) {
 		g_warning("%s", error->message);
-		g_clear_error(&error);
 		goto out;
 	}
 
@@ -161,7 +163,6 @@ static gboolean r_on_handle_info(RInstaller *interface,
 		res = load_manifest_from_bundle(bundle, &manifest, &error);
 		if (!res) {
 			g_warning("%s\n", error->message);
-			g_clear_error(&error);
 			goto out;
 		}
 	}
@@ -174,10 +175,7 @@ out:
 				manifest->update_compatible,
 				manifest->update_version ? manifest->update_version : "");
 	} else {
-		g_dbus_method_invocation_return_error(invocation,
-				G_IO_ERROR,
-				G_IO_ERROR_FAILED_HANDLED,
-				"rauc info error");
+		g_dbus_method_invocation_take_error(invocation, error);
 	}
 
 	return TRUE;
@@ -496,6 +494,8 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 		g_error("Failed to export interface: %s", ierror->message);
 		g_error_free(ierror);
 	}
+
+	g_dbus_error_register_error(R_SIGNATURE_ERROR, R_SIGNATURE_ERROR_INVALID, "de.pengutronix.rauc.Error.InavlidSiganture");
 
 	r_installer_set_compatible(r_installer, r_context()->config->system_compatible);
 	r_installer_set_variant(r_installer, r_context()->config->system_variant);
