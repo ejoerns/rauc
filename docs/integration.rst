@@ -35,6 +35,23 @@ In principle, these are:
   For information about how to integrate RAUC using these tools,
   refer to the sections :ref:`sec_int_yocto` or :ref:`sec_int_ptxdist`.
 
+Manual Installation
+-------------------
+
+To manually create a directory structure containing all RAUC installation
+files, you can use default `GNU Automake
+<https://www.gnu.org/software/automake/manual/>`_ install handling.
+If you don't to do this on the target itself (i.e. installing all into your
+systems root), use `DESTDIR` to define a local installation folder:
+
+    ./configure
+    make
+    make DESTDIR=install-folder install
+
+.. note::
+  To control the subdirectories and files created, please run ./configure --help
+  to see the list of available options.
+
 .. _sec-int-system-config:
 
 Partitioning Your Device
