@@ -1876,6 +1876,7 @@ typedef enum {
 	NONE = 0,
 	MARK,
 	INSTALLED,
+	IS_EXPECTED,
 } RaucStatusAction;
 
 typedef struct {
@@ -1892,6 +1893,34 @@ typedef struct {
 	guint32 activated_count;
 	GHashTable *slot_checksums;
 } InstallationInfo;
+
+static gboolean retreive_is_expected_via_dbus(gchar **expected, GError **error) {
+	RInstaller *proxy = NULL;
+	GError *ierror = NULL;
+	GVariant* installed = NULL;
+	GVariantDict dict;
+	const gchar *is_expected;
+	GBusType bus_type = (!g_strcmp0(g_getenv("DBUS_STARTER_BUS_TYPE"), "session"))
+	                    ? G_BUS_TYPE_SESSION : G_BUS_TYPE_SYSTEM;
+
+	g_return_val_if_fail(expected, FALSE);
+
+	proxy = r_installer_proxy_new_for_bus_sync(bus_type,
+			G_DBUS_PROXY_FLAGS_NONE,
+			"de.pengutronix.rauc", "/", NULL, &ierror);
+	if (proxy == NULL) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	is_expected = r_installer_get_is_expected(proxy);
+
+	g_variant_dict_init(&dict, installed);
+
+	g_message("is_expected: %s", is_expected);
+	
+	return TRUE;
+}
 
 static gboolean retreive_installed_via_dbus(InstallationInfo **installed_info, GError **error) {
 	RInstaller *proxy = NULL;
@@ -1966,6 +1995,14 @@ static gboolean retreive_installed(InstallationInfo** info, GError **error) {
 	}
 }
 
+static gboolean retreive_is_expected(gchar **expected, GError **error) {
+	if (ENABLE_SERVICE) {
+		return retreive_is_expected_via_dbus(expected, error);
+	} else {
+		g_error("Unsupported");
+	}
+}
+
 
 #define RAUC_DATE_FORMAT_READABLE "%a %Y-%m-%d %H:%M:%S %Z"
 
@@ -2007,6 +2044,7 @@ static gboolean status_start(int argc, char **argv)
 	g_autoptr(RaucStatusPrint) status_print = NULL;
 	RaucStatusAction action = NONE;
 	InstallationInfo *installed_info = NULL;
+	gchar *expected = NULL;
 
 	g_debug("status start");
 	r_exit_status = 0;
@@ -2083,7 +2121,8 @@ static gboolean status_start(int argc, char **argv)
 		state = "active";
 	} else if (g_strcmp0(argv[2], "installed") == 0) {
 		action = INSTALLED;
-		state = "installed";
+	} else if (g_strcmp0(argv[2], "is-expected") == 0) {
+		action = IS_EXPECTED;
 	} else {
 		g_printerr("unknown subcommand %s\n", argv[2]);
 		r_exit_status = 1;
@@ -2120,6 +2159,14 @@ static gboolean status_start(int argc, char **argv)
 			case MARK:
 				if (!r_installer_call_mark_sync(proxy, state, slot_identifier,
 							&slot_name, &message, NULL, &ierror)) {
+					message = g_strdup(ierror->message);
+					g_error_free(ierror);
+					r_exit_status = 1;
+					return TRUE;
+				}
+				break;
+			case IS_EXPECTED:
+				if (!retreive_is_expected(&expected, &ierror)) {
 					message = g_strdup(ierror->message);
 					g_error_free(ierror);
 					r_exit_status = 1;
