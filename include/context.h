@@ -125,11 +125,39 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucProgressStep, r_context_free_progress_step);
 
 void r_context_register_progress_callback(progress_callback progress_cb);
 
+/**
+ * Return if context is marked busy.
+ *
+ * @return TRUE if context is busy.
+ */
 gboolean r_context_get_busy(void)
 G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Explicitly mark the context busy to prevent concurrent access on context
+ * during installation.
+ *
+ * Note this will fail if context is busy already.
+ */
 void r_context_set_busy(gboolean busy);
 
+/**
+ * Returns a non-const instance of context object, to allow changing variables.
+ *
+ * Sets up context object if not existing, yet.
+ *
+ * Leaves the context object in 'pending' state.
+ */
 RaucContext *r_context_conf(void);
+
+/**
+ * Returns read-only (const) reference to context object.
+ *
+ * Use this to access context information regularly.
+ *
+ * If the context is 'pending', this configures the context and removes the
+ * 'pending' state from the context object.
+ */
 const RaucContext *r_context(void);
 void r_context_install_info_free(RContextInstallationInfo *info);
 void r_context_clean(void);
