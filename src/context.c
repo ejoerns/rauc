@@ -212,10 +212,13 @@ gboolean r_context_configure(GError **error)
 	g_assert_false(context->busy);
 
 	g_clear_pointer(&context->config, free_config);
-	res = load_config(context->configpath, &context->config, &ierror);
-	if (!res && ierror->domain==g_file_error_quark()) {
-		g_debug("system config not found, using default values");
-		g_clear_error(&ierror);
+	if (context->configpath) {
+		if (!load_config(context->configpath, &context->config, &ierror)) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+	} else {
+		/* This is a hack as we cannot get rid of config easily */
 		default_config(&context->config);
 	}
 
@@ -550,7 +553,6 @@ RaucContext *r_context_conf(void)
 		}
 
 		context = g_new0(RaucContext, 1);
-		context->configpath = g_strdup("/etc/rauc/system.conf");
 		context->progress = NULL;
 		context->install_info = g_new0(RContextInstallationInfo, 1);
 	}
