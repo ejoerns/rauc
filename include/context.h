@@ -159,5 +159,6 @@ RaucContext *r_context_conf(void);
  * 'pending' state from the context object.
  */
 const RaucContext *r_context(void);
+gboolean r_context_configure(GError **error);
 void r_context_install_info_free(RContextInstallationInfo *info);
 void r_context_clean(void);
