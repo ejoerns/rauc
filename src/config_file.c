@@ -769,6 +769,9 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 		g_strfreev(groupsplit);
 	}
 
+	if (g_hash_table_size(slots) == 0)
+		g_warning("No slots configured. Consider adding at least one redundant slot pair to your system config!");
+
 	/* Add parent pointers */
 	slotlist = g_hash_table_get_keys(slots);
 	for (l = slotlist; l != NULL; l = l->next) {
