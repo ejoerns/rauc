@@ -1,4 +1,21 @@
 #!/bin/sh
+#
+# RAUC qemu test runner script
+#
+# Invoke to run the RAUC test suite in a safe qemu environment allowing to
+# run tests with root privileges and emulate and test virtual device like
+# block devices, NAND, etc.
+#
+# Usage:
+#
+# ./qemu-test <argument>
+#
+# Optional arguments:
+#
+#   coverage    Run with coverage report generation enabled
+#   shell       Setup qemu test system and provide an interactive shell
+#
+# When no argument is given, the default test suite will be executed
 
 set -e
 
