@@ -517,6 +517,19 @@ test_expect_success FAKETIME "rauc sign bundle with valid certificate" "
   test -f out.raucb
 "
 
+
+test_expect_success "rauc extract" "
+  rauc \
+    --keyring $SHARNESS_TEST_DIRECTORY/openssl-ca/dev-ca.pem \
+    extract $SHARNESS_TEST_DIRECTORY/good-bundle.raucb $TEST_TMPDIR/bundle-extract &&
+  test -f $TEST_TMPDIR/bundle-extract/appfs.img &&
+  test -f $TEST_TMPDIR/bundle-extract/custom_handler.sh &&
+  test -f $TEST_TMPDIR/bundle-extract/hook.sh &&
+  test -f $TEST_TMPDIR/bundle-extract/manifest.raucm &&
+  test -f $TEST_TMPDIR/bundle-extract/rootfs.img &&
+  rm -rf $TEST_TMPDIR/bundle-extract
+"
+
 test_expect_success CASYNC "rauc convert" "
   rm -f casync.raucb &&
   rauc \
