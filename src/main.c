@@ -189,6 +189,23 @@ static gchar *resolve_bundle_path(char *path)
 	return g_steal_pointer(&bundlelocation);
 }
 
+static void send_progress_callback(gint percentage,
+		const gchar *message,
+		gint nesting_depth)
+{
+	if (install_progressbar && isatty(STDOUT_FILENO)) {
+		g_autofree gchar *progress = make_progress_line(percentage);
+		/* This does:
+		 * - move to start of line
+		 * - clear line
+		 * - print 2 lines
+		 * - move to previous line
+		 */
+		g_print("\r\033[F\033[J%3"G_GINT32_FORMAT "%% %s\n%s\n", percentage, message, progress);
+	} else {
+		g_print("%3"G_GINT32_FORMAT "%% %s\n", percentage, message);
+	}
+}
 
 static gboolean install_start(int argc, char **argv)
 {
@@ -263,6 +280,7 @@ static gboolean install_start(int argc, char **argv)
 			goto out_loop;
 		}
 	} else {
+		r_context_register_progress_callback(send_progress_callback);
 		install_run(args);
 	}
 
