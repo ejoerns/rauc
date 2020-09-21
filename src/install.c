@@ -1210,6 +1210,7 @@ void install_args_free(RaucInstallArgs *args)
 	clear_bundle_access_args(&args->access_args);
 	g_free(args);
 }
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucInstallArgs, install_args_free);
 
 gboolean install_run(RaucInstallArgs *args)
 {
