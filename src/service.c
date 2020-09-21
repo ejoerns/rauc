@@ -401,32 +401,22 @@ static gboolean r_on_handle_get_primary(RInstaller *interface,
 
 static gboolean auto_install(const gchar *source)
 {
-	RaucInstallArgs *args = install_args_new();
-	gboolean res = TRUE;
+	g_autoptr(RaucInstallArgs) args = install_args_new();
 
 	if (!g_file_test(r_context()->config->autoinstall_path, G_FILE_TEST_EXISTS))
 		return FALSE;
 
-	g_message("input bundle: %s", source);
-
-	res = !r_context_get_busy();
-	if (!res)
-		goto out;
+	if (!!r_context_get_busy())
+		return FALSE;
 
 	args->name = g_strdup(source);
 	args->notify = service_install_notify;
 	args->cleanup = service_install_cleanup;
 
-	res = install_run(args);
-	if (!res) {
-		goto out;
-	}
-	args = NULL;
+	if (!install_run(args))
+		return FALSE;
 
-out:
-	g_clear_pointer(&args, g_free);
-
-	return res;
+	return TRUE;
 }
 
 void set_last_error(gchar *message)
