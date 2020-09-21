@@ -510,8 +510,11 @@ static void r_on_name_acquired(GDBusConnection *connection,
 {
 	g_debug("name '%s' acquired", name);
 
-	if (r_context()->config->autoinstall_path)
-		auto_install(r_context()->config->autoinstall_path);
+	if (r_context()->config->autoinstall_path) {
+		if (!auto_install(r_context()->config->autoinstall_path)) {
+			g_message("Failed to invoke auto_install!");
+		}
+	}
 
 	return;
 }
