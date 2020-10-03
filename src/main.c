@@ -1313,6 +1313,10 @@ static gchar* r_status_formatter_readable(RaucStatusPrint *status)
 
 			GList *children = NULL;
 
+			/* skip non-root slots (configuration error) */
+			if (xslot->parent)
+				continue;
+
 			r_string_append_slot(text, xslot, status);
 
 			children = r_slot_get_all_children(status->slots, xslot);
