@@ -455,7 +455,7 @@ static gboolean write_slot_start(int argc, char **argv)
 		goto out;
 	}
 
-	g_message("Slot written successfully");
+	g_print("Slot written successfully");
 
 out:
 	return TRUE;
@@ -1917,7 +1917,7 @@ static void cmdline_handler(int argc, char **argv)
 
 	if (rcommand == NULL) {
 		/* INVALID COMMAND given */
-		g_message("Invalid command '%s' given", cmdarg);
+		g_print("Invalid command '%s' given", cmdarg);
 		r_exit_status = 1;
 		goto print_help;
 	}
