@@ -522,6 +522,10 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 			}
 			g_key_file_remove_key(key_file, groups[i], "resize", NULL);
 
+#if ENABLE_GPT == 0
+			if (g_strcmp0(slot->type, "boot-gpt-switch") == 0)
+				g_warning("'boot-gpt-switch' slot type used but RAUC is compiled with GPT support disabled!");
+#endif
 			if (g_strcmp0(slot->type, "boot-mbr-switch") == 0 ||
 			    g_strcmp0(slot->type, "boot-gpt-switch") == 0) {
 				slot->region_start = key_file_consume_binary_suffixed_string(key_file, groups[i],
