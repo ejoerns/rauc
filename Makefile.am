@@ -140,20 +140,7 @@ TEST_LOG_DRIVER = $(top_srcdir)/build-aux/tap-driver.sh
 TEST_LOG_COMPILER = $(top_srcdir)/tap-test
 
 check_PROGRAMS = \
-	test/bootchooser.test \
-	test/checksum.test \
-	test/config_file.test \
-	test/context.test \
-	test/dm.test \
-	test/manifest.test \
-	test/signature.test \
-	test/update_handler.test \
-	test/utils.test \
-	test/install.test \
-	test/service.test \
-	test/bundle.test \
-	test/progress.test \
-	test/slot.test
+	test/dm.test
 
 if WANT_NETWORK
 check_PROGRAMS += test/network.test
@@ -198,7 +185,7 @@ librauctest_la_SOURCES = \
 	test/install-fixtures.h
 librauctest_la_LIBADD = $(GLIB_LIBS) librauc.la
 
-TESTS = $(check_PROGRAMS) test/rauc.t
+TESTS = $(check_PROGRAMS)
 
 test_bootchooser_test_SOURCES = test/bootchooser.c
 test_bootchooser_test_LDADD = librauctest.la
