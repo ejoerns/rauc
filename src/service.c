@@ -175,6 +175,7 @@ out:
 				manifest->update_compatible,
 				manifest->update_version ? manifest->update_version : "");
 	} else {
+		g_message("Taking error: domain: %d, code: %d, msg: %s", error->domain, error->code, error->message);
 		g_dbus_method_invocation_take_error(invocation, error);
 	}
 
@@ -496,6 +497,7 @@ static void r_on_bus_acquired(GDBusConnection *connection,
 	}
 
 	g_dbus_error_register_error(R_SIGNATURE_ERROR, R_SIGNATURE_ERROR_INVALID, "de.pengutronix.rauc.Error.InavlidSiganture");
+	g_dbus_error_register_error(G_IO_ERROR, G_IO_ERROR_NOT_FOUND, "de.pengutronix.rauc.GIOError.NotFound");
 
 	r_installer_set_compatible(r_installer, r_context()->config->system_compatible);
 	r_installer_set_variant(r_installer, r_context()->config->system_variant);
