@@ -1396,7 +1396,7 @@ static gboolean check_bundle_access(int bundle_fd, GError **error)
 	 * - storage on unsafe filesystems such as FUSE or NFS, where the data
 	 *   is supplied by an untrusted source (the rootfs is explicitly
 	 *   trusted, though)
-	 * - storage on an filesystem mounted from a block device with a non-root owner
+	 * - storage on a filesystem mounted from a block device with a non-root owner
 	 * - existing open file descriptors (via F_SETLEASE)
 	 */
 
