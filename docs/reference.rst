@@ -681,7 +681,7 @@ When using `rauc extract` (or other commands which need access to the squashfs
 except `install`), the squashfs is checked before accessing it by RAUC itself
 without using the kernel's device mapper target, as they are often used by
 normal users on their development hosts.
-It this case, the same mechanism for ensuring exclusive access as with plain
+In this case, the same mechanism for ensuring exclusive access as with plain
 bundles is used.
 
 .. _sec_ref_format_crypt:
@@ -1399,7 +1399,7 @@ The "Variant" Property
   de.pengutronix.rauc.Installer:Variant
   Variant  readable   s
 
-Represents the system's variant. This can be used to select parts of an bundle.
+Represents the system's variant. This can be used to select parts of a bundle.
 
 
 .. _gdbus-property-de-pengutronix-rauc-Installer.BootSlot:
