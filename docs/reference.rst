@@ -86,6 +86,7 @@ Example configuration:
 ``grubenv``
   Only valid when ``bootloader`` is set to ``grub``.
   Specifies the path under which the GRUB environment can be accessed.
+  Defaults to ``/boot/grub/grubenv``.
 
 ``barebox-statename``
   Only valid when ``bootloader`` is set to ``barebox``.
