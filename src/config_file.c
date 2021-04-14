@@ -70,6 +70,38 @@ static gboolean fix_grandparent_links(GHashTable *slots, GError **error)
 	return TRUE;
 }
 
+static const gchar *singleton_classes[] = {"boot-mbr-switch", "boot-gpt-switch", "boot-emmc", NULL};
+
+static gboolean config_file_sanity_checks(RaucConfig *config, GError **error)
+{
+	GList *slotlist = NULL;
+
+	g_return_val_if_fail(config != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/* Check singleton slots */
+	slotlist = g_hash_table_get_values(config->slots);
+	for (GList *l = slotlist; l != NULL; l = l->next) {
+		RaucSlot *slot = l->data;
+
+		if (g_strcmp0(slot->type, "boot-emmc") != 0) // FIXME
+			continue;
+
+		if (r_slot_get_num_of_class(config->slots, slot->sclass) > 1) {
+			g_set_error(
+					error,
+					R_CONFIG_ERROR,
+					R_CONFIG_ERROR_INVALID_FORMAT,
+					"Only 1 slot of type '%s' allowed", slot->type);
+
+			return FALSE;
+		}
+	}
+	g_list_free(slotlist);
+
+	return TRUE;
+}
+
 static const gchar *supported_bootloaders[] = {"barebox", "grub", "uboot", "efi", "custom", "noop", NULL};
 
 gboolean parse_bundle_formats(guint *mask, const gchar *config, GError **error)
@@ -719,7 +751,13 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 		goto free;
 	}
 
-	g_strfreev(groups);
+	/* g_strfreev(groups); ??? */
+
+	if (!config_file_sanity_checks(c, &ierror)) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto free;
+	}
 
 	res = TRUE;
 free:
