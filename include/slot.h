@@ -84,6 +84,7 @@ void r_slot_free_status(RaucSlotStatus *slotstatus);
  * @param device the device path to search for
  *
  * @return a RaucSlot pointer or NULL
+ *         [transfer none]
  */
 RaucSlot *r_slot_find_by_device(GHashTable *slots, const gchar *device)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -95,6 +96,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param botname the bootname to search for
  *
  * @return a RaucSlot pointer or NULL
+ *         [transfer none]
  */
 RaucSlot *r_slot_find_by_bootname(GHashTable *slots, const gchar *bootname)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -105,6 +107,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param slotstate state to turn into string
  *
  * @return string representation of slot state
+ *         [transfer full]
  */
 gchar* r_slot_slotstate_to_str(SlotState slotstate)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -138,6 +141,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param slot slot to find parent root slot for
  *
  * @return pointer to RaucSlot
+ *         [transfer none]
  */
 RaucSlot* r_slot_get_parent_root(RaucSlot *slot)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -146,6 +150,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * Gets all classes that do not have a parent
  *
  * @return NULL-teminated array of intern strings. Free with g_free().
+ *         [transfer full]
  */
 gchar** r_slot_get_root_classes(GHashTable *slots)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -169,6 +174,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @return list of pointers to all memers of slots hash table that are of
  *         selected class.
+ *         [transfer container]
  */
 GList* r_slot_get_all_of_class(GHashTable *slots, const gchar* class)
 G_GNUC_WARN_UNUSED_RESULT;
@@ -181,6 +187,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @return list of pointers to all memers of slots hash table that are children
  *         of given slot.
+ *         [transfer container]
  */
 GList* r_slot_get_all_children(GHashTable *slots, RaucSlot *parent)
 G_GNUC_WARN_UNUSED_RESULT;
