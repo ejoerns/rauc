@@ -307,14 +307,13 @@ GList* r_slot_get_all_of_class(GHashTable *slots, const gchar* class)
 {
 	GList *retlist = NULL;
 	GHashTableIter iter;
-	gchar *name;
 	RaucSlot *slot = NULL;
 
 	g_return_val_if_fail(slots, NULL);
 	g_return_val_if_fail(class, NULL);
 
 	g_hash_table_iter_init(&iter, slots);
-	while (g_hash_table_iter_next(&iter, (gpointer*) &name, (gpointer*) &slot)) {
+	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &slot)) {
 		if (g_strcmp0(slot->sclass, class) != 0)
 			continue;
 		retlist = g_list_append(retlist, slot);
@@ -327,14 +326,13 @@ GList* r_slot_get_all_children(GHashTable *slots, RaucSlot *parent)
 {
 	GList *retlist = NULL;
 	GHashTableIter iter;
-	gchar *name;
 	RaucSlot *slot = NULL;
 
 	g_return_val_if_fail(slots, NULL);
 	g_return_val_if_fail(parent, NULL);
 
 	g_hash_table_iter_init(&iter, slots);
-	while (g_hash_table_iter_next(&iter, (gpointer*) &name, (gpointer*) &slot)) {
+	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &slot)) {
 		if (slot == parent)
 			continue;
 
