@@ -71,6 +71,103 @@ static gboolean fix_grandparent_links(GHashTable *slots, GError **error)
 	return TRUE;
 }
 
+static const gchar *singleton_classes[] = {"boot-mbr-switch", "boot-gpt-switch", "boot-emmc", NULL};
+
+static gboolean check_class_consistency(RaucConfig *config, GError **error)
+{
+	g_auto(GStrv) classes = NULL;
+
+	classes = r_slot_get_classes(config->slots);
+	for (gchar **class = classes; *class != NULL; class++) {
+		GList *list = NULL;
+
+		list = r_slot_get_all_of_class(config->slots, *class);
+		for (GList *l = list; l != NULL; l = l->next) {
+			RaucSlot *slot = l->data;
+			gboolean comp_readonly;
+			const gchar *comp_parent_class;
+
+			if (l == list) {
+				comp_readonly = slot->readonly;
+				comp_parent_class = slot->parent ? slot->parent->sclass : NULL;
+			}
+
+			/* check readonly is set consistently */
+			if (slot->readonly != comp_readonly) {
+				g_set_error(
+						error,
+						R_CONFIG_ERROR,
+						R_CONFIG_ERROR_INVALID_FORMAT,
+						"inconsistent 'readonly=' parameters in slots of class '%s'", slot->sclass);
+				return FALSE;
+			}
+
+			/* check parent is set consistently */
+			if (comp_parent_class && slot->parent) {
+				if (g_strcmp0(slot->parent->sclass, comp_parent_class) != 0) {
+					g_set_error(
+							error,
+							R_CONFIG_ERROR,
+							R_CONFIG_ERROR_INVALID_FORMAT,
+							"inconsistent 'parent=' parameters in slots of class '%s': referenced parent classes differ", *class);
+					return FALSE;
+				}
+			} else if ((!comp_parent_class && slot->parent) || (comp_parent_class && !slot->parent)) {
+				g_set_error(
+						error,
+						R_CONFIG_ERROR,
+						R_CONFIG_ERROR_INVALID_FORMAT,
+						"inconsistent 'parent=' parameters in slots of class '%s': parent both set and unset", *class);
+				return FALSE;
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static gboolean check_singleton_slots(RaucConfig *config, GError **error)
+{
+	g_autoptr(GList) slotlist = NULL;
+
+	slotlist = g_hash_table_get_values(config->slots);
+	for (GList *l = slotlist; l != NULL; l = l->next) {
+		RaucSlot *slot = l->data;
+
+		if (!g_strv_contains(singleton_classes, slot->type))
+			continue;
+
+		if (r_slot_get_num_of_class(config->slots, slot->sclass) > 1) {
+			g_set_error(
+					error,
+					R_CONFIG_ERROR,
+					R_CONFIG_ERROR_INVALID_FORMAT,
+					"Only 1 slot of type '%s' allowed", slot->type);
+
+			return FALSE;
+		}
+	}
+	g_list_free(slotlist);
+
+	return TRUE;
+}
+
+static gboolean config_file_sanity_checks(RaucConfig *config, GError **error)
+{
+	g_return_val_if_fail(config != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/* Check singleton slots */
+	if (!check_singleton_slots(config, error))
+		return FALSE;
+
+	/* Check class consistency */
+	if (!check_class_consistency(config, error))
+		return FALSE;
+
+	return TRUE;
+}
+
 gboolean parse_bundle_formats(guint *mask, const gchar *config, GError **error)
 {
 	gboolean res = TRUE;
@@ -815,6 +912,14 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 	c->slots = slots;
 
 	if (!check_remaining_groups(key_file, &ierror)) {
+		g_propagate_error(error, ierror);
+		res = FALSE;
+		goto free;
+	}
+
+	/* g_strfreev(groups); ??? */
+
+	if (!config_file_sanity_checks(c, &ierror)) {
 		g_propagate_error(error, ierror);
 		res = FALSE;
 		goto free;
