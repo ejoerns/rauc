@@ -322,6 +322,26 @@ GList* r_slot_get_all_of_class(GHashTable *slots, const gchar* class)
 	return retlist;
 }
 
+guint r_slot_get_num_of_class(GHashTable *slots, const gchar* class)
+{
+	guint count = 0;
+	GHashTableIter iter;
+	gchar *name;
+	RaucSlot *slot = NULL;
+
+	g_return_val_if_fail(slots, 0);
+	g_return_val_if_fail(class, 0);
+
+	g_hash_table_iter_init(&iter, slots);
+	while (g_hash_table_iter_next(&iter, (gpointer*) &name, (gpointer*) &slot)) {
+		if (g_strcmp0(slot->sclass, class) != 0)
+			continue;
+		count++;
+	}
+
+	return count;
+}
+
 GList* r_slot_get_all_children(GHashTable *slots, RaucSlot *parent)
 {
 	GList *retlist = NULL;

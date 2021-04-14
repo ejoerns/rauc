@@ -219,6 +219,17 @@ GList* r_slot_get_all_of_class(GHashTable *slots, const gchar* class)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
+ * Returns number of slots of given slot class
+ *
+ * @param slots GHashTable of system slots
+ * @param class name of class to find all slots for
+ *
+ * @return number of slots of given class
+ */
+guint r_slot_get_num_of_class(GHashTable *slots, const gchar* class)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
  * Returns list of child slots of given parent slot.
  *
  * @param slots GHashTable of system slots
