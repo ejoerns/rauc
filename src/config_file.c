@@ -166,7 +166,6 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 	GList *slotlist = NULL;
 	GHashTable *slots = NULL;
 	g_autoptr(GHashTable) bootnames = NULL;
-	GList *l;
 	gchar *bootloader;
 	const gchar **pointer;
 	gboolean dtbvariant;
@@ -669,7 +668,7 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 
 	/* Add parent pointers */
 	slotlist = g_hash_table_get_keys(slots);
-	for (l = slotlist; l != NULL; l = l->next) {
+	for (GList *l = slotlist; l != NULL; l = l->next) {
 		RaucSlot *slot;
 		RaucSlot *parent;
 		RaucSlot *child;
@@ -970,7 +969,7 @@ static void load_slot_status_globally(void)
 	GHashTable *slots = r_context()->config->slots;
 	g_autoptr(GKeyFile) key_file = g_key_file_new();
 	g_auto(GStrv) groups = NULL;
-	gchar **group, *slotname;
+	gchar *slotname;
 	GHashTableIter iter;
 	RaucSlot *slot;
 
@@ -983,7 +982,7 @@ static void load_slot_status_globally(void)
 
 	/* Load all slot states included in the statusfile */
 	groups = g_key_file_get_groups(key_file, NULL);
-	for (group = groups; *group != NULL; group++) {
+	for (gchar **group = groups; *group != NULL; group++) {
 		if (!g_str_has_prefix(*group, RAUC_SLOT_PREFIX "."))
 			continue;
 
