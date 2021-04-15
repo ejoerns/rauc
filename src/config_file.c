@@ -99,6 +99,37 @@ static gboolean config_file_sanity_checks(RaucConfig *config, GError **error)
 	}
 	g_list_free(slotlist);
 
+	/* Check class consistency */
+	{
+		gchar** classes = NULL; //FIXME
+		classes = r_slot_get_classes(config->slots);
+		for (gchar **class = classes; *class != NULL; class++) {
+			GList *list = NULL;
+			gboolean comp_readonly;
+
+			g_message("Checking class %s", *class);
+
+			list = r_slot_get_all_of_class(config->slots, *class);
+			for (GList *l = list; l != NULL; l = l->next) {
+				RaucSlot *slot = l->data;
+				g_message("%s", slot->name);
+
+				if (l == list) {
+					comp_readonly = slot->readonly;
+				}
+
+				if (slot->readonly != comp_readonly) {
+					g_set_error(
+							error,
+							R_CONFIG_ERROR,
+							R_CONFIG_ERROR_INVALID_FORMAT,
+							"'readonly' parameter set inconsistently in slots of class '%s'", slot->sclass);
+					return FALSE;
+				}
+			}
+		}
+	}
+
 	return TRUE;
 }
 
