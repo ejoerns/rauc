@@ -147,6 +147,11 @@ RaucSlot* r_slot_get_parent_root(RaucSlot *slot)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
+ */
+gchar** r_slot_get_classes(GHashTable *slots)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
  * Gets all classes that do not have a parent
  *
  * @return NULL-teminated array of intern strings. Free with g_free().
