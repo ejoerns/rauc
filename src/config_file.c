@@ -106,24 +106,46 @@ static gboolean config_file_sanity_checks(RaucConfig *config, GError **error)
 		for (gchar **class = classes; *class != NULL; class++) {
 			GList *list = NULL;
 			gboolean comp_readonly;
+			const gchar *comp_parent_class;
 
 			g_message("Checking class %s", *class);
 
 			list = r_slot_get_all_of_class(config->slots, *class);
 			for (GList *l = list; l != NULL; l = l->next) {
 				RaucSlot *slot = l->data;
-				g_message("%s", slot->name);
+				g_message("%s, readonly: %s", slot->name, slot->readonly ? "TRUE" : "FALSE");
 
 				if (l == list) {
 					comp_readonly = slot->readonly;
+					comp_parent_class = slot->parent ? slot->parent->sclass : NULL;
 				}
 
+				/* check readonly is set consistently */
 				if (slot->readonly != comp_readonly) {
 					g_set_error(
 							error,
 							R_CONFIG_ERROR,
 							R_CONFIG_ERROR_INVALID_FORMAT,
 							"'readonly' parameter set inconsistently in slots of class '%s'", slot->sclass);
+					return FALSE;
+				}
+
+				/* check parent is set consistently */
+				if (comp_parent_class && slot->parent) {
+					if (g_strcmp0(slot->parent->sclass, comp_parent_class) != 0) {
+						g_set_error(
+								error,
+								R_CONFIG_ERROR,
+								R_CONFIG_ERROR_INVALID_FORMAT,
+								"'parent' parameter set inconsistently in slots of class '%s'", slot->sclass);
+						return FALSE;
+					}
+				} else if ((!comp_parent_class && slot->parent) || (comp_parent_class && !slot->parent)) {
+					g_set_error(
+							error,
+							R_CONFIG_ERROR,
+							R_CONFIG_ERROR_INVALID_FORMAT,
+							"'parent' parameter set inconsistently in slots of class '%s'", slot->sclass);
 					return FALSE;
 				}
 			}
