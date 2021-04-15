@@ -257,6 +257,31 @@ void r_slot_clean_data_directory(const RaucSlot *slot)
 	}
 }
 
+gchar** r_slot_get_classes(GHashTable *slots)
+{
+	GPtrArray *slotclasses = NULL;
+	GHashTableIter iter;
+	RaucSlot *iterslot = NULL;
+
+	g_return_val_if_fail(slots, NULL);
+
+	slotclasses = g_ptr_array_new();
+
+	g_hash_table_iter_init(&iter, slots);
+	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &iterslot)) {
+		const gchar *key = NULL;
+
+		g_assert_nonnull(iterslot->sclass);
+
+		key = g_intern_string(iterslot->sclass);
+		g_ptr_array_remove_fast(slotclasses, (gpointer)key); /* avoid duplicates */
+		g_ptr_array_add(slotclasses, (gpointer)key);
+	}
+	g_ptr_array_add(slotclasses, NULL);
+
+	return (gchar**) g_ptr_array_free(slotclasses, FALSE);
+}
+
 gchar** r_slot_get_root_classes(GHashTable *slots)
 {
 	GPtrArray *slotclasses = NULL;

@@ -186,6 +186,15 @@ G_GNUC_WARN_UNUSED_RESULT;
 void r_slot_clean_data_directory(const RaucSlot *slot);
 
 /**
+ * Gets all classes
+ *
+ * @return NULL-teminated array of intern strings. Free with g_free().
+ *         [transfer full]
+ */
+gchar** r_slot_get_classes(GHashTable *slots)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
  * Gets all classes that do not have a parent
  *
  * @return NULL-teminated array of intern strings. Free with g_free().
