@@ -500,10 +500,15 @@ With this you can always mount ``/dev/data`` and get the correct data slot.
 RAUC casync Support
 -------------------
 
-.. warning:: casync support is still experimental and lacks some unit tests.
+.. note:: Make sure to use a recent casync version (e.g. from the
+  `git <https://github.com/systemd/casync>`_) for evaluation.
 
-  When evaluating, make sure to compile a recent casync version from the
-  `git <https://github.com/systemd/casync>`_ for testing.
+  Also, for using UBI support, make sure to add casync patches from
+  https://github.com/systemd/casync/pull/227.
+
+  If file system images are sufficient, also check for the more lightweight
+  `https://github.com/florolf/casync-nano <casync-nano>` tool which can be
+  used as a drop-in replacement for these use cases.
 
 Using the Content-Addressable Data Synchronization tool `casync` for updating
 embedded / IoT devices provides a couple of benefits.
