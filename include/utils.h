@@ -3,6 +3,19 @@
 #include <gio/gio.h>
 #include <glib.h>
 
+/* Evaluate EXPRESSION, and repeat as long as it returns -1 with `errno'
+ * set to EINTR. Needed for builds against musl, taken from glibc's unistd.h.
+ */
+
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) \
+	(__extension__ \
+		 ({ long int __result; \
+		    do {__result = (long int) (expression);} \
+		    while (__result == -1L && errno == EINTR); \
+		    __result; }))
+#endif
+
 /* Use
  *
  *   g_auto(filedesc) fd = -1
