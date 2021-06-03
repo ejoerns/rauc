@@ -1827,7 +1827,7 @@ static void cmdline_handler(int argc, char **argv)
 #endif
 			"  extract\tExtract the bundle content\n"
 			"  install\tInstall a bundle\n"
-			"  info\t\tShow file information\n"
+			"  info\t\tShow bundle information\n"
 #if ENABLE_SERVICE == 1
 			"  service\tStart RAUC service\n"
 #endif
