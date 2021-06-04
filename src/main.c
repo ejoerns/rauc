@@ -42,6 +42,7 @@ gchar *mksquashfs_args = NULL;
 gchar *casync_args = NULL;
 gchar **recipients = NULL;
 gchar *handler_args = NULL;
+gchar *keyring = NULL;
 gchar *mount = NULL;
 gchar *bootslot = NULL;
 gboolean utf8_supported = FALSE;
@@ -1996,6 +1997,7 @@ static GOptionEntry entries_install[] = {
 	{"progress", '\0', 0, G_OPTION_ARG_NONE, &install_progressbar, "show progress bar", NULL},
 #else
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra handler arguments", "ARGS"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "(override) keyring file", "PEMFILE"},
 	{"mount", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
 	{"override-boot-slot", '\0', 0, G_OPTION_ARG_STRING, &bootslot, "override auto-detection of booted slot", "BOOTNAME"},
 #endif
@@ -2003,29 +2005,31 @@ static GOptionEntry entries_install[] = {
 };
 
 static GOptionEntry entries_bundle[] = {
-	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "verification keyring file", "PEMFILE"},
+	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "post-signing verification keyring file", "PEMFILE"},
 	{"mksquashfs-args", '\0', 0, G_OPTION_ARG_STRING, &mksquashfs_args, "mksquashfs extra args", "ARGS"},
 	{0}
 };
 
 static GOptionEntry entries_resign[] = {
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
-	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "verification keyring file", "PEMFILE"},
+	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "post-signing verification keyring file", "PEMFILE"},
 	{0}
 };
 
 static GOptionEntry entries_replace[] = {
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
-	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "verification keyring file", "PEMFILE"},
+	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "post-signing verification keyring file", "PEMFILE"},
 	{0}
 };
 
 static GOptionEntry entries_convert[] = {
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
-	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "verification keyring file", "PEMFILE"},
+	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "keyring file", "PEMFILE"},
 	{"mksquashfs-args", '\0', 0, G_OPTION_ARG_STRING, &mksquashfs_args, "mksquashfs extra args", "ARGS"},
 	{"casync-args", '\0', 0, G_OPTION_ARG_STRING, &casync_args, "casync extra args", "ARGS"},
 	{0}
@@ -2042,6 +2046,7 @@ static GOptionEntry entries_extract[] = {
 };
 
 static GOptionEntry entries_info[] = {
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{"output-format", '\0', 0, G_OPTION_ARG_STRING, &output_format, "output format", "FORMAT"},
@@ -2061,6 +2066,7 @@ static GOptionEntry entries_status[] = {
 
 static GOptionEntry entries_service[] = {
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra handler arguments", "ARGS"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "(override) keyring file", "PEMFILE"},
 	{"mount", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
 	{"override-boot-slot", '\0', 0, G_OPTION_ARG_STRING, &bootslot, "override auto-detection of booted slot", "BOOTNAME"},
 	{0}
@@ -2146,7 +2152,7 @@ static void create_option_groups(void)
 static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, debug = FALSE, version = FALSE;
-	gchar *confpath = NULL, *keyring = NULL, **intermediate = NULL;
+	gchar *confpath = NULL, **intermediate = NULL;
 	char *cmdarg = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	GOptionEntry entries[] = {
@@ -2154,7 +2160,8 @@ static void cmdline_handler(int argc, char **argv)
 		/* NOTE: cert and key kept for backwards-compatibility, but made invisible */
 		{"cert", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &certpath, "cert file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		{"key", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &keypath, "key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
-		{"keyring", '\0', 0, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+		/* NOTE: keyring kept for backwards-compatibility, but made invisible */
+		{"keyring", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
 		{"intermediate", '\0', 0, G_OPTION_ARG_FILENAME_ARRAY, &intermediate, "intermediate CA file name", "PEMFILE"},
 		/* NOTE: mount kept for backwards-compatibility, but made invisible */
 		{"mount", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
