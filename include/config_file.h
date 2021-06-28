@@ -65,6 +65,13 @@ typedef struct {
 
 	gchar *systeminfo_handler;
 
+	/* streaming */
+	/* FIXME: use more future-proof name than streaming? */
+	gchar *streaming_sandbox_user;
+	gchar *streaming_tls_cert;
+	gchar *streaming_tls_key;
+	gchar *streaming_tls_ca;
+
 	GHashTable *slots;
 } RaucConfig;
 
