@@ -495,7 +495,7 @@ static gboolean resign_start(int argc, char **argv)
 		goto out;
 	}
 
-	if (!check_bundle(argv[2], &bundle, !verification_disabled, &ierror)) {
+	if (!check_bundle(argv[2], &bundle, !verification_disabled, NULL, &ierror)) {
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
@@ -585,7 +585,7 @@ static gboolean extract_start(int argc, char **argv)
 	g_debug("input bundle: %s", argv[2]);
 	g_debug("output dir: %s", argv[3]);
 
-	if (!check_bundle(argv[2], &bundle, TRUE, &ierror)) {
+	if (!check_bundle(argv[2], &bundle, TRUE, NULL, &ierror)) {
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
@@ -638,7 +638,7 @@ static gboolean convert_start(int argc, char **argv)
 	g_debug("input bundle: %s", argv[2]);
 	g_debug("output bundle: %s", argv[3]);
 
-	if (!check_bundle(argv[2], &bundle, TRUE, &ierror)) {
+	if (!check_bundle(argv[2], &bundle, TRUE, NULL, &ierror)) {
 		g_printerr("%s\n", ierror->message);
 		g_clear_error(&ierror);
 		r_exit_status = 1;
@@ -924,7 +924,7 @@ static gboolean info_start(int argc, char **argv)
 		goto out;
 	g_debug("input bundle: %s", bundlelocation);
 
-	res = check_bundle(bundlelocation, &bundle, !verification_disabled, &error);
+	res = check_bundle(bundlelocation, &bundle, !verification_disabled, NULL, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
 		g_clear_error(&error);
@@ -1705,7 +1705,7 @@ static gboolean mount_start(int argc, char **argv)
 		goto out;
 	g_debug("input bundle: %s", bundlelocation);
 
-	res = check_bundle(bundlelocation, &bundle, TRUE, &error);
+	res = check_bundle(bundlelocation, &bundle, TRUE, NULL, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
 		g_clear_error(&error);

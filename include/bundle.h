@@ -19,6 +19,14 @@ typedef enum {
 } RBundleError;
 
 typedef struct {
+	gchar *tls_cert;
+	gchar *tls_key;
+	gchar *tls_ca;
+	gboolean tls_no_verify;
+	GStrv http_headers;
+} RaucBundleAccessArgs;
+
+typedef struct {
 	gchar *path;
 	gchar *origpath;
 	gchar *storepath;
@@ -58,11 +66,12 @@ G_GNUC_WARN_UNUSED_RESULT;
  *               check_bundle
  * @param verify If set to true the bundle signature will also be verified, if
  *               set to FALSE this step will be skipped
+ * @param access_args Optional arguments to control streaming access
  * @param error Return location for a GError
  *
  * @return TRUE on success, FALSE if an error occurred
  */
-gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, GError **error)
+gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, RaucBundleAccessArgs *access_args, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
@@ -218,3 +227,11 @@ gboolean umount_bundle(RaucBundle *bundle, GError **error);
 void free_bundle(RaucBundle *bundle);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucBundle, free_bundle);
+
+/**
+ * Frees the memory pointed to by the RaucBundleAccessArgs, but not the
+ * structure itself.
+ *
+ * @param access_args RaucBundleAccessArgs to clear
+ */
+void clear_bundle_access_args(RaucBundleAccessArgs *access_args);

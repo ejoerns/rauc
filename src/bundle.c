@@ -1384,7 +1384,7 @@ out:
 	return res;
 }
 
-gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, GError **error)
+gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, RaucBundleAccessArgs *access_args, GError **error)
 {
 	GError *ierror = NULL;
 	gboolean res = FALSE;
@@ -1941,4 +1941,14 @@ void free_bundle(RaucBundle *bundle)
 	if (bundle->verified_chain)
 		sk_X509_pop_free(bundle->verified_chain, X509_free);
 	g_free(bundle);
+}
+
+void clear_bundle_access_args(RaucBundleAccessArgs *access_args)
+{
+	g_free(access_args->tls_cert);
+	g_free(access_args->tls_key);
+	g_free(access_args->tls_ca);
+	g_strfreev(access_args->http_headers);
+
+	memset(access_args, 0, sizeof(*access_args));
 }
