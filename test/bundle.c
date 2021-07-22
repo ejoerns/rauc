@@ -270,7 +270,7 @@ static void bundle_test_extract_signature(BundleFixture *fixture,
 	outputsig = g_build_filename(fixture->tmpdir, "bundle.sig", NULL);
 	g_assert_nonnull(outputsig);
 
-	res = check_bundle(fixture->bundlename, &bundle, TRUE, &ierror);
+	res = check_bundle(fixture->bundlename, &bundle, TRUE, NULL, &ierror);
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 	g_assert_nonnull(bundle);
