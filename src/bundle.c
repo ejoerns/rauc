@@ -6,6 +6,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/vfs.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <openssl/rand.h>
 
@@ -17,6 +19,7 @@
 #include "network.h"
 #include "dm.h"
 #include "verity_hash.h"
+#include "nbd.h"
 
 /* from statfs(2) man page, as linux/magic.h may not have all of them */
 #ifndef AFS_SUPER_MAGIC
@@ -1384,6 +1387,89 @@ out:
 	return res;
 }
 
+#if ENABLE_STREAMING
+static gboolean open_remote_bundle(RaucBundle *bundle, GError **error)
+{
+	gboolean res = FALSE;
+	GError *ierror = NULL;
+	g_autofree void *buffer = NULL;
+	guint64 sigsize;
+	guint64 offset;
+
+	g_return_val_if_fail(bundle != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	g_assert_null(bundle->stream);
+	g_assert_nonnull(bundle->nbd_srv);
+	g_assert_null(bundle->nbd_dev);
+
+	offset = bundle->nbd_srv->data_size - sizeof(sigsize);
+
+	res = nbd_read(bundle->nbd_srv->sock, (guint8*)&sigsize, sizeof(sigsize), offset, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to read signature size from bundle: ");
+		goto out;
+	}
+	sigsize = GUINT64_FROM_BE(sigsize);
+
+	if (sigsize == 0) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_SIGNATURE,
+				"Signature size is 0");
+		res = FALSE;
+		goto out;
+	}
+	/* sanity check: signature should be smaller than bundle size */
+	if (sigsize > offset) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_SIGNATURE,
+				"Signature size (%"G_GUINT64_FORMAT ") exceeds bundle size", sigsize);
+		res = FALSE;
+		goto out;
+	}
+	/* sanity check: signature should be smaller than 64KiB */
+	if (sigsize > MAX_BUNDLE_SIGNATURE_SIZE) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_SIGNATURE,
+				"Signature size (%"G_GUINT64_FORMAT ") exceeds 64KiB", sigsize);
+		res = FALSE;
+		goto out;
+	}
+
+	/* The CMS data starts at filesize - sizeof(sizesize) - sigsize. */
+	offset -= sigsize;
+	if (offset % 4096) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_SIGNATURE,
+				"Payload size (%"G_GUINT64_FORMAT ") is not a multiple of 4KiB. "
+				"See https://rauc.readthedocs.io/en/latest/faq.html#what-causes-a-payload-size-that-is-not-a-multiple-of-4kib",
+				offset);
+		res = FALSE;
+		goto out;
+	}
+	bundle->size = offset;
+
+	buffer = g_malloc0(sigsize);
+	res = nbd_read(bundle->nbd_srv->sock, buffer, sigsize, offset, &ierror);
+	if (!res) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to read signature from bundle: ");
+		goto out;
+	}
+	bundle->sigdata = g_bytes_new_take(g_steal_pointer(&buffer), sigsize);
+
+out:
+	return res;
+}
+#else
+static gboolean open_remote_bundle(RaucBundle *bundle, GError **error)
+{
+	g_error("configured without --enable-streaming");
+	return FALSE;
+}
+#endif
+
 gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean verify, RaucBundleAccessArgs *access_args, GError **error)
 {
 	GError *ierror = NULL;
@@ -1410,7 +1496,31 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 	/* Download Bundle to temporary location if remote URI is given */
 	bundlescheme = g_uri_parse_scheme(bundlename);
 	if (is_remote_scheme(bundlescheme)) {
-#if ENABLE_NETWORK
+#if ENABLE_STREAMING
+		ibundle->path = g_strdup(bundlename);
+
+		g_message("Remote URI detected, streaming bundle...");
+		ibundle->nbd_srv = new_nbd_server();
+		ibundle->nbd_srv->url = g_strdup(bundlename);
+		if (access_args) {
+			ibundle->nbd_srv->tls_cert = g_strdup(access_args->tls_cert);
+			ibundle->nbd_srv->tls_key = g_strdup(access_args->tls_key);
+			ibundle->nbd_srv->tls_ca = g_strdup(access_args->tls_ca);
+			ibundle->nbd_srv->tls_no_verify = access_args->tls_no_verify;
+			ibundle->nbd_srv->headers = g_strdupv(access_args->http_headers);
+		}
+		if (!ibundle->nbd_srv->tls_cert)
+			ibundle->nbd_srv->tls_cert = g_strdup(r_context()->config->streaming_tls_cert);
+		if (!ibundle->nbd_srv->tls_key)
+			ibundle->nbd_srv->tls_key = g_strdup(r_context()->config->streaming_tls_key);
+		if (!ibundle->nbd_srv->tls_ca)
+			ibundle->nbd_srv->tls_ca = g_strdup(r_context()->config->streaming_tls_ca);
+		res = start_nbd_server(ibundle->nbd_srv, &ierror);
+		if (!res) {
+			g_propagate_prefixed_error(error, ierror, "Failed to stream bundle %s: ", ibundle->path);
+			goto out;
+		}
+#elif ENABLE_NETWORK
 		ibundle->origpath = g_strdup(bundlename);
 		ibundle->path = g_build_filename(g_get_tmp_dir(), "_download.raucb", NULL);
 
@@ -1445,15 +1555,30 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 
 	g_message("Reading bundle: %s", ibundle->path);
 
-	res = open_local_bundle(ibundle, &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
-		goto out;
+	if (!ibundle->nbd_srv) { /* local or downloaded */
+		res = open_local_bundle(ibundle, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+	} else { /* streaming */
+		res = open_remote_bundle(ibundle, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
 	}
 
 	res = cms_is_detached(ibundle->sigdata, &detached, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
+		goto out;
+	}
+
+	if (detached && ibundle->nbd_srv) {
+		g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_FORMAT,
+				"Bundle format 'plain' not supported in streaming mode");
+		res = FALSE;
 		goto out;
 	}
 
@@ -1493,8 +1618,6 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 			ibundle->signature_verified = TRUE;
 			ibundle->payload_verified = TRUE;
 		} else {
-			int fd = g_file_descriptor_based_get_fd(G_FILE_DESCRIPTOR_BASED(ibundle->stream));
-
 			if (!(r_context()->config->bundle_formats_mask & 1 << R_MANIFEST_FORMAT_VERITY)) {
 				g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_FORMAT,
 						"Bundle format 'verity' not allowed");
@@ -1502,12 +1625,18 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, gboolean ver
 				goto out;
 			}
 
-			if (!check_bundle_access(fd, &ierror)) {
-				ibundle->exclusive_check_error = g_strdup(ierror->message);
-				g_clear_error(&ierror);
-			} else {
-				ibundle->exclusive_verified = TRUE;
+			/* check if we have exclusive access to local or downloaded bundles */
+			if (ibundle->stream) {
+				int fd = g_file_descriptor_based_get_fd(G_FILE_DESCRIPTOR_BASED(ibundle->stream));
+
+				if (!check_bundle_access(fd, &ierror)) {
+					ibundle->exclusive_check_error = g_strdup(ierror->message);
+					g_clear_error(&ierror);
+				} else {
+					ibundle->exclusive_verified = TRUE;
+				}
 			}
+
 			res = cms_verify_sig(ibundle->sigdata, store, &cms, &manifest_bytes, &ierror);
 			if (!res) {
 				g_propagate_error(error, ierror);
@@ -1773,7 +1902,6 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error)
 	GError *ierror = NULL;
 	g_autofree gchar *mount_point = NULL;
 	g_autofree gchar *loopname = NULL;
-	gint bundlefd = -1;
 	gint loopfd = -1;
 	gboolean res = FALSE;
 
@@ -1797,11 +1925,26 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error)
 
 	g_message("Mounting bundle '%s' to '%s'", bundle->path, mount_point);
 
-	bundlefd = g_file_descriptor_based_get_fd(G_FILE_DESCRIPTOR_BASED(bundle->stream));
-	res = r_setup_loop(bundlefd, &loopfd, &loopname, bundle->size, &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
-		goto out;
+	if (bundle->stream) { /* local or downloaded bundle */
+		gint bundlefd = g_file_descriptor_based_get_fd(G_FILE_DESCRIPTOR_BASED(bundle->stream));
+		res = r_setup_loop(bundlefd, &loopfd, &loopname, bundle->size, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+	} else if (ENABLE_STREAMING && bundle->nbd_srv) { /* streaming bundle access */
+		bundle->nbd_dev = new_nbd_device();
+		bundle->nbd_dev->data_size = bundle->size;
+		bundle->nbd_dev->sock = bundle->nbd_srv->sock;
+		bundle->nbd_srv->sock = -1;
+		res = setup_nbd_device(bundle->nbd_dev, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+		loopname = g_strdup(bundle->nbd_dev->dev);
+	} else {
+		g_assert_not_reached();
 	}
 
 	if (!bundle->manifest) { /* plain format */
@@ -1915,6 +2058,22 @@ gboolean umount_bundle(RaucBundle *bundle, GError **error)
 	g_rmdir(bundle->mount_point);
 	g_clear_pointer(&bundle->mount_point, g_free);
 
+	if (ENABLE_STREAMING && bundle->nbd_dev) {
+		res = remove_nbd_device(bundle->nbd_dev, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+	}
+
+	if (ENABLE_STREAMING && bundle->nbd_srv) {
+		res = stop_nbd_server(bundle->nbd_srv, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+	}
+
 	res = TRUE;
 out:
 	return res;
@@ -1931,6 +2090,12 @@ void free_bundle(RaucBundle *bundle)
 		}
 
 	g_free(bundle->path);
+
+	if (ENABLE_STREAMING && bundle->nbd_dev)
+		free_nbd_device(bundle->nbd_dev);
+	if (ENABLE_STREAMING && bundle->nbd_srv)
+		free_nbd_server(bundle->nbd_srv);
+
 	if (bundle->stream)
 		g_object_unref(bundle->stream);
 	g_bytes_unref(bundle->sigdata);
@@ -1945,10 +2110,12 @@ void free_bundle(RaucBundle *bundle)
 
 void clear_bundle_access_args(RaucBundleAccessArgs *access_args)
 {
-	g_free(access_args->tls_cert);
-	g_free(access_args->tls_key);
-	g_free(access_args->tls_ca);
-	g_strfreev(access_args->http_headers);
+	if (ENABLE_STREAMING) {
+		g_free(access_args->tls_cert);
+		g_free(access_args->tls_key);
+		g_free(access_args->tls_ca);
+		g_strfreev(access_args->http_headers);
+	}
 
 	memset(access_args, 0, sizeof(*access_args));
 }

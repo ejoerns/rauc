@@ -85,6 +85,10 @@ if WANT_GPT
 librauc_la_SOURCES += src/gpt.c
 endif
 
+if ENABLE_STREAMING
+librauc_la_SOURCES += src/nbd.c include/nbd.h
+endif
+
 nodist_librauc_la_SOURCES = \
 	$(gdbus_installer_generated)
 librauc_la_CFLAGS = $(AM_CFLAGS) $(CODE_COVERAGE_CFLAGS)
