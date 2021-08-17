@@ -1,3 +1,17 @@
+Release 1.6 (development)
+-------------------------
+
+.. rubric:: Enhancements
+
+* Add support for streaming installation from a HTTP(S) server for verity
+  bundles.
+  This avoids the need for a temporary bundle storage location and prepares for
+  more efficient incremental updates.
+
+.. rubric:: Bug fixes
+
+.. rubric:: Testing
+
 Release 1.5.1 (released Jan 22, 2021)
 -------------------------------------
 
