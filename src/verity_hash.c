@@ -395,7 +395,7 @@ out:
 			g_message("Verification of data area failed.");
 		else {
 			g_debug("Verification of data area succeeded.");
-			r = memcmp(root_hash, calculated_digest, digest_size) ? -EPERM : 0;
+			r = memcmp(root_hash, calculated_digest, digest_size) ? -EINVAL : 0;
 			if (r)
 				g_message("Verification of root hash failed.");
 			else
