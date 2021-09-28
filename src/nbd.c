@@ -750,6 +750,22 @@ static gboolean finish_configure(struct RaucNBDContext *ctx, struct RaucNBDTrans
 	if (code != CURLE_OK)
 		g_error("unexpected error from curl_easy_getinfo in %s", G_STRFUNC);
 
+	if (response_code == 0) {
+		g_autofree gchar *error = g_strdup_printf("server not responding");
+		g_variant_dict_insert(&dict, "error", "s", error);
+		g_variant_dict_insert(&dict, "error-http-code", "u", (guint32)response_code);
+		res = FALSE;
+		goto reply;
+	}
+
+	if (response_code == 200) {
+		g_autofree gchar *error = g_strdup_printf("unexpected HTTP code %ld. Range requests not supported by server", response_code);
+		g_variant_dict_insert(&dict, "error", "s", error);
+		g_variant_dict_insert(&dict, "error-http-code", "u", (guint32)response_code);
+		res = FALSE;
+		goto reply;
+	}
+
 	if (response_code != 206) {
 		g_autofree gchar *error = g_strdup_printf("unexpected HTTP error code %ld", response_code);
 		g_variant_dict_insert(&dict, "error", "s", error);
