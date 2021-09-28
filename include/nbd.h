@@ -6,6 +6,8 @@
 #define R_NBD_ERROR r_nbd_error_quark()
 GQuark r_nbd_error_quark(void);
 
+#define RAUC_SOCKET_FD 3
+
 typedef enum {
 	R_NBD_ERROR_CONFIGURATION,
 	R_NBD_ERROR_STARTUP,

@@ -2115,7 +2115,7 @@ int main(int argc, char **argv)
 
 	if (ENABLE_STREAMING && g_getenv("RAUC_NBD_SERVER")) {
 		pthread_setname_np(pthread_self(), "rauc-nbd");
-		return nbd_server_main(3, NULL) ? 0 : 1;
+		return nbd_server_main(RAUC_SOCKET_FD, NULL) ? 0 : 1;
 	}
 
 	create_option_groups();

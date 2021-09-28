@@ -30,7 +30,6 @@
 /* these are only used before passing the socket to the kernel */
 #define RAUC_NBD_CMD_CONFIGURE 0x1000
 #define RAUC_NBD_HANDLE "\x89\xce\x48\x24\x0c\xe4\x82\xce"
-#define RAUC_SOCKET_FD 3
 
 GQuark
 r_nbd_error_quark(void)
