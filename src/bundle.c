@@ -1936,7 +1936,7 @@ gboolean mount_bundle(RaucBundle *bundle, GError **error)
 		bundle->nbd_dev = new_nbd_device();
 		bundle->nbd_dev->data_size = bundle->size;
 		bundle->nbd_dev->sock = bundle->nbd_srv->sock;
-		bundle->nbd_srv->sock = -1;
+		//bundle->nbd_srv->sock = -1; // TODO: why? prevents proper cleanup in stop_nbd_server()
 		res = setup_nbd_device(bundle->nbd_dev, &ierror);
 		if (!res) {
 			g_propagate_error(error, ierror);
