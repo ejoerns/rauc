@@ -178,14 +178,20 @@ static int netlink_connect_cb(struct nl_msg *msg, void *arg)
 	return NL_OK;
 }
 
+// FIXME: either g_error on failure or make netlink_connect a GError method to propage error info?
 static struct nl_sock *netlink_connect(int *driver_id)
 {
 	struct nl_sock *nl = nl_socket_alloc();
+	int err;
 
-	if (!nl)
+	if (!nl) {
+		g_message("Failed to allocate netlink socket");
 		goto out;
+	}
 
-	if (genl_connect(nl)) { /* error */
+	err = genl_connect(nl);
+	if (err) { /* error */
+		g_message("Failed to connect to netlink socket: %s", nl_geterror(err));
 		nl_socket_free(nl);
 		nl = NULL;
 		goto out;
@@ -193,6 +199,7 @@ static struct nl_sock *netlink_connect(int *driver_id)
 
 	*driver_id = genl_ctrl_resolve(nl, "nbd");
 	if (*driver_id < 0) {
+		g_message("generic netlink family \"nbd\" not found - BLK_DEV_NBD not enabled in kernel?");
 		nl_close(nl);
 		nl_socket_free(nl);
 		nl = NULL;
