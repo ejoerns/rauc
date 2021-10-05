@@ -163,12 +163,9 @@ void free_nbd_device(RaucNBDDevice *nbd_dev)
 	GError *ierror = NULL;
 	g_return_if_fail(nbd_dev);
 
-	g_message("%s", __func__);
-
 	if (nbd_dev->index_valid) {
 		if (!remove_nbd_device(nbd_dev, &ierror)) {
-			/* FIXME report error */
-			g_message("%s, %s", __func__, ierror->message);
+			g_message("removing ndb device failed: %s", ierror->message);
 			g_error_free(ierror);
 		}
 	}
@@ -192,8 +189,7 @@ void free_nbd_server(RaucNBDServer *nbd_srv)
 
 	if (nbd_srv->sproc) {
 		if (!stop_nbd_server(nbd_srv, &ierror)) {
-			/* FIXME report error */
-			g_message("%s, %s", __func__, ierror->message);
+			g_message("stopping nbd server failed: %s", ierror->message);
 			g_error_free(ierror);
 		}
 	}
