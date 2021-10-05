@@ -240,14 +240,18 @@ gboolean setup_nbd_device(RaucNBDDevice *nbd_dev, GError **error)
 	if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, driver_id, 0, 0, NBD_CMD_CONNECT, 0))
 		g_error("failed to add generic netlink headers to message");
 
+	/* do not set NBD_ATTR_INDEX to let nbd return free nbd device index */
 	NLA_PUT_U64(msg, NBD_ATTR_SIZE_BYTES, nbd_dev->data_size);
 	NLA_PUT_U64(msg, NBD_ATTR_BLOCK_SIZE_BYTES, 4096);
+	NLA_PUT_U64(msg, NBD_ATTR_TIMEOUT, 300);
 	NLA_PUT_U64(msg, NBD_ATTR_SERVER_FLAGS, 0);
+	// FIXME: Currently, I encounter that NBD_CFLAG_DESTROY_ON_DISCONNECT will remove devices but kernel fails to re-add them
+	// However, there are various changes in recent kernel versions dealing with nbd destroy handling, thus this might be fixed already (tested here against v5.10).
+	// Note: nbd-client does not set any flag at all
 	NLA_PUT_U64(msg, NBD_ATTR_CLIENT_FLAGS,
 			NBD_CFLAG_DESTROY_ON_DISCONNECT |
 			NBD_CFLAG_DISCONNECT_ON_CLOSE
 			);
-	NLA_PUT_U64(msg, NBD_ATTR_TIMEOUT, 300);
 
 	attr_sockets = nla_nest_start(msg, NBD_ATTR_SOCKETS);
 	if (!attr_sockets)
