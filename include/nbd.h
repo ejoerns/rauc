@@ -45,10 +45,20 @@ typedef struct {
 typedef struct {
 } RaucNBDConfig;
 
+
+/**
+ * FIXME: prefix with r_nbd_ !? -> r_nbd_new_device()
+ * @return Returns a new-allocated NBD device structure
+ */
 RaucNBDDevice *new_nbd_device(void);
+/**
+ * FIXME: rename to r_nbd_free_device() ?
+ * @param nbd_dev to free
+ */
 void free_nbd_device(RaucNBDDevice *nbd_dev);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucNBDDevice, free_nbd_device);
 
+/** FIXME: r_nbd_new_server() */
 RaucNBDServer *new_nbd_server(void);
 void free_nbd_server(RaucNBDServer *nbd_srv);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(RaucNBDServer, free_nbd_server);
