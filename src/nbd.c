@@ -44,6 +44,7 @@ struct RaucStats {
 	gdouble min, max;
 };
 
+// FIXME: probably other prefix than 'r_stats_'?! (or move to stats.c)
 /**
  * Initializes a new statistics item.
  *
@@ -63,6 +64,7 @@ static void r_stats_init(struct RaucStats *stats)
 	stats->min = G_MINDOUBLE;
 }
 
+// FIXME: probably other prefix than 'r_stats_'?!
 /**
  * Adds a value to statistic item.
  *
