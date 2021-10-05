@@ -44,16 +44,36 @@ struct RaucStats {
 	gdouble min, max;
 };
 
+/**
+ * Initializes a new statistics item.
+ *
+ * Each statistic item is meant to measure exactly one property.
+ * Thus measuring different properties will required having mutlitple RaucStats
+ * objects.
+ *
+ * @param stats pointer to RaucStats struct.
+ */
 static void r_stats_init(struct RaucStats *stats)
 {
+	g_return_if_fail(stats);
+
 	memset(stats, 0, sizeof(*stats));
 
 	stats->min = G_MAXDOUBLE;
 	stats->min = G_MINDOUBLE;
 }
 
+/**
+ * Adds a value to statistic item.
+ *
+ * The statistics store the latest 64 values added as well as the sum of all
+ * values added and the min and max value of all values added so far.
+ * It also counts the total number of values added so far.
+ */
 static void r_stats_add(struct RaucStats *stats, gdouble value)
 {
+	g_return_if_fail(stats);
+
 	stats->values[stats->next] = value;
 	stats->next = (stats->next + 1) % 64;
 	stats->count++;
@@ -66,18 +86,36 @@ static void r_stats_add(struct RaucStats *stats, gdouble value)
 		stats->max = value;
 }
 
+/**
+ * Returns the average value of all values added so far.
+ *
+ * @param stats pointer to RaucStats struct to get average for
+ * @return average of all values
+ */
 static gdouble r_stats_get_avg(const struct RaucStats *stats)
 {
+	g_return_if_fail(stats);
+
 	if (stats->count)
 		return stats->sum / stats->count;
 	else
 		return 0.0;
 }
 
+/**
+ * Returns the average of the latest (max 64) values added.
+ *
+ * @param stats pointer to RaucStats struct to get average for
+ * @return average of latest (max 64) values
+ */
 static gdouble r_stats_get_recent_avg(const struct RaucStats *stats)
 {
 	gdouble sum = 0.0;
-	guint64 count = stats->count;
+	guint64 count = 0;
+
+	g_return_if_fail(stats);
+
+	count = stats->count;
 
 	if (count > 64)
 		count = 64;
@@ -91,6 +129,12 @@ static gdouble r_stats_get_recent_avg(const struct RaucStats *stats)
 		return 0.0;
 }
 
+/**
+ * Dumps the statistics for given item with provided prefix.
+ *
+ * @param stats pointer to RaucStats struct to dump
+ * @param prefix String to prepend to indicate which statistic item is printed
+ */
 static void r_stats_show(const struct RaucStats *stats, const gchar *prefix)
 {
 	g_autoptr(GString) msg = g_string_sized_new(128);
