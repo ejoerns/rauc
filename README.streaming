@@ -1,0 +1,16 @@
+Streaming Review
+
+* rauc install http:::/www/ejo/cl-update-bundle-cl.raucb
+
+  (Invalid URI scheme)
+
+  Leads to:
+
+  | Failed to stream bundle http:::/www/ejo/cl-update-bundle-cl.raucb: failed to configure streaming: server not responding
+
+  -> check for invalid URI?
+
+* Error handling in nbd.c:finish_configure()
+
+  * Add extra check for response_code 0: got no data
+  * Add extra check for response_code 200: server does not support range requests

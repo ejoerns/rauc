@@ -1,0 +1,76 @@
+How Streaming Works - In Detail
+-------------------------------
+
+RAUC will switch to streaming mode once a remote bundle scheme is detected in
+the bundle path provided by the caller (and streaming support is compiled in).
+
+The check_bundle() function, which is responsible for opening and verifying the
+bundle, prepares the initial setup.
+
+The very first action in check_bundle() is to instantiate and launch the
+'rauc-nbd' server helper process together with a socketpair that serves as IPC
+interface between the rauc service and the rauc-nbd helper process.
+
+The rauc-nbd helper process mainly serves as the NBD server later on, but will
+also be used by 'rauc' directly during initial configuration.
+All communication with the remote bundle server is handled by 'rauc-nbd' only!
+
+Together with the 'rauc-nbd' server startup, a configuration request is sent
+through the IPC socket from 'rauc' to 'rauc-nbd' server.
+This contains the URL the helper process needs to access as well as
+verification instruction (TLS certs, etc.).
+The data exchange happens via GVariant serialization.
+
+The rauc-nbd helper process stores this information and uses it when setting up
+curl requests against the bundle server.
+
+Upon this initial configuration requests, the rauc-nbd server also already
+performs an initial request to the remote bundle server.
+This request is a range-request of four bytes to check if communication and
+range-requests work as expected (also by full reply header verification) and to
+get the actual size of the full bundle from the server, as well as some other
+data like modification timestamps.
+
+The information about the bundle size is important in order to perform
+subsequent range requests to read the signature size and thus the signature
+itself (like RAUC would do for local bundles, too).
+
+If retrieving the initial data succeeds, then, in open_remote_bundle, RAUC
+actually reads the bundle signature size and signature by manually invoking nbd
+server read requests over the socket to the rauc-nbd server.
+This are the same commands the kernel would invoke when using the helper
+process ass nbd server.
+This way, no NBD device needs to be set up unless the bundle is not verified
+yet.
+
+With the signature retrieved, RAUC performs the exact same checks and signature
+validation as it would for a local (verity) bundle.
+At this point it can also now also reject legacy 'plain' bundles, as these do
+not have a manifest embedded in the signature and thus cannot be verified using
+dm-verity.
+
+Once the verification is done, RAUC mounts the bundle for accessing its actual
+content (images).
+For streaming mode, this will be the point where the actual kernel nbd device
+is set up.
+RAUC uses the generic netlink API for this, as the ioctl interface does not
+allow dynamic retrieval of any free nbd device (and has other limitations).
+The setup is done by the rauc service itself and hands over the same socket of
+the initial socketpair that was used to communicate with the rauc-nbd helper
+process.
+From now on, the kernel uses it as nbd server backend socket.
+After setup, RAUC gets access to a /dev/nbdX network block device driven by the
+kernel.
+
+This abstraction as a simple block device allows to then to set up dm-verity
+etc. like for a local bundle.
+
+All read requests to /dev/nbd0 will go through the kernel and trigger a nbd read
+command on the socketpair between the kernel and the rauc-nbd server process.
+The rauc-nbd server listening to this socket will perform a curl HTTP range
+request for the requested data portion and send this to the bundle server.
+Once the server provided the data, RAUC will in turn receive them and provide
+them to the kernel in order to let the user read it via /dev/nbdX.
+
+The implementation with curl's multi interface allows to perform multiple read
+requests in parallel to speed up data transport.
