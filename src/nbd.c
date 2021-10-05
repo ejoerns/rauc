@@ -334,6 +334,7 @@ gboolean setup_nbd_device(RaucNBDDevice *nbd_dev, GError **error)
 	goto out;
 
 	/* This label is used by the NLA_PUT macros. */
+	// FIXME: Inconsistent to use GError on NLA_PUT_U32 and g_error() on nl_nest_start()?
 nla_put_failure:
 	res = FALSE;
 	g_set_error(error, G_IO_ERROR, G_IO_ERROR_FAILED, "netlink NLA_PUT failed");
@@ -354,6 +355,7 @@ gboolean remove_nbd_device(RaucNBDDevice *nbd_dev, GError **error)
 	struct nl_msg *msg = NULL;
 
 	g_return_val_if_fail(nbd_dev != NULL, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	if (!nbd_dev->index_valid)
 		return TRUE;
@@ -549,6 +551,7 @@ static gboolean prepare_curl(struct RaucNBDTransfer *xfer)
 
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_ERRORBUFFER, xfer->errbuf);
 
+	// FIXME: Document debug option?
 	if (g_getenv("RAUC_CURL_VERBOSE"))
 		code |= curl_easy_setopt(xfer->easy, CURLOPT_VERBOSE, 1L);
 
@@ -576,11 +579,12 @@ static gboolean prepare_curl(struct RaucNBDTransfer *xfer)
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_FAILONERROR, 1L);
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 
-	code |= curl_easy_setopt(xfer->easy, CURLOPT_HTTPPROXYTUNNEL, 1L);
+	code |= curl_easy_setopt(xfer->easy, CURLOPT_HTTPPROXYTUNNEL, 1L); // FIXME: What does this mean when CURLOPT_PROXY is not set?
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_SUPPRESS_CONNECT_HEADERS, 1L);
 
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_PRIVATE, xfer); /* Associate RaucNBDTransfer data for storing additional infos */
 
+	// FIXME: We cannot determine this way which curl operation did fail :(
 	if (code)
 		g_error("unexpected error from curl_easy_setopt in %s", G_STRFUNC);
 
@@ -716,6 +720,8 @@ static gboolean start_configure(struct RaucNBDContext *ctx, struct RaucNBDTransf
 
 		if (ctx->headers) {
 			ctx->headers_slist = gstrv_to_slist(ctx->headers);
+			if (ctx->headers_slist == NULL)
+				g_message("Failed setting header slist");
 		}
 	}
 
@@ -756,7 +762,7 @@ static gboolean start_request(struct RaucNBDContext *ctx, struct RaucNBDTransfer
 	switch (xfer->request.type) {
 		case NBD_CMD_READ: {
 			res = start_read(ctx, xfer);
-			g_assert_true(res);
+			g_assert_true(res); // FIXME: start_read always returns TRUE.
 			break;
 		}
 		case NBD_CMD_DISC: {
@@ -766,7 +772,7 @@ static gboolean start_request(struct RaucNBDContext *ctx, struct RaucNBDTransfer
 			break;
 		}
 		case RAUC_NBD_CMD_CONFIGURE: {
-			res = start_configure(ctx, xfer);
+			res = start_configure(ctx, xfer); // FIXME: start_configure always returns TRUE.
 			g_assert_true(res);
 			break;
 		}
@@ -1018,11 +1024,11 @@ gboolean nbd_server_main(gint sock, GError **error)
 			memcpy(xfer->reply.handle, xfer->request.handle, sizeof(xfer->reply.handle));
 
 			res = start_request(&ctx, xfer);
-			g_assert_true(res);
+			g_assert_true(res); //FIXME: error handling
 		}
 
 		mcode = curl_multi_perform(ctx.multi, &still_running);
-		g_assert(mcode == CURLM_OK);
+		g_assert(mcode == CURLM_OK); // FIXME: inconsistent to use g_error at some points and g_assert() at others
 
 		/* loop until all pending curl multi messages are read */
 		while (1) {
@@ -1058,6 +1064,7 @@ gboolean nbd_server_main(gint sock, GError **error)
 			res = finish_request(&ctx, xfer);
 			if (!res) {
 				g_message("finish_request failed, shutting down");
+				// FIXME: This will let nbd_server_main return FALSE without GError set
 				goto out;
 			}
 
@@ -1072,6 +1079,7 @@ gboolean nbd_server_main(gint sock, GError **error)
 		};
 	}
 
+	// FIXME: show by default? Or with g_debug?
 	r_stats_show(&ctx.dl_size, "dl size");
 	r_stats_show(&ctx.dl_speed, "dlspeed");
 	r_stats_show(&ctx.namelookup, "name lookup");
@@ -1098,6 +1106,8 @@ static gpointer nbd_server_thread(gpointer data)
 
 /* Send configuration request with curl info (URL, cert/key/ca) from client to rauc-nbd server
  * so that the rauc-nbd server can set up its curl context to communicate with the bundle server
+ *
+ * FIXME: better: nbd_server_configure? As we do not configure the nbd device here?
  */
 static gboolean nbd_configure(RaucNBDServer *nbd_srv, GError **error)
 {
@@ -1383,6 +1393,8 @@ out:
 	return res;
 }
 
+
+// FIXME: rename to r_nbd_read_request()
 gboolean nbd_read(gint sock, guint8 *data, size_t size, off64_t offset, GError **error)
 {
 	struct nbd_request request = {0};

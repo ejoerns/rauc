@@ -458,6 +458,7 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 	c->streaming_tls_cert = key_file_consume_string(key_file, "streaming", "tls-cert", NULL);
 	c->streaming_tls_key = key_file_consume_string(key_file, "streaming", "tls-key", NULL);
 	c->streaming_tls_ca = key_file_consume_string(key_file, "streaming", "tls-ca", NULL);
+	//FIXME: why no tls-no-verify and http-headers here?
 	if (!check_remaining_keys(key_file, "streaming", &ierror)) {
 		g_propagate_error(error, ierror);
 		res = FALSE;

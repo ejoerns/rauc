@@ -1403,6 +1403,10 @@ static gboolean open_remote_bundle(RaucBundle *bundle, GError **error)
 	g_assert_nonnull(bundle->nbd_srv);
 	g_assert_null(bundle->nbd_dev);
 
+	// FIXME: can we be sure that data_size is set?
+	// If the header did not contain 'Content-Range', the size will not be set.
+	// The value packed in by rauc-nbd and transferred over socket will be
+	// 0, too. The offset calculated here will unerflow..
 	offset = bundle->nbd_srv->data_size - sizeof(sigsize);
 
 	res = nbd_read(bundle->nbd_srv->sock, (guint8*)&sigsize, sizeof(sigsize), offset, &ierror);
