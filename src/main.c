@@ -2113,6 +2113,8 @@ int main(int argc, char **argv)
 	if (g_get_charset(NULL))
 		utf8_supported = TRUE;
 
+	/* For streaming installation: If RAUC_NBD_SERVER env variable is set,
+	 * spawn as 'rauc-nbd' proxy process instead */
 	if (ENABLE_STREAMING && g_getenv("RAUC_NBD_SERVER")) {
 		pthread_setname_np(pthread_self(), "rauc-nbd");
 		return nbd_server_main(RAUC_SOCKET_FD, NULL) ? 0 : 1;

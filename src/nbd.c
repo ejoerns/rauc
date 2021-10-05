@@ -202,6 +202,10 @@ void free_nbd_server(RaucNBDServer *nbd_srv)
 	g_free(nbd_srv);
 }
 
+/* Callback for receiving netlink connect reply.
+ *
+ * The reply must contain the index of a free nbd device.
+ */
 static int netlink_connect_cb(struct nl_msg *msg, void *arg)
 {
 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
@@ -220,6 +224,12 @@ static int netlink_connect_cb(struct nl_msg *msg, void *arg)
 	return NL_OK;
 }
 
+/**
+ * Connect to a netlink socket for nbd configuration.
+ *
+ * @param driver_id Return location for numerical 'nbd' netlink family identifier
+ * @return netlink socket on success, NULL otherwise
+ */
 // FIXME: either g_error on failure or make netlink_connect a GError method to propage error info?
 static struct nl_sock *netlink_connect(int *driver_id)
 {
@@ -252,6 +262,8 @@ out:
 	return nl;
 }
 
+/* uses netlink to setup /dev/nbdX */
+/* netlink API doc: infradead.org/~tgr/libnl/doc/core.html */
 gboolean setup_nbd_device(RaucNBDDevice *nbd_dev, GError **error)
 {
 	gboolean res = FALSE;
@@ -454,6 +466,11 @@ static size_t write_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 	return nmemb;
 }
 
+
+/* Header callback used for initial bundle (header) range requests.
+ * It parses headers for some sanity checking and to retrieve size of bundle and
+ * server/bundle modification timestamps when available.
+ */
 static size_t header_cb(char *buffer, size_t size, size_t nitems, void *userdata)
 {
 	struct RaucNBDTransfer *xfer = userdata;
@@ -487,6 +504,7 @@ static size_t header_cb(char *buffer, size_t size, size_t nitems, void *userdata
 			return 0;
 		}
 
+		/* range must be 0-3 as we asked for bundle header only */
 		if (!g_str_equal(h_range[0], "0-3") || g_str_equal(h_range[1], "*")) {
 			g_message("invalid content-range value");
 			return 0;
@@ -561,7 +579,7 @@ static gboolean prepare_curl(struct RaucNBDTransfer *xfer)
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_HTTPPROXYTUNNEL, 1L);
 	code |= curl_easy_setopt(xfer->easy, CURLOPT_SUPPRESS_CONNECT_HEADERS, 1L);
 
-	code |= curl_easy_setopt(xfer->easy, CURLOPT_PRIVATE, xfer);
+	code |= curl_easy_setopt(xfer->easy, CURLOPT_PRIVATE, xfer); /* Associate RaucNBDTransfer data for storing additional infos */
 
 	if (code)
 		g_error("unexpected error from curl_easy_setopt in %s", G_STRFUNC);
@@ -657,6 +675,14 @@ static struct curl_slist *gstrv_to_slist(const GStrv strv)
 	return slist;
 }
 
+/*
+ * Invoked by rauc-nbd server.
+ * Set up CURL context with URL and verification information provided by rauc
+ * (socket) client (upon first invocation).
+ *
+ * Perform initial range request to bundle server get the 'sqsh' magic from
+ * remote bundle and see if bundle is accessible and range requests work.
+ */
 static gboolean start_configure(struct RaucNBDContext *ctx, struct RaucNBDTransfer *xfer)
 {
 	gboolean res = FALSE;
@@ -718,6 +744,11 @@ static gboolean start_configure(struct RaucNBDContext *ctx, struct RaucNBDTransf
 	return TRUE;
 }
 
+/* Based on the NBD requests provided in xfer, either:
+ * - trigger http range request to bundle server upon nbd read request
+ * - disconnect on disconnect request
+ * - configure requests will set up curl context, etc. (proper url, verification, etc.)
+ */
 static gboolean start_request(struct RaucNBDContext *ctx, struct RaucNBDTransfer *xfer)
 {
 	gboolean res = FALSE;
@@ -885,6 +916,9 @@ out:
 	return res;
 }
 
+/* finishes handling the request emitted by start_request.
+ * Triggered by incoming http reply
+ */
 static gboolean finish_request(struct RaucNBDContext *ctx, struct RaucNBDTransfer *xfer)
 {
 	gboolean res = FALSE;
@@ -949,10 +983,12 @@ gboolean nbd_server_main(gint sock, GError **error)
 	while (!ctx.done) {
 		int numfds = 0;
 		int still_running = 0;
+		/* poll for events on open curl easy handles (1 second timeout) and for new data on socket ctx.sock (rauc client) */
 		CURLMcode mcode = curl_multi_wait(ctx.multi, &waitfd, 1, 1000, &numfds);
 		g_assert(mcode == CURLM_OK);
 
-		if ((numfds > 0) && (waitfd.revents & CURL_WAIT_POLLIN)) { /* new event from the client */
+		/* process new event from client */
+		if ((numfds > 0) && (waitfd.revents & CURL_WAIT_POLLIN)) { /* new event from the client, either NBD read or configure */
 			struct RaucNBDTransfer *xfer = g_malloc0(sizeof(struct RaucNBDTransfer));
 			xfer->ctx = &ctx;
 
@@ -977,6 +1013,7 @@ gboolean nbd_server_main(gint sock, GError **error)
 			xfer->request.len = GUINT32_FROM_BE(xfer->request.len);
 			//g_message("type 0x%x: from 0x%llx+0x%x", xfer->request.type, xfer->request.from, xfer->request.len);
 
+			/* assemble reply, acutally start/perform reqeust the NBD client expects */
 			xfer->reply.magic = GUINT32_TO_BE(NBD_REPLY_MAGIC);
 			memcpy(xfer->reply.handle, xfer->request.handle, sizeof(xfer->reply.handle));
 
@@ -987,6 +1024,7 @@ gboolean nbd_server_main(gint sock, GError **error)
 		mcode = curl_multi_perform(ctx.multi, &still_running);
 		g_assert(mcode == CURLM_OK);
 
+		/* loop until all pending curl multi messages are read */
 		while (1) {
 			CURLcode code = 0;
 			int msgs_in_queue = 0;
@@ -1000,6 +1038,7 @@ gboolean nbd_server_main(gint sock, GError **error)
 				continue;
 			}
 
+			/* Get context for this easy handle */
 			code = curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &xfer);
 			g_assert(code == CURLE_OK);
 
@@ -1057,6 +1096,9 @@ static gpointer nbd_server_thread(gpointer data)
 	return NULL;
 }
 
+/* Send configuration request with curl info (URL, cert/key/ca) from client to rauc-nbd server
+ * so that the rauc-nbd server can set up its curl context to communicate with the bundle server
+ */
 static gboolean nbd_configure(RaucNBDServer *nbd_srv, GError **error)
 {
 	struct nbd_request request = {0};
@@ -1070,7 +1112,7 @@ static gboolean nbd_configure(RaucNBDServer *nbd_srv, GError **error)
 	g_return_val_if_fail(nbd_srv != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	/* send config request */
+	/* send config request, serialized using GVariant */
 	g_variant_dict_insert(&dict, "url", "s", nbd_srv->url);
 	if (nbd_srv->tls_cert)
 		g_variant_dict_insert(&dict, "cert", "s", nbd_srv->tls_cert);
