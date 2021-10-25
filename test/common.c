@@ -240,7 +240,14 @@ gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
 
 gboolean test_mount(const gchar *src, const gchar *dest)
 {
-	return r_mount_full(src, dest, NULL, NULL, NULL);
+	g_autoptr(GError) error = NULL;
+
+	if (!r_mount_full(src, dest, NULL, NULL, &error)) {
+		g_warning("%s", error->message);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 
