@@ -1257,7 +1257,7 @@ int main(int argc, char *argv[])
 
 	r_context_conf()->handlerextra = g_strdup("--dummy1 --dummy2");
 	r_context();
-
+if (0) {
 	g_test_add_func("/install/target-group/non-redundant", test_install_determine_target_group_non_redundant);
 
 	g_test_add_func("/install/target-group/async", test_install_target_group_async);
@@ -1275,7 +1275,7 @@ int main(int argc, char *argv[])
 	g_test_add_func("/install/image-selection/readonly", test_install_image_readonly);
 
 	g_test_add_func("/install/image-mapping/variants", test_install_image_variants);
-
+}
 	for (RManifestBundleFormat format = R_MANIFEST_FORMAT_PLAIN; format <= R_MANIFEST_FORMAT_VERITY; format++) {
 		const gchar *format_name = r_manifest_bundle_format_to_str(format);
 
@@ -1284,6 +1284,7 @@ int main(int argc, char *argv[])
 			        .format = format,
 			},
 		}));
+if (0) {
 		g_test_add(g_strdup_printf("/install/bootname/%s", format_name),
 				InstallFixture, install_data,
 				install_fixture_set_up_system_user, install_test_bootname,
@@ -1293,12 +1294,12 @@ int main(int argc, char *argv[])
 				InstallFixture, install_data,
 				install_fixture_set_up_system_conf, install_test_target,
 				install_fixture_tear_down);
-
+}
 		g_test_add(g_strdup_printf("/install/bundle/%s", format_name),
 				InstallFixture, install_data,
 				install_fixture_set_up_bundle, install_test_bundle,
 				install_fixture_tear_down);
-
+if (0) {
 		g_test_add(g_strdup_printf("/install/bundle/central-status/%s", format_name),
 				InstallFixture, install_data,
 				install_fixture_set_up_bundle_central_status, install_test_bundle,
@@ -1375,6 +1376,7 @@ int main(int argc, char *argv[])
 				InstallFixture, install_data,
 				install_fixture_set_up_bundle_already_mounted, install_test_already_mounted,
 				install_fixture_tear_down);
+}
 	}
 
 	return g_test_run();
