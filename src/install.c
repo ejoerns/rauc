@@ -772,6 +772,35 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
+static gboolean mount_info(void)
+{
+	GSubprocess *sub;
+	GError *error = NULL;
+	gboolean res = FALSE;
+
+	g_message("MOUNT INFO");
+
+	sub = g_subprocess_new(
+			G_SUBPROCESS_FLAGS_NONE,
+			&error,
+			"mount",
+			NULL);
+
+	if (!sub) {
+		g_warning("mount info failed: %s", error->message);
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	res = g_subprocess_wait_check(sub, NULL, &error);
+	if (!res) {
+		g_warning("mount info failed: %s", error->message);
+		g_clear_error(&error);
+	}
+
+	return TRUE;
+}
+
 static gboolean test_file(const gchar *filename)
 {
 	GSubprocess *sub;
@@ -938,6 +967,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			g_message("Updating %s with %s", dest_slot->device, mfimage->filename);
 
 		test_file(mfimage->filename);
+		mount_info();
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
@@ -956,6 +986,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		g_message("Updating done");
 
 		test_file(dest_slot->device);
+		mount_info();
 
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
