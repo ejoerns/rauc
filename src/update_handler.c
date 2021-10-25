@@ -197,7 +197,7 @@ static gboolean copy_raw_image(RaucImage *image, GUnixOutputStream *outstream, G
 	}
 
 	size = g_output_stream_splice(G_OUTPUT_STREAM(outstream), instream,
-			G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+			G_OUTPUT_STREAM_SPLICE_NONE,
 			NULL,
 			&ierror);
 	if (size == -1) {
@@ -401,6 +401,7 @@ static gboolean copy_raw_image_to_dev(RaucImage *image, RaucSlot *slot, GError *
 		goto out;
 	}
 
+	g_message("closing slot device %s", slot->device);
 	res = g_output_stream_close(G_OUTPUT_STREAM(outstream), NULL, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
