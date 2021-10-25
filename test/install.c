@@ -228,11 +228,46 @@ device=/path/to/prebootloader";
 	r_context_conf()->configpath = g_strdup(pathname);
 }
 
+static gboolean mount_info(void)
+{
+	GSubprocess *sub;
+	GError *error = NULL;
+	gboolean res = FALSE;
+
+	g_message("MOUNT INFO");
+
+	sub = g_subprocess_new(
+			G_SUBPROCESS_FLAGS_NONE,
+			&error,
+			"mount",
+			NULL);
+
+	if (!sub) {
+		g_warning("mount info failed: %s", error->message);
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	res = g_subprocess_wait_check(sub, NULL, &error);
+	if (!res) {
+		g_warning("mount info failed: %s", error->message);
+		g_clear_error(&error);
+	}
+
+	return TRUE;
+}
+
 static void install_fixture_tear_down(InstallFixture *fixture,
 		gconstpointer user_data)
 {
+
+
+	g_message("TEARDOWN...");
+
 	if (!fixture->tmpdir)
 		return;
+
+	mount_info();
 
 	test_umount(fixture->tmpdir, "slot");
 	test_umount(fixture->tmpdir, "bootloader");
