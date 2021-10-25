@@ -52,7 +52,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 	g_autoptr(GSubprocess) sproc = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
-	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
+	g_autoptr(GPtrArray) args = g_ptr_array_new_full(11, g_free);
 
 	g_return_val_if_fail(source != NULL, FALSE);
 	g_return_val_if_fail(mountpoint != NULL, FALSE);
@@ -71,6 +71,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 		g_ptr_array_add(args, g_strdup("-o"));
 		g_ptr_array_add(args, g_strdup(extra_options));
 	}
+	g_ptr_array_add(args, g_strdup("-v"));
 	g_ptr_array_add(args, g_strdup(source));
 	g_ptr_array_add(args, g_strdup(mountpoint));
 	g_ptr_array_add(args, NULL);
