@@ -28,6 +28,7 @@ jobs:
 
     - name: Build documentation
       run: |
+        ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
         make doc SPHINXOPTS=-W
 
     - name: Run distcheck
