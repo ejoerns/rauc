@@ -21,24 +21,6 @@ jobs:
       run: |
         ./autogen.sh
 
-    - name: Test with service and gpt
-      run: |
-        ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
-        make clean
-        make -j4
-        make -j4 check TESTS=
-        ./qemu-test
-        lcov --directory . --capture --output-file "service.info"
-        
-    - name: Test without service and gpt
-      run: |
-        ./configure --enable-code-coverage --disable-service CFLAGS=-Werror
-        make clean
-        make -j4
-        make -j4 check TESTS=
-        ./qemu-test
-        lcov --directory . --capture --output-file "noservice.info"
-
     - uses: codecov/codecov-action@v1
       with:
         files: service.info,noservice.info
