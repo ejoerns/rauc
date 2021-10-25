@@ -1379,6 +1379,8 @@ static gboolean img_to_fs_handler(RaucImage *image, RaucSlot *dest_slot, const g
 	GError *ierror = NULL;
 	gboolean res = FALSE;
 
+	g_message("%s", __func__);
+
 	/* run slot pre install hook if enabled */
 	if (hook_name && image->hooks.pre_install) {
 		res = mount_and_run_slot_hook(hook_name, R_SLOT_HOOK_PRE_INSTALL, image, dest_slot, &ierror);

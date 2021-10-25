@@ -920,6 +920,8 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			goto out;
 		}
 
+		g_message("Updating done");
+
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
 		g_free(slot_state->bundle_description);
@@ -946,6 +948,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		r_context_end_step("copy_image", TRUE);
 
 		install_args_update(args, g_strdup_printf("Updating slot %s status", dest_slot->name));
+		g_message("Saving slot status to %s...", dest_slot->name);
 		res = save_slot_status(dest_slot, &ierror);
 		if (!res) {
 			g_propagate_prefixed_error(error, ierror, "Error while writing status file: ");
