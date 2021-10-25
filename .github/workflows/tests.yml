@@ -23,18 +23,9 @@ jobs:
       run: |
         ./autogen.sh
 
-    - uses: codecov/codecov-action@v1
-      with:
-        files: service.info,noservice.info
-        verbose: true
-
-    - name: Build documentation
-      run: |
-        ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
-        make doc SPHINXOPTS=-W
-
     - name: Run distcheck
       run: |
+        ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
         make -j4 distcheck
 
     - name: Build CGI example
