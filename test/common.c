@@ -242,7 +242,7 @@ gboolean test_mount(const gchar *src, const gchar *dest)
 {
 	g_autoptr(GError) error = NULL;
 
-	if (!r_mount_full(src, dest, NULL, NULL, &error)) {
+	if (!r_mount_full(src, dest, NULL, "loop", &error)) {
 		g_warning("%s", error->message);
 		return FALSE;
 	}
