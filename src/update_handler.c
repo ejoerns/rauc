@@ -1948,7 +1948,7 @@ img_to_slot_handler get_update_handler(RaucImage *mfimage, RaucSlot *dest_slot, 
 	for (RaucUpdatePair *updatepair = updatepairs; updatepair->src != NULL; updatepair++) {
 		if (g_pattern_match_simple(updatepair->src, src) &&
 		    g_pattern_match_simple(updatepair->dest, dest)) {
-			g_message("Image detected as type: %s", updatepair->src);
+			g_message("Found handler with pattern: %s -> %s", updatepair->src, updatepair->dest);
 			handler = updatepair->handler;
 			break;
 		}
