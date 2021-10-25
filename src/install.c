@@ -955,6 +955,8 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		g_message("Updating done");
 
+		test_file(dest_slot->device);
+
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
 		g_free(slot_state->bundle_description);
