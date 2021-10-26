@@ -76,6 +76,8 @@ void fixture_helper_fixture_set_up_system_user(gchar *tmpdir,
 	g_assert_true(test_make_filesystem(tmpdir, "images/appfs-1"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/bootloader-0"));
 
+	g_assert_true(test_fsck_filesystem(tmpdir, "images/rootfs-1"));
+
 	/* Set dummy bootname provider */
 	r_context_conf()->bootslot = g_strdup("system0");
 }
