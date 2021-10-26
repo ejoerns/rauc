@@ -955,11 +955,13 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 	}
 
 	if (!dest_slot->ext_mount_point) {
+		g_message("Unmounting %s again...", dest_slot->device);
 		if (!r_umount_slot(dest_slot, &ierror)) {
 			g_message("Failed to unmount slot %s: %s", dest_slot->device, ierror->message);
 			g_clear_error(&ierror);
 			return;
 		}
+		g_message("Successfully umountd %s!", dest_slot->device);
 	}
 }
 
