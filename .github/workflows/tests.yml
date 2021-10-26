@@ -16,6 +16,15 @@ jobs:
         gcc --version
         mount --version
 
+    - name: Install something
+      run: |
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
+
+    - name: Re-Inspect environment
+      run: |
+        mount --version
+
     - uses: actions/checkout@v2
 
     - name: Run autogen.sh
