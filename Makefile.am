@@ -185,7 +185,7 @@ librauctest_la_SOURCES = \
 	test/install-fixtures.h
 librauctest_la_LIBADD = $(GLIB_LIBS) librauc.la
 
-TESTS = $(check_PROGRAMS) test/rauc.t
+TESTS = $(check_PROGRAMS)
 
 test_install_test_SOURCES = test/install.c
 test_install_test_LDADD = librauctest.la
