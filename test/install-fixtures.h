@@ -4,7 +4,7 @@
 
 #include "common.h"
 
-#define SLOT_SIZE (150*1024*1024)
+#define SLOT_SIZE (75*1024*1024)
 
 typedef struct {
 	gchar *tmpdir;
