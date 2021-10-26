@@ -18,6 +18,7 @@ jobs:
         gcc --version
         mount --version
         uname -a
+        lsmod
 
     - name: Install something
       run: |
