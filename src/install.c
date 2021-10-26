@@ -783,7 +783,8 @@ static gboolean mount_info(void)
 	sub = g_subprocess_new(
 			G_SUBPROCESS_FLAGS_NONE,
 			&error,
-			"mount",
+			"losetup",
+			"-a",
 			NULL);
 
 	if (!sub) {
