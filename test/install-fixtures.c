@@ -94,9 +94,9 @@ void fixture_helper_set_up_system(gchar *tmpdir,
 
 	/* Make images user-writable */
 	test_make_slot_user_writable(tmpdir, "images/rootfs-0");
-	test_make_slot_user_writable(tmpdir, "images/appfs-0");
+	//test_make_slot_user_writable(tmpdir, "images/appfs-0");
 	test_make_slot_user_writable(tmpdir, "images/rootfs-1");
-	test_make_slot_user_writable(tmpdir, "images/appfs-1");
+	//test_make_slot_user_writable(tmpdir, "images/appfs-1");
 	test_make_slot_user_writable(tmpdir, "images/bootloader-0");
 
 	/* Provide active mounted slot */
