@@ -26,6 +26,8 @@ jobs:
     - name: Run distcheck
       run: |
         ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
+        lsmod
+        rmmod floppy
         make -j4 distcheck
 
     - name: Build CGI example
