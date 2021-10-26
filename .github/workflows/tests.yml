@@ -15,6 +15,7 @@ jobs:
         whoami
         gcc --version
         mount --version
+        uname -a
 
     - name: Install something
       run: |
