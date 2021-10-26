@@ -250,6 +250,7 @@ gboolean test_fsck_filesystem(const gchar *dirname, const gchar *filename)
 			G_SUBPROCESS_FLAGS_NONE,
 			&error,
 			"/sbin/fsck.ext4",
+			"-y",
 			"-v",
 			path,
 			NULL);
