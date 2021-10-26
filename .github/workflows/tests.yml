@@ -18,8 +18,8 @@ jobs:
 
     - name: Install something
       run: |
-        sudo apt-get update
-        sudo DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
+        apt-get update
+        DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
 
     - name: Re-Inspect environment
       run: |
