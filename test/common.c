@@ -215,12 +215,11 @@ gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
 
 	path = g_build_filename(dirname, filename, NULL);
 	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_STDOUT_SILENCE,
+			G_SUBPROCESS_FLAGS_NONE,
 			&error,
 			"/sbin/mkfs.ext4",
 			"-F",
 			"-I256",
-			"-O^metadata_csum",
 			path,
 			NULL);
 
