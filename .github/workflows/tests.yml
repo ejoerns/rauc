@@ -19,6 +19,7 @@ jobs:
     - name: Install something
       run: |
         apt-get update
+        add-apt-repository deb http://deb.debian.org/debian/ testing main
         DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
 
     - name: Re-Inspect environment
