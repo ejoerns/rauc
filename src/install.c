@@ -831,6 +831,36 @@ static gboolean test_file(const gchar *filename)
 	return TRUE;
 }
 
+static gboolean test_fsck_filesystem(const gchar *filename)
+{
+	GSubprocess *sub;
+	GError *error = NULL;
+	gboolean res = FALSE;
+
+	sub = g_subprocess_new(
+			G_SUBPROCESS_FLAGS_NONE,
+			&error,
+			"/sbin/fsck.ext4",
+			"-y",
+			"-v",
+			filename,
+			NULL);
+
+	if (!sub) {
+		g_warning("Checking filesystem failed: %s", error->message);
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	res = g_subprocess_wait_check(sub, NULL, &error);
+	if (!res) {
+		g_warning("fsck failed: %s", error->message);
+		g_clear_error(&error);
+	}
+
+	return TRUE;
+}
+
 
 static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bundledir, RaucManifest *manifest, GHashTable *target_group, GError **error)
 {
@@ -986,6 +1016,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		g_message("Updating done");
 
 		test_file(dest_slot->device);
+		test_fsck_filesystem(dest_slot->device);
 		mount_info();
 
 		g_free(slot_state->bundle_compatible);
