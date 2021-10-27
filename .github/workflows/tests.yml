@@ -20,10 +20,6 @@ jobs:
         uname -a
         lsmod
 
-    - name: Run test.sh
-      run: |
-        ./test/test.sh
-
     - name: Install something
       run: |
         echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
@@ -37,6 +33,12 @@ jobs:
         mount --version
 
     - uses: actions/checkout@v2
+
+    - name: Run test.sh
+      run: |
+        ls
+        ls test
+        ./test/test.sh
 
     - name: Run autogen.sh
       run: |
