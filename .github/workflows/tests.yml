@@ -50,7 +50,7 @@ jobs:
 
     - name: Run distcheck
       run: |
-        make -j4 distcheck
+        ./qemu-test distcheck
 
     - name: Build CGI example
       run: |
