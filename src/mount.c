@@ -355,7 +355,7 @@ gboolean r_umount_slot(RaucSlot *slot, GError **error)
 	g_return_val_if_fail(slot->mount_point != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	res = r_umount(slot->mount_point, &ierror);
+	res = r_umount(slot->device, &ierror);
 	if (!res) {
 		res = FALSE;
 		g_propagate_prefixed_error(
