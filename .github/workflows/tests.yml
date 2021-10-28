@@ -82,8 +82,8 @@ jobs:
 
     - name: Install required packages
       run: |
-        apt-get update
-        apt-get install -qy build-essential automake libtool libglib2.0-dev libcurl3-dev libssl-dev libjson-glib-dev libdbus-1-dev libfdisk-dev squashfs-tools
+        sudo apt-get update
+        DEBIAN_FRONTEND='noninteractive' sudo apt-get install -qy build-essential automake libtool libglib2.0-dev libcurl3-dev libssl-dev libjson-glib-dev libdbus-1-dev libfdisk-dev squashfs-tools
     - name: Run distcheck
       run: |
         ./autogen.sh
