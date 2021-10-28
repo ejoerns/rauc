@@ -84,10 +84,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run distcheck
+    - name: Run autogen.sh
       run: |
         ./autogen.sh
+
+    - name: Run distcheck
+      run: |
         ./configure --enable-gpt CFLAGS=-Werror
+        make clean
+        make -j4
+        make -j4 check TESTS=
         ./qemu-test distcheck
 
   cross:
