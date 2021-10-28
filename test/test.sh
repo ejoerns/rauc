@@ -4,7 +4,7 @@ set -e
 
 echo "Setting up for $1 test runs"
 
-for run in {1..$1}; do
+for run in $(seq 1 $1); do
 
 echo "Starting test run $run..."
 
