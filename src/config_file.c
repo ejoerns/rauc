@@ -961,7 +961,7 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 			g_clear_error(&ierror);
 			return;
 		}
-		g_message("Successfully umountd %s!", dest_slot->device);
+		g_message("Successfully umounted %s!", dest_slot->device);
 	}
 }
 
