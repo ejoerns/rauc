@@ -6,7 +6,7 @@ echo "Setting up for $1 test runs"
 
 for run in {1..$1}; do
 
-echo "Starting test run..."
+echo "Starting test run $run..."
 
 # create target device
 dd if=/dev/zero of=target-dev bs=1M count=10
@@ -29,6 +29,6 @@ cat test-image > target-dev
 mount -t ext4 -v target-dev /mnt
 umount -v target-dev
 
-echo "Test run done..."
+echo "Test run $run done..."
 
 done
