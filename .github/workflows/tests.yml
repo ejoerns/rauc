@@ -83,6 +83,7 @@ jobs:
     - name: Run distcheck
       run: |
         ./autogen.sh
+        ./configure --enable-gpt CFLAGS=-Werror
         ./qemu-test distcheck
 
   cross:
