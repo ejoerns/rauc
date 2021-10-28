@@ -36,7 +36,7 @@ jobs:
 
     - name: Run test.sh
       run: |
-        for run in {1..20}; do ./test/test.sh; done
+        for run in {1..50}; do ./test/test.sh; done
 
     - name: Run autogen.sh
       run: |
