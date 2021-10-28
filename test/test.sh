@@ -2,6 +2,8 @@
 
 set -e
 
+echo "Starting test run..."
+
 # create target device
 dd if=/dev/zero of=target-dev bs=1M count=10
 mkfs.ext4 -F -I 256 target-dev > /dev/null
@@ -22,3 +24,5 @@ cat test-image > target-dev
 # remount for writing status file
 mount -t ext4 -v target-dev /mnt
 umount -v target-dev
+
+echo "Test run done..."
