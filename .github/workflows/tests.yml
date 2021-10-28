@@ -48,10 +48,6 @@ jobs:
       run: |
         make doc SPHINXOPTS=-W
 
-    - name: Run distcheck
-      run: |
-        ./qemu-test distcheck
-
     - name: Build CGI example
       run: |
         cd contrib/cgi
@@ -78,6 +74,16 @@ jobs:
         cat test-suite.log || true
         cat rauc-*/_build/sub/test-suite.log || true
         dmesg | tail -n 100
+
+  distcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Run distcheck
+      run: |
+        ./autogen.sh
+        ./qemu-test distcheck
 
   cross:
     runs-on: ubuntu-latest
