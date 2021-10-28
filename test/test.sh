@@ -12,7 +12,7 @@ mkfs.ext4 -F -I 256 test-image > /dev/null
 # simulate installation
 
 # mount and inspect for status file
-mount -v target-dev /mnt
+mount -t ext4 -v target-dev /mnt
 stat /mnt/rauc.slots || true
 umount -v target-dev
 
@@ -20,5 +20,5 @@ umount -v target-dev
 cat test-image > target-dev
 
 # remount for writing status file
-mount -v target-dev /mnt
+mount -t ext4 -v target-dev /mnt
 umount -v target-dev
