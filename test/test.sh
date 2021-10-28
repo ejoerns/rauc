@@ -6,18 +6,19 @@ set -e
 dd if=/dev/zero of=target-dev bs=1M count=10
 mkfs.ext4 -F -I 256 target-dev > /dev/null
 # create test image
-dd if=/dev/random of=test-image bs=1M count=10
+dd if=/dev/random of=test-image bs=1M count=20
 mkfs.ext4 -F -I 256 test-image > /dev/null
+
 # simulate installation
+
+# mount and inspect for status file
 mount -v target-dev /mnt
-echo "loop before:"
-losetup -a | grep target-dev
-stat /mnt/foo || true
+stat /mnt/rauc.slots || true
 umount -v target-dev
 
-dd if=test-image of=target-dev
-sync target-dev
-echo "loop after:"
-losetup -a | grep test-file || true
+# copy content of image
+cat test-image > target-dev
+
+# remount for writing status file
 mount -v target-dev /mnt
 umount -v target-dev
