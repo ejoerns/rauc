@@ -2,6 +2,10 @@
 
 set -e
 
+echo "Setting up for $1 test runs"
+
+for run in {1..$1}; do
+
 echo "Starting test run..."
 
 # create target device
@@ -26,3 +30,5 @@ mount -t ext4 -v target-dev /mnt
 umount -v target-dev
 
 echo "Test run done..."
+
+done
