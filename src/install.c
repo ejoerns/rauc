@@ -70,12 +70,11 @@ static gchar *resolve_loop_device(const gchar *devicepath, GError **error)
 
 gboolean determine_slot_states(GError **error)
 {
-	GList *slotlist = NULL;
+	g_autoptr(GList) slotlist = NULL;
 	GList *mountlist = NULL;
 	RaucSlot *booted = NULL;
 	GHashTableIter iter;
 	RaucSlot *slot;
-	gboolean res = FALSE;
 	GError *ierror = NULL;
 
 	g_assert_nonnull(r_context()->config);
@@ -86,7 +85,7 @@ gboolean determine_slot_states(GError **error)
 				R_SLOT_ERROR,
 				R_SLOT_ERROR_NO_CONFIG,
 				"No slot configuration found");
-		goto out;
+		return FALSE;
 	}
 	g_assert_nonnull(r_context()->config->slots);
 
@@ -106,7 +105,7 @@ gboolean determine_slot_states(GError **error)
 		devicepath = resolve_loop_device(g_unix_mount_get_device_path(m), &ierror);
 		if (!devicepath) {
 			g_propagate_error(error, ierror);
-			goto out;
+			return FALSE;
 		}
 		s = find_config_slot_by_device(r_context()->config,
 				devicepath);
@@ -129,7 +128,7 @@ gboolean determine_slot_states(GError **error)
 				R_SLOT_ERROR,
 				R_SLOT_ERROR_NO_BOOTSLOT,
 				"Bootname or device of booted slot not found");
-		goto out;
+		return FALSE;
 	}
 
 	slotlist = g_hash_table_get_keys(r_context()->config->slots);
@@ -184,8 +183,7 @@ gboolean determine_slot_states(GError **error)
 				s->state = ST_INACTIVE;
 			}
 
-			res = TRUE;
-			goto out;
+			return TRUE;
 		}
 
 		g_set_error(
@@ -193,7 +191,7 @@ gboolean determine_slot_states(GError **error)
 				R_SLOT_ERROR,
 				R_SLOT_ERROR_NO_SLOT_WITH_STATE_BOOTED,
 				"Did not find booted slot (matching '%s')", r_context()->bootslot);
-		goto out;
+		return FALSE;
 	}
 
 	/* Determine active group members */
@@ -211,12 +209,7 @@ gboolean determine_slot_states(GError **error)
 		}
 	}
 
-	res = TRUE;
-
-out:
-	g_clear_pointer(&slotlist, g_list_free);
-
-	return res;
+	return TRUE;
 }
 
 gboolean determine_boot_states(GError **error)
