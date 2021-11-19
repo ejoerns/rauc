@@ -22,7 +22,7 @@ jobs:
 
     - name: Install something
       run: |
-        echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
+        #echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
         apt-get update
         #DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
         #add-apt-repository deb http://deb.debian.org/debian/ testing main
