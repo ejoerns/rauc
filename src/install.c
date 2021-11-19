@@ -799,6 +799,17 @@ static gboolean mount_info(void)
 		g_clear_error(&error);
 	}
 
+
+	{
+		GList *mountlist = NULL;
+		mountlist = g_unix_mounts_get(NULL);
+		for (GList *l = mountlist; l != NULL; l = l->next) {
+			GUnixMountEntry *m = (GUnixMountEntry*)l->data;
+			gchar* loopdev = resolve_loop_device(g_unix_mount_get_device_path(m));
+			g_message("loopdev XXX: %s", loopdev);
+		}
+	}
+
 	return TRUE;
 }
 
