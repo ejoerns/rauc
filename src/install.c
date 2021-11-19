@@ -774,7 +774,6 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 
 static gboolean mount_info(void)
 {
-	/*
 	GSubprocess *sub;
 	GError *error = NULL;
 	gboolean res = FALSE;
@@ -800,7 +799,7 @@ static gboolean mount_info(void)
 		g_clear_error(&error);
 	}
 
-*/	
+/*
 	{
 		GList *mountlist = NULL;
 		mountlist = g_unix_mounts_get(NULL);
@@ -810,7 +809,7 @@ static gboolean mount_info(void)
 			g_message("loopdev XXX: %s", loopdev);
 		}
 	}
-
+*/
 	return TRUE;
 }
 
