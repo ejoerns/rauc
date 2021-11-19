@@ -772,7 +772,7 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
-static gboolean mount_info(gchar *file)
+static gboolean mount_info(void)
 {
 	GSubprocess *sub;
 	GError *error = NULL;
@@ -784,8 +784,7 @@ static gboolean mount_info(gchar *file)
 			G_SUBPROCESS_FLAGS_NONE,
 			&error,
 			"losetup",
-			"-j",
-			file,
+			"-a",
 			NULL);
 
 	if (!sub) {
@@ -800,17 +799,6 @@ static gboolean mount_info(gchar *file)
 		g_clear_error(&error);
 	}
 
-/*
-	{
-		GList *mountlist = NULL;
-		mountlist = g_unix_mounts_get(NULL);
-		for (GList *l = mountlist; l != NULL; l = l->next) {
-			GUnixMountEntry *m = (GUnixMountEntry*)l->data;
-			gchar* loopdev = resolve_loop_device(g_unix_mount_get_device_path(m));
-			g_message("loopdev XXX: %s", loopdev);
-		}
-	}
-*/
 	return TRUE;
 }
 
@@ -1010,7 +998,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			g_message("Updating %s with %s", dest_slot->device, mfimage->filename);
 
 		test_file(mfimage->filename);
-		mount_info(dest_slot->device);
+		mount_info();
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
@@ -1030,7 +1018,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		test_file(dest_slot->device);
 		test_fsck_filesystem(dest_slot->device);
-		mount_info(dest_slot->device);
+		mount_info();
 
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
