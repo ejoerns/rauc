@@ -65,7 +65,6 @@ jobs:
         dmsetup targets || true
 
     - name: Show logs
-      if: ${{ failure() }}
       run: |
         cat config.log || true
         cat test/*.log || true
