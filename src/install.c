@@ -772,7 +772,7 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
-static gboolean mount_info(void)
+static gboolean mount_info(gchar *file)
 {
 	GSubprocess *sub;
 	GError *error = NULL;
@@ -784,7 +784,8 @@ static gboolean mount_info(void)
 			G_SUBPROCESS_FLAGS_NONE,
 			&error,
 			"losetup",
-			"-a",
+			"-j",
+			file,
 			NULL);
 
 	if (!sub) {
@@ -1009,7 +1010,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			g_message("Updating %s with %s", dest_slot->device, mfimage->filename);
 
 		test_file(mfimage->filename);
-		mount_info();
+		mount_info(dest_slot->device);
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
@@ -1029,7 +1030,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		test_file(dest_slot->device);
 		test_fsck_filesystem(dest_slot->device);
-		mount_info();
+		mount_info(dest_slot->device);
 
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
