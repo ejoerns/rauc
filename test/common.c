@@ -215,7 +215,7 @@ gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
 
 	path = g_build_filename(dirname, filename, NULL);
 	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_NONE,
+			G_SUBPROCESS_FLAGS_STDOUT_SILENCE,
 			&error,
 			"/sbin/mkfs.ext4",
 			"-F",
@@ -232,38 +232,6 @@ gboolean test_make_filesystem(const gchar *dirname, const gchar *filename)
 	res = g_subprocess_wait_check(sub, NULL, &error);
 	if (!res) {
 		g_warning("mkfs failed: %s", error->message);
-		g_clear_error(&error);
-	}
-
-	return TRUE;
-}
-
-gboolean test_fsck_filesystem(const gchar *dirname, const gchar *filename)
-{
-	GSubprocess *sub;
-	GError *error = NULL;
-	gchar *path;
-	gboolean res = FALSE;
-
-	path = g_build_filename(dirname, filename, NULL);
-	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_NONE,
-			&error,
-			"/sbin/fsck.ext4",
-			"-y",
-			"-v",
-			path,
-			NULL);
-
-	if (!sub) {
-		g_warning("Checking filesystem failed: %s", error->message);
-		g_clear_error(&error);
-		return FALSE;
-	}
-
-	res = g_subprocess_wait_check(sub, NULL, &error);
-	if (!res) {
-		g_warning("fsck failed: %s", error->message);
 		g_clear_error(&error);
 	}
 

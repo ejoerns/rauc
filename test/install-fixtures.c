@@ -62,21 +62,19 @@ void fixture_helper_fixture_set_up_system_user(gchar *tmpdir,
 	/* Setup pseudo devices */
 	g_assert(test_prepare_dummy_file(tmpdir, "images/rootfs-0",
 			SLOT_SIZE, "/dev/zero") == 0);
-	//g_assert(test_prepare_dummy_file(tmpdir, "images/appfs-0",
-	//		SLOT_SIZE, "/dev/zero") == 0);
+	g_assert(test_prepare_dummy_file(tmpdir, "images/appfs-0",
+			SLOT_SIZE, "/dev/zero") == 0);
 	g_assert(test_prepare_dummy_file(tmpdir, "images/rootfs-1",
 			SLOT_SIZE, "/dev/zero") == 0);
 	g_assert(test_prepare_dummy_file(tmpdir, "images/appfs-1",
 			SLOT_SIZE, "/dev/zero") == 0);
-	//g_assert(test_prepare_dummy_file(tmpdir, "images/bootloader-0",
-	//		SLOT_SIZE, "/dev/zero") == 0);/
+	g_assert(test_prepare_dummy_file(tmpdir, "images/bootloader-0",
+			SLOT_SIZE, "/dev/zero") == 0);
 	g_assert_true(test_make_filesystem(tmpdir, "images/rootfs-0"));
-	//g_assert_true(test_make_filesystem(tmpdir, "images/appfs-0"));
+	g_assert_true(test_make_filesystem(tmpdir, "images/appfs-0"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/rootfs-1"));
 	g_assert_true(test_make_filesystem(tmpdir, "images/appfs-1"));
-	//g_assert_true(test_make_filesystem(tmpdir, "images/bootloader-0"));
-
-	g_assert_true(test_fsck_filesystem(tmpdir, "images/rootfs-1"));
+	g_assert_true(test_make_filesystem(tmpdir, "images/bootloader-0"));
 
 	/* Set dummy bootname provider */
 	r_context_conf()->bootslot = g_strdup("system0");
@@ -98,8 +96,8 @@ void fixture_helper_set_up_system(gchar *tmpdir,
 	test_make_slot_user_writable(tmpdir, "images/rootfs-0");
 	//test_make_slot_user_writable(tmpdir, "images/appfs-0");
 	test_make_slot_user_writable(tmpdir, "images/rootfs-1");
-	test_make_slot_user_writable(tmpdir, "images/appfs-1");
-	//test_make_slot_user_writable(tmpdir, "images/bootloader-0");
+	//test_make_slot_user_writable(tmpdir, "images/appfs-1");
+	test_make_slot_user_writable(tmpdir, "images/bootloader-0");
 
 	/* Provide active mounted slot */
 	slotfile = g_build_filename(tmpdir, "images/rootfs-0", NULL);
@@ -109,11 +107,11 @@ void fixture_helper_set_up_system(gchar *tmpdir,
 	g_free(slotpath);
 
 	/* Provide already mounted slot */
-	//slotfile = g_build_filename(tmpdir, "images/bootloader-0", NULL);
-	//slotpath = g_build_filename(tmpdir, "bootloader", NULL);
-	//g_assert(test_mount(slotfile, slotpath));
-	//g_free(slotfile);
-	//g_free(slotpath);
+	slotfile = g_build_filename(tmpdir, "images/bootloader-0", NULL);
+	slotpath = g_build_filename(tmpdir, "bootloader", NULL);
+	g_assert(test_mount(slotfile, slotpath));
+	g_free(slotfile);
+	g_free(slotpath);
 }
 
 void fixture_helper_set_up_bundle(gchar *tmpdir,

@@ -10,33 +10,14 @@ jobs:
       # allow mounting and devtmpfs in the container
       options: --user=root --privileged -v /dev:/dev
     env:
-      LOOPDEV_DEBUG: all
+      G_MESSAGES_DEBUG: "rauc rauc-subprocess"
     steps:
     - name: Inspect environment
       run: |
         whoami
         gcc --version
-        mount --version
-        uname -a
-        lsmod
-
-    - name: Install something
-      run: |
-        #echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
-        apt-get update
-        #DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
-        #add-apt-repository deb http://deb.debian.org/debian/ testing main
-        DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
-
-    - name: Re-Inspect environment
-      run: |
-        mount --version
 
     - uses: actions/checkout@v2
-
-    - name: Run test.sh
-      run: |
-        ./test/test.sh 50
 
     - name: Run autogen.sh
       run: |
@@ -57,6 +38,7 @@ jobs:
         make -j4 distcheck
 
     - name: Show system status
+      if: ${{ failure() }}
       run: |
         dmesg | tail -n 100
         mount || true

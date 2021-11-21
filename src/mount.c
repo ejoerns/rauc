@@ -204,7 +204,7 @@ gboolean r_setup_loop(gint fd, gint *loopfd_out, gchar **loopname_out, goffset s
 
 	looprc = ioctl(loopfd, LOOP_SET_BLOCK_SIZE, 4096);
 	if (looprc < 0) {
-		g_message("Failed to set loop device block size to 4096, continuing");
+		g_debug("Failed to set loop device block size to 4096, continuing");
 	}
 
 	g_message("Configured loop device '%s' for %" G_GOFFSET_FORMAT " bytes", loopname, size);
@@ -237,7 +237,6 @@ gboolean r_umount(const gchar *filename, GError **error)
 		g_ptr_array_add(args, g_strdup("--non-interactive"));
 	}
 	g_ptr_array_add(args, g_strdup("umount"));
-	g_ptr_array_add(args, g_strdup("-v"));
 	g_ptr_array_add(args, g_strdup(filename));
 	g_ptr_array_add(args, NULL);
 
@@ -355,7 +354,7 @@ gboolean r_umount_slot(RaucSlot *slot, GError **error)
 	g_return_val_if_fail(slot->mount_point != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	res = r_umount(slot->device, &ierror);
+	res = r_umount(slot->mount_point, &ierror);
 	if (!res) {
 		res = FALSE;
 		g_propagate_prefixed_error(
