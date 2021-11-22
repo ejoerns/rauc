@@ -237,6 +237,7 @@ gboolean r_umount(const gchar *filename, GError **error)
 		g_ptr_array_add(args, g_strdup("--non-interactive"));
 	}
 	g_ptr_array_add(args, g_strdup("umount"));
+	g_ptr_array_add(args, g_strdup("-v"));
 	g_ptr_array_add(args, g_strdup(filename));
 	g_ptr_array_add(args, NULL);
 
