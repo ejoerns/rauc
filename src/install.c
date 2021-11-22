@@ -772,7 +772,7 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
-static gboolean mount_info(gchar *file)
+static gboolean mount_info(const gchar *prefix, gchar *file)
 {
 	GSubprocess *sub;
 	GError *error = NULL;
@@ -809,7 +809,7 @@ static gboolean mount_info(gchar *file)
 
 	sub_stdout = g_bytes_get_data(stdout_buf, &sub_stdout_size);
 	if (sub_stdout) {
-		g_message("Still mounted: %s", sub_stdout);
+		g_message("Still mounted: %s (%s)", sub_stdout, prefix);
 	}
 
 	return TRUE;
@@ -938,11 +938,13 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		r_context_begin_step_formatted("check_slot", 0, "Checking slot %s", dest_slot->name);
 
+		mount_info("TP@0", dest_slot->device);
 		// FIXME: Does deactivating this play a role at all?
 		load_slot_status(dest_slot);
 		//dest_slot->status = g_new0(RaucSlotStatus, 1);
 		slot_state = dest_slot->status;
 
+		mount_info("TP@1", dest_slot->device);
 		/* In case we failed unmounting while reading status
 		 * file, abort here */
 		if (dest_slot->mount_point) {
@@ -983,7 +985,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 			g_message("Updating %s with %s", dest_slot->device, mfimage->filename);
 
 		test_file(mfimage->filename);
-		mount_info(dest_slot->device);
+		mount_info("TP@2", dest_slot->device);
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
@@ -1002,7 +1004,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		g_message("Updating done");
 
 		test_file(dest_slot->device);
-		mount_info(dest_slot->device);
+		mount_info("TP@3", dest_slot->device);
 
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
