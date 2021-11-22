@@ -25,7 +25,7 @@ jobs:
         #echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
         apt-get update
         echo "deb http://de.archive.ubuntu.com/ubuntu/ hirsute-updates main" > /etc/apt/sources.list.d/hirsute.list
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C
         apt-get update
         DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
         add-apt-repository deb http://de.archive.ubuntu.com/ubuntu hirsute-updates main
