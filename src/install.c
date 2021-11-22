@@ -781,8 +781,6 @@ static gboolean mount_info(const gchar *prefix, gchar *file)
 	const char *sub_stdout;
 	gsize sub_stdout_size;
 
-	g_message("MOUNT INFO");
-
 	sub = g_subprocess_new(
 			G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE,
 			&error,
