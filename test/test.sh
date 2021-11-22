@@ -23,7 +23,8 @@ umount -v $TMPDIR/target-dev
 
 # verify not mounted
 LOSETUP=$(losetup -j $TMPDIR/target-dev)
-echo "$LOSETUP" | grep "/dev/loop" && echo "$LOSETUP" && exit 1
+echo "LOSETUP: $LOSETUP"
+echo "$LOSETUP" | grep "/dev/loop" && exit 1
 
 # copy content of image
 cat $TMPDIR/test-image > $TMPDIR/target-dev
@@ -33,7 +34,8 @@ mount -t ext4 -v $TMPDIR/target-dev $TMPDIR/mount
 umount -v $TMPDIR/target-dev
 # verify not mounted
 LOSETUP=$(losetup -j $TMPDIR/target-dev)
-echo "$LOSETUP" | grep "/dev/loop" && echo "$LOSETUP" && exit 1
+echo "LOSETUP: $LOSETUP"
+echo "$LOSETUP" | grep "/dev/loop" && exit 1
 
 echo "Test run $run done..."
 
