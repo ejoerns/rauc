@@ -808,10 +808,8 @@ static gboolean mount_info(gchar *file)
 	}
 
 	sub_stdout = g_bytes_get_data(stdout_buf, &sub_stdout_size);
-	if (!sub_stdout) {
-		g_message("NO DATA!");
-	} else {
-		g_message("DATA: %s", sub_stdout);
+	if (sub_stdout) {
+		g_error("Still mounted! %s", sub_stdout);
 	}
 
 	return TRUE;
