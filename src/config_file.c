@@ -937,7 +937,7 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 
 	/* read slot status */
 	if (!dest_slot->ext_mount_point) {
-		g_message("mounting slot %s", dest_slot->device);
+		g_message("mounting slot TPx%s", dest_slot->device);
 		if (!r_mount_slot(dest_slot, &ierror)) {
 			g_message("Failed to mount slot %s: %s", dest_slot->device, ierror->message);
 			g_clear_error(&ierror);
@@ -949,12 +949,14 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 			dest_slot->ext_mount_point ? dest_slot->ext_mount_point : dest_slot->mount_point,
 			"slot.raucs", NULL);
 
+	g_message("Not loading slot file locally");
 	//if (!read_slot_status(slotstatuspath, dest_slot->status, &ierror)) {
 	//	g_message("Failed to load status file %s: %s", slotstatuspath, ierror->message);
 	//	g_clear_error(&ierror);
 	//}
 
 	if (!dest_slot->ext_mount_point) {
+		g_message("unmounting slot TPy %s", dest_slot->device);
 		if (!r_umount_slot(dest_slot, &ierror)) {
 			g_message("Failed to unmount slot %s: %s", dest_slot->device, ierror->message);
 			g_clear_error(&ierror);
