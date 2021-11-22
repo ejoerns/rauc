@@ -777,11 +777,14 @@ static gboolean mount_info(gchar *file)
 	GSubprocess *sub;
 	GError *error = NULL;
 	gboolean res = FALSE;
+	g_autoptr(GBytes) stdout_buf = NULL;
+	const char *sub_stdout;
+	gsize sub_stdout_size;
 
 	g_message("MOUNT INFO");
 
 	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_NONE,
+			G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE,
 			&error,
 			"losetup",
 			"-j",
@@ -794,10 +797,21 @@ static gboolean mount_info(gchar *file)
 		return FALSE;
 	}
 
-	res = g_subprocess_wait_check(sub, NULL, &error);
+	if (!g_subprocess_communicate(sub, NULL, NULL, &stdout_buf, NULL, NULL)) {
+		g_warning("communicate failed");
+		return FALSE;
+	}
+
+	res = g_subprocess_wait_check(sub, NULL, NULL);
 	if (!res) {
-		g_warning("mount info failed: %s", error->message);
-		g_clear_error(&error);
+		g_warning("mount info failed");
+	}
+
+	sub_stdout = g_bytes_get_data(stdout_buf, &sub_stdout_size);
+	if (!sub_stdout) {
+		g_message("NO DATA!");
+	} else {
+		g_message("DATA: %s", sub_stdout);
 	}
 
 	return TRUE;
