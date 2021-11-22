@@ -986,9 +986,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		test_file(mfimage->filename);
 		mount_info("TP@2", dest_slot->device);
-		// FIXME: sleep 1 second
-		//g_usleep(1000000UL);
-		mount_info("TP@2a", dest_slot->device);
 
 		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
 
