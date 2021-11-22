@@ -940,6 +940,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		// FIXME: Does deactivating this play a role at all?
 		//load_slot_status(dest_slot);
+		dest_slot->status = g_new0(RaucSlotStatus, 1);
 		slot_state = dest_slot->status;
 
 		/* In case we failed unmounting while reading status
