@@ -938,7 +938,8 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		r_context_begin_step_formatted("check_slot", 0, "Checking slot %s", dest_slot->name);
 
-		load_slot_status(dest_slot);
+		// FIXME: Does deactivating this play a role at all?
+		//load_slot_status(dest_slot);
 		slot_state = dest_slot->status;
 
 		/* In case we failed unmounting while reading status
