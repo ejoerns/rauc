@@ -949,10 +949,10 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 			dest_slot->ext_mount_point ? dest_slot->ext_mount_point : dest_slot->mount_point,
 			"slot.raucs", NULL);
 
-	if (!read_slot_status(slotstatuspath, dest_slot->status, &ierror)) {
-		g_message("Failed to load status file %s: %s", slotstatuspath, ierror->message);
-		g_clear_error(&ierror);
-	}
+	//if (!read_slot_status(slotstatuspath, dest_slot->status, &ierror)) {
+	//	g_message("Failed to load status file %s: %s", slotstatuspath, ierror->message);
+	//	g_clear_error(&ierror);
+	//}
 
 	if (!dest_slot->ext_mount_point) {
 		if (!r_umount_slot(dest_slot, &ierror)) {
