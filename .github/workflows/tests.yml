@@ -50,7 +50,6 @@ jobs:
     - name: Run distcheck
       run: |
         ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
-        udevadm monitor > udev.log &
         make -j4 check
 
     - name: Show system status
