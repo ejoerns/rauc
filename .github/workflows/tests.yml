@@ -39,9 +39,9 @@ jobs:
 
     - uses: actions/checkout@v2
 
-      #- name: Run test.sh
-      #  run: |
-      #    ./test/test.sh 50
+    - name: Run test.sh
+      run: |
+        ./test/test.sh 50
 
     - name: Run autogen.sh
       run: |
