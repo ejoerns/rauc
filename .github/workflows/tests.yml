@@ -29,7 +29,7 @@ jobs:
         apt-get update
         #DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
         #add-apt-repository deb http://de.archive.ubuntu.com/ubuntu hirsute-updates main
-        DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux
+        DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux lsof
 
     - name: Re-Inspect environment
       run: |
