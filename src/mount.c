@@ -82,7 +82,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 	g_message("mount call: %s", mount_call);
 
 	g_ptr_array_add(flock_args, g_strdup("flock"));
-	g_ptr_array_add(flock_args, mountpoint);
+	g_ptr_array_add(flock_args, g_strdup(mountpoint));
 	g_ptr_array_add(flock_args, mount_call);
 	g_ptr_array_add(flock_args, NULL);
 
