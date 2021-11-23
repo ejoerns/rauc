@@ -62,6 +62,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 		g_ptr_array_add(args, g_strdup("sudo"));
 		g_ptr_array_add(args, g_strdup("--non-interactive"));
 	}
+	g_ptr_array_add(args, g_strdup("flock"));
 	g_ptr_array_add(args, g_strdup("mount"));
 	if (type != NULL) {
 		g_ptr_array_add(args, g_strdup("-t"));
