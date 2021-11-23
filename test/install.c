@@ -1295,7 +1295,11 @@ if (0) {
 				install_fixture_set_up_system_conf, install_test_target,
 				install_fixture_tear_down);
 }
-		g_test_add(g_strdup_printf("/install/bundle/%s", format_name),
+		g_test_add(g_strdup_printf("/install/bundle-1/%s", format_name),
+				InstallFixture, install_data,
+				install_fixture_set_up_bundle, install_test_bundle,
+				install_fixture_tear_down);
+		g_test_add(g_strdup_printf("/install/bundle-2/%s", format_name),
 				InstallFixture, install_data,
 				install_fixture_set_up_bundle, install_test_bundle,
 				install_fixture_tear_down);
