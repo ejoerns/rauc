@@ -48,7 +48,7 @@ jobs:
     - name: Run distcheck
       run: |
         ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
-        udevadm monitor &
+        udevadm monitor > udev.log &
         make -j4 distcheck
 
     - name: Build CGI example
@@ -76,4 +76,5 @@ jobs:
         cat test/*.log || true
         cat test-suite.log || true
         cat rauc-*/_build/sub/test-suite.log || true
+        cat udev.log || true
         dmesg | tail -n 100
