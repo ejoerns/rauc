@@ -83,6 +83,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 
 	g_ptr_array_add(flock_args, g_strdup("flock"));
 	g_ptr_array_add(flock_args, mount_call);
+	g_ptr_array_add(flock_args, NULL);
 
 	sproc = r_subprocess_newv(flock_args, G_SUBPROCESS_FLAGS_NONE, &ierror);
 	if (sproc == NULL) {
