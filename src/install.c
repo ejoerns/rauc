@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <linux/loop.h>
 #include <fcntl.h>
 #include <gio/gfiledescriptorbased.h>
 #include <gio/gio.h>
@@ -772,45 +773,22 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
-static gboolean lsof(void)
+static void lsof(void)
 {
-	GSubprocess *sub;
-	GError *error = NULL;
-	gboolean res = FALSE;
-	g_autoptr(GBytes) stdout_buf = NULL;
-	const char *sub_stdout;
-	gsize sub_stdout_size;
+	int fd_out;
+	int ret;
 
-	sub = g_subprocess_new(
-			G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE,
-			&error,
-			"fuser",
-			"-m",
-			"/dev/loop8",
-			NULL);
+	fd_out = g_open("/dev/loop8", O_WRONLY | O_EXCL);
+	
+	ret = ioctl(fd_out, LOOP_CLR_FD, 0);
 
-	if (!sub) {
-		g_warning("lsof failed: %s", error->message);
-		g_clear_error(&error);
-		return FALSE;
+	if (ret && (errno == ENXIO)) {
+		g_message("ENXIO");
+		close(fd_out);
+		return;
+	} else {
+		g_message("errno: %d", errno);
 	}
-
-	if (!g_subprocess_communicate(sub, NULL, NULL, &stdout_buf, NULL, NULL)) {
-		g_warning("communicate failed");
-		return FALSE;
-	}
-
-	res = g_subprocess_wait_check(sub, NULL, NULL);
-	if (!res) {
-		g_warning("lsof failed");
-	}
-
-	sub_stdout = g_bytes_get_data(stdout_buf, &sub_stdout_size);
-	if (sub_stdout) {
-		g_message("lsof: %s", sub_stdout);
-	}
-
-	return TRUE;
 }
 
 static gboolean mount_info(const gchar *prefix, gchar *file)
