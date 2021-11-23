@@ -54,6 +54,7 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 	gboolean res = FALSE;
 	g_autoptr(GPtrArray) args = g_ptr_array_new_full(11, g_free);
 	g_autoptr(GPtrArray) flock_args = g_ptr_array_new_full(2, g_free);
+	gchar* mount_call;
 
 	g_return_val_if_fail(source != NULL, FALSE);
 	g_return_val_if_fail(mountpoint != NULL, FALSE);
@@ -77,8 +78,11 @@ gboolean r_mount_full(const gchar *source, const gchar *mountpoint, const gchar*
 	g_ptr_array_add(args, g_strdup(mountpoint));
 	g_ptr_array_add(args, NULL);
 
+	mount_call =  g_strjoinv(" ", (gchar**) args->pdata);
+	g_message("mount call: %s", mount_call);
+
 	g_ptr_array_add(flock_args, g_strdup("flock"));
-	g_ptr_array_add(flock_args, g_strjoinv(" ", (gchar**) args->pdata));
+	g_ptr_array_add(flock_args, mount_call);
 
 	sproc = r_subprocess_newv(flock_args, G_SUBPROCESS_FLAGS_NONE, &ierror);
 	if (sproc == NULL) {
