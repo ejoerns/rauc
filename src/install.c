@@ -782,12 +782,15 @@ static void lsof(void)
 	
 	ret = ioctl(fd_out, LOOP_CLR_FD, 0);
 
-	if (ret && (errno == ENXIO)) {
-		g_message("ENXIO");
-		close(fd_out);
-		return;
-	} else {
-		g_message("errno: %d", errno);
+	for (int i=0; i < 20; i++) {
+		if (ret && (errno == ENXIO)) {
+			g_message("ENXIO");
+			close(fd_out);
+			return;
+		} else {
+			g_message("errno: %d", errno);
+		}
+		g_usleep(10);
 	}
 }
 
