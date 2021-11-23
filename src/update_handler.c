@@ -40,6 +40,7 @@ static GUnixOutputStream* open_slot_device(RaucSlot *slot, int *fd, GError **err
 	g_return_val_if_fail(slot, NULL);
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
+	// FIXME: How is this possible, if slot is still mounted?
 	fd_out = g_open(slot->device, O_WRONLY | O_EXCL);
 
 	if (fd_out == -1) {
