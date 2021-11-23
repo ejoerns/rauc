@@ -7,10 +7,10 @@ echo "Setting up for $1 test runs"
 TMPDIR=$(mktemp -d)
 
 # create target device
-dd if=/dev/zero of=$TMPDIR/target-dev bs=1M count=2000
+dd if=/dev/zero of=$TMPDIR/target-dev bs=1M count=50
 mkfs.ext4 -F -I 256 $TMPDIR/target-dev > /dev/null
 # create test image
-dd if=/dev/random of=$TMPDIR/test-image bs=1M count=1800
+dd if=/dev/zero of=$TMPDIR/test-image bs=1M count=50
 mkfs.ext4 -F -I 256 $TMPDIR/test-image > /dev/null
 
 # crate mount mounts
@@ -27,20 +27,21 @@ for run in $(seq 1 $1); do
 echo "Run $run..."
 
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
-touch $TMPDIR/mount/rauc.slots.bak || true
 umount $TMPDIR/target-dev
 
 # verify not mounted
-#LOSETUP=$(losetup -j $TMPDIR/target-dev)
-#echo "LOSETUP: $LOSETUP"
+LOSETUP=$(losetup -j $TMPDIR/target-dev)
+echo "TP@0: $LOSETUP"
 #echo "$LOSETUP" | grep "/dev/loop" && exit 1
 
 # copy content of image
-cat $TMPDIR/test-image > $TMPDIR/target-dev
+dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M bs=1M
 
+LOSETUP=$(losetup -j $TMPDIR/target-dev)
+echo "TP@1: $LOSETUP"
 # remount for writing status file
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
-echo "Status file changed" > $TMPDIR/mount/status.file
+echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
 umount $TMPDIR/target-dev
 # verify not mounted
 #LOSETUP=$(losetup -j $TMPDIR/target-dev)
