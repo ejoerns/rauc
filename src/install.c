@@ -1032,6 +1032,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		test_file(dest_slot->device);
 		mount_info("TP@3", dest_slot->device);
+		// FIXME: Fails, when loopdev is still associated here!
 
 		g_free(slot_state->bundle_compatible);
 		g_free(slot_state->bundle_version);
