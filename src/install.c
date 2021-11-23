@@ -793,7 +793,7 @@ static void lsof(void)
 		} else {
 			g_message("errno: %d", err);
 		}
-		g_usleep(10000); // 10ms
+		//g_usleep(10000); // 10ms
 	}
 
 	close(fd_out);
