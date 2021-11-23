@@ -27,14 +27,18 @@ dd if=/dev/zero of=$TMPDIR/target-dev-b bs=1M count=50
 mkfs.ext4 -F -I 256 $TMPDIR/target-dev-b > /dev/null
 dd if=/dev/zero of=$TMPDIR/target-dev-c bs=1M count=50
 mkfs.ext4 -F -I 256 $TMPDIR/target-dev-c > /dev/null
+dd if=/dev/zero of=$TMPDIR/target-dev-d bs=1M count=50
+mkfs.ext4 -F -I 256 $TMPDIR/target-dev-d > /dev/null
 
 mkdir $TMPDIR/mount-a
 mkdir $TMPDIR/mount-b
 mkdir $TMPDIR/mount-c
+mkdir $TMPDIR/mount-d
 
 mount -t ext4 $TMPDIR/target-dev-a $TMPDIR/mount-a
 mount -t ext4 $TMPDIR/target-dev-b $TMPDIR/mount-b
 mount -t ext4 $TMPDIR/target-dev-c $TMPDIR/mount-c
+mount -t ext4 $TMPDIR/target-dev-d $TMPDIR/mount-d
 
 # create minimal FS content
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
@@ -72,6 +76,7 @@ done
 umount $TMPDIR/mount-a
 umount $TMPDIR/mount-b
 umount $TMPDIR/mount-c
+umount $TMPDIR/mount-d
 
 # dump log
 cat $LOGFILE
