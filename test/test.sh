@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 set -e
 
 echo "Setting up for $1 test runs"
