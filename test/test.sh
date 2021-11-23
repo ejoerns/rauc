@@ -20,6 +20,22 @@ mkfs.ext4 -F -I 256 $TMPDIR/test-image > /dev/null
 # crate mount mounts
 mkdir $TMPDIR/mount
 
+# waste loop devs
+dd if=/dev/zero of=$TMPDIR/target-dev-a bs=1M count=50
+mkfs.ext4 -F -I 256 $TMPDIR/target-dev-a > /dev/null
+dd if=/dev/zero of=$TMPDIR/target-dev-b bs=1M count=50
+mkfs.ext4 -F -I 256 $TMPDIR/target-dev-b > /dev/null
+dd if=/dev/zero of=$TMPDIR/target-dev-c bs=1M count=50
+mkfs.ext4 -F -I 256 $TMPDIR/target-dev-c > /dev/null
+
+mkdir $TMPDIR/mount-a
+mkdir $TMPDIR/mount-b
+mkdir $TMPDIR/mount-c
+
+mount -t ext4 $TMPDIR/target-dev-a $TMPDIR/mount-a
+mount -t ext4 $TMPDIR/target-dev-b $TMPDIR/mount-b
+mount -t ext4 $TMPDIR/target-dev-c $TMPDIR/mount-c
+
 # create minimal FS content
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 mkdir -p /usr/bin /etc /lib /home/root
@@ -52,6 +68,10 @@ umount $TMPDIR/target-dev
 echo "done." >> $LOGFILE
 
 done
+
+umount $TMPDIR/mount-a
+umount $TMPDIR/mount-b
+umount $TMPDIR/mount-c
 
 # dump log
 cat $LOGFILE
