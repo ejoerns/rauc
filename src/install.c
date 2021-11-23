@@ -772,6 +772,46 @@ static gboolean pre_install_checks(gchar* bundledir, GList *install_images, GHas
 	return TRUE;
 }
 
+static gboolean lsof(void)
+{
+	GSubprocess *sub;
+	GError *error = NULL;
+	gboolean res = FALSE;
+	g_autoptr(GBytes) stdout_buf = NULL;
+	const char *sub_stdout;
+	gsize sub_stdout_size;
+
+	sub = g_subprocess_new(
+			G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE,
+			&error,
+			"lsof",
+			"/dev/loop8",
+			NULL);
+
+	if (!sub) {
+		g_warning("lsof failed: %s", error->message);
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	if (!g_subprocess_communicate(sub, NULL, NULL, &stdout_buf, NULL, NULL)) {
+		g_warning("communicate failed");
+		return FALSE;
+	}
+
+	res = g_subprocess_wait_check(sub, NULL, NULL);
+	if (!res) {
+		g_warning("lsof failed");
+	}
+
+	sub_stdout = g_bytes_get_data(stdout_buf, &sub_stdout_size);
+	if (sub_stdout) {
+		g_message("lsof: %s", sub_stdout);
+	}
+
+	return TRUE;
+}
+
 static gboolean mount_info(const gchar *prefix, gchar *file)
 {
 	GSubprocess *sub;
@@ -941,6 +981,8 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		load_slot_status(dest_slot);
 		//dest_slot->status = g_new0(RaucSlotStatus, 1);
 		slot_state = dest_slot->status;
+
+		lsof();
 
 		mount_info("TP@1", dest_slot->device);
 		/* In case we failed unmounting while reading status
