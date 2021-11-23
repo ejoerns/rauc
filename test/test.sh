@@ -5,6 +5,7 @@ set -e
 echo "Setting up for $1 test runs"
 
 TMPDIR=$(mktemp -d)
+LOGFILE=$TMPDIR/test.log
 
 # create target device
 dd if=/dev/zero of=$TMPDIR/target-dev bs=1M count=50
@@ -24,32 +25,32 @@ umount $TMPDIR/target-dev
 
 for run in $(seq 1 $1); do
 
-echo "Run $run..."
+echo "Run $run..." > $LOGFILE
 
+# mimic slot status read
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
+touch $TMPDIR/mount/status.file || true
 umount $TMPDIR/target-dev
 
-# verify not mounted
-LOSETUP=$(losetup -j $TMPDIR/target-dev)
-echo "TP@0: $LOSETUP"
-#echo "$LOSETUP" | grep "/dev/loop" && exit 1
+# echo if loop associated
+echo "TP@0: $(losetup -j $TMPDIR/target-dev)" > $LOGFILE
 
 # copy content of image
-dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M bs=1M
+dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M
 
-LOSETUP=$(losetup -j $TMPDIR/target-dev)
-echo "TP@1: $LOSETUP"
-# remount for writing status file
+# echo if loop associated
+echo "TP@1: $(losetup -j $TMPDIR/target-dev)" > $LOGFILE
+
+# mount again for writing status file
 mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
 umount $TMPDIR/target-dev
-# verify not mounted
-#LOSETUP=$(losetup -j $TMPDIR/target-dev)
-#echo "LOSETUP: $LOSETUP"
-#echo "$LOSETUP" | grep "/dev/loop" && exit 1
 
-echo "done."
+echo "done." > $LOGFILE
 
 done
+
+# dump log
+cat $LOGFILE
 
 rm -rf $TMPDIR
