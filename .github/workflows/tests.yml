@@ -48,6 +48,7 @@ jobs:
     - name: Run distcheck
       run: |
         ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
+        udevadm monitor &
         make -j4 distcheck
 
     - name: Build CGI example
