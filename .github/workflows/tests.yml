@@ -31,7 +31,7 @@ jobs:
         #add-apt-repository deb http://de.archive.ubuntu.com/ubuntu hirsute-updates main
         DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux lsof
         # killing in the name of..
-        killall udev
+        ps faux
 
     - name: Re-Inspect environment
       run: |
