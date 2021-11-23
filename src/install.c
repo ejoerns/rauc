@@ -795,6 +795,8 @@ static void lsof(void)
 		}
 		g_usleep(10);
 	}
+
+	close(fd_out);
 }
 
 static gboolean mount_info(const gchar *prefix, gchar *file)
