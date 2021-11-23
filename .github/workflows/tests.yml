@@ -51,18 +51,10 @@ jobs:
       run: |
         ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
         udevadm monitor > udev.log &
-        make -j4 distcheck
-
-    - name: Build CGI example
-      run: |
-        cd contrib/cgi
-        ./autogen.sh
-        ./configure CFLAGS=-Werror
-        make clean
-        make -j4
-        make -j4 distcheck
+        make -j4 check
 
     - name: Show system status
+      if: ${{ failure() }}
       run: |
         dmesg | tail -n 100
         mount || true
@@ -71,6 +63,7 @@ jobs:
         dmsetup targets || true
 
     - name: Show logs
+      if: ${{ failure() }}
       run: |
         cat config.log || true
         cat test/*.log || true
