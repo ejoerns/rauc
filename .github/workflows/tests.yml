@@ -19,6 +19,13 @@ jobs:
         mount --version
         uname -a
         lsmod
+        ls -la /dev/loop*
+
+    - name: Create Loop Devices
+      run: |
+        mknod -m 0660 /dev/loop8 b 7 8
+        mknod -m 0660 /dev/loop9 b 7 9
+        mknod -m 0660 /dev/loop10 b 7 10
 
     - name: Install something
       run: |
