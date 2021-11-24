@@ -10,7 +10,7 @@ jobs:
       # allow mounting and devtmpfs in the container
       options: --user=root --privileged -v /dev:/dev
     env:
-      G_MESSAGES_DEBUG: "rauc rauc-subprocess"
+      LOOPDEV_DEBUG: all
     steps:
     - name: Inspect environment
       run: |
