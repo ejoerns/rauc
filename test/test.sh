@@ -42,10 +42,12 @@ mount -t ext4 $TMPDIR/target-dev-c $TMPDIR/mount-c
 mount -t ext4 $TMPDIR/target-dev-d $TMPDIR/mount-d
 
 # create minimal FS content
-mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
-mkdir -p /usr/bin /etc /lib /home/root
-touch /usr/bin/file /etc/file /lib/file /home/root/file
-umount $TMPDIR/target-dev
+#mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
+#mkdir -p /usr/bin /etc /lib /home/root
+#touch /usr/bin/file /etc/file /lib/file /home/root/file
+#umount $TMPDIR/target-dev
+
+ps faux
 
 for run in $(seq 1 $1); do
 
@@ -70,7 +72,6 @@ dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 # echo if loop associated
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
-ps faux
 stat $TMPDIR/target-dev
 
 # mount again for writing status file
