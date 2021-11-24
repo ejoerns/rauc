@@ -63,7 +63,7 @@ umount $TMPDIR/target-dev
 echo "TP@0: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
 # copy content of image
-dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M >> $LOGFILE 2>&1
+dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 
 # echo if loop associated
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
