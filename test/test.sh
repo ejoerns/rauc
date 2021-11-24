@@ -68,6 +68,8 @@ dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 # echo if loop associated
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
+stat $TMPDIR/target-dev
+
 # mount again for writing status file
 flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
