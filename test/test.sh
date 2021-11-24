@@ -75,6 +75,9 @@ echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 stat $TMPDIR/target-dev
 lslocks
 
+# find non-overlapping device!
+losetup --find -L --show ~/file.img
+
 # mount again for writing status file
 flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
