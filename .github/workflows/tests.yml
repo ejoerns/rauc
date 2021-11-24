@@ -15,7 +15,7 @@ jobs:
     - name: Inspect environment
       run: |
         whoami
-        gcc --version
+        gcc --version || true
         mount --version
         uname -a
         lsmod
