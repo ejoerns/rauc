@@ -18,7 +18,7 @@ jobs:
         gcc --version || true
         mount --version
         uname -a
-        lsmod
+        lsmod || true
         ls -la /dev/loop*
 
     - name: Create Loop Devices and Remount /tmp
