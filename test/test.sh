@@ -49,6 +49,9 @@ umount $TMPDIR/target-dev
 
 for run in $(seq 1 $1); do
 
+echo "Drop caches.." >> $LOGFILE
+echo 1 > /proc/sys/vm/drop_caches
+
 echo "Run $run..." >> $LOGFILE
 
 # mimic slot status read
