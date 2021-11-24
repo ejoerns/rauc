@@ -55,7 +55,7 @@ echo 1 > /proc/sys/vm/drop_caches
 echo "Run $run..." >> $LOGFILE
 
 # mimic slot status read
-mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
+flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 touch $TMPDIR/mount/status.file || true
 umount $TMPDIR/target-dev
 
@@ -69,7 +69,7 @@ dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M >> $LOGFILE 2>&1
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
 # mount again for writing status file
-mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
+flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
 umount $TMPDIR/target-dev
 
