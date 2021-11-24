@@ -96,7 +96,7 @@ echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
 echo "Drop caches.." >> $LOGFILE
 #time echo 1 > /proc/sys/vm/drop_caches
-sleep 0.1
+sleep 0.5
 
 #stat $TMPDIR/target-dev
 #lslocks
