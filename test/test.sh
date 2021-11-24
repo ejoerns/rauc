@@ -63,6 +63,9 @@ mount -t ext4 $TMPDIR/target-dev-i $TMPDIR/mount-i
 
 losetup -a
 
+md5sum $TMPDIR/target-dev
+md5sum $TMPDIR/test-image
+
 # create minimal FS content
 #mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 #mkdir -p /usr/bin /etc /lib /home/root
@@ -96,6 +99,8 @@ echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
 #stat $TMPDIR/target-dev
 #lslocks
+
+md5sum $TMPDIR/target-dev
 
 # find non-overlapping device!
 LOOPDEV=$(losetup --find -L --show $TMPDIR/target-dev)
