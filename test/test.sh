@@ -63,9 +63,6 @@ mount -t ext4 $TMPDIR/target-dev-i $TMPDIR/mount-i
 
 losetup -a
 
-md5sum $TMPDIR/target-dev
-md5sum $TMPDIR/test-image
-
 # create minimal FS content
 #mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 #mkdir -p /usr/bin /etc /lib /home/root
@@ -97,10 +94,11 @@ dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 # echo if loop associated
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
+echo "Drop caches.." >> $LOGFILE
+echo 1 > /proc/sys/vm/drop_caches
+
 #stat $TMPDIR/target-dev
 #lslocks
-
-md5sum $TMPDIR/target-dev
 
 # find non-overlapping device!
 LOOPDEV=$(losetup --find -L --show $TMPDIR/target-dev)
