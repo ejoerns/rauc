@@ -43,6 +43,7 @@ jobs:
     - name: Re-Inspect environment
       run: |
         mount --version
+        ls -la /dev/loop*
 
     - uses: actions/checkout@v2
 
