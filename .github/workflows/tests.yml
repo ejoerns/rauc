@@ -21,11 +21,12 @@ jobs:
         lsmod
         ls -la /dev/loop*
 
-    - name: Create Loop Devices
+    - name: Create Loop Devices and Remount /tmp
       run: |
         mknod -m 0660 /dev/loop8 b 7 8
         mknod -m 0660 /dev/loop9 b 7 9
         mknod -m 0660 /dev/loop10 b 7 10
+        mount -t tmpfs tmpfs /tmp
 
         #- name: Install something
         #  run: |
