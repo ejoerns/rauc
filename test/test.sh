@@ -76,7 +76,7 @@ stat $TMPDIR/target-dev
 lslocks
 
 # find non-overlapping device!
-losetup --find -L --show $TMPDIR/target-dev
+losetup --find -L -r --show $TMPDIR/target-dev
 
 # mount again for writing status file
 flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
