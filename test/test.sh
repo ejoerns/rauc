@@ -76,10 +76,12 @@ stat $TMPDIR/target-dev
 lslocks
 
 # find non-overlapping device!
-losetup --find -L -r --show $TMPDIR/target-dev
+LOOPDEV=$(losetup --find -L -r --show $TMPDIR/target-dev)
+echo "mounting $LOOPDEV"
+mount -t ext4 $LOOPDEV $TMPDIR/mount
 
 # mount again for writing status file
-flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
+#flock $TMPDIR/target-dev mount -t ext4 $TMPDIR/target-dev $TMPDIR/mount
 echo "Status file changed: $DATE" > $TMPDIR/mount/status.file
 umount $TMPDIR/target-dev
 
