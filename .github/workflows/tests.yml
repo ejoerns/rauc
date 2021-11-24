@@ -43,15 +43,6 @@ jobs:
       run: |
         ./test/test.sh 50
 
-    - name: Run autogen.sh
-      run: |
-        ./autogen.sh
-
-    - name: Run distcheck
-      run: |
-        ./configure --enable-code-coverage --enable-gpt CFLAGS=-Werror
-        make -j4 check
-
     - name: Show system status
       if: ${{ failure() }}
       run: |
@@ -64,9 +55,6 @@ jobs:
     - name: Show logs
       if: ${{ failure() }}
       run: |
-        cat config.log || true
-        cat test/*.log || true
-        cat test-suite.log || true
-        cat rauc-*/_build/sub/test-suite.log || true
+        cat /tmp/tmp*/test.log || true
         cat udev.log || true
         dmesg | tail -n 100

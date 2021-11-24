@@ -82,4 +82,4 @@ umount $TMPDIR/mount-d
 # dump log
 cat $LOGFILE
 
-rm -rf $TMPDIR
+#m -rf $TMPDIR
