@@ -27,18 +27,18 @@ jobs:
         mknod -m 0660 /dev/loop9 b 7 9
         mknod -m 0660 /dev/loop10 b 7 10
 
-    - name: Install something
-      run: |
-        #echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
-        apt-get update
-        echo "deb http://de.archive.ubuntu.com/ubuntu/ hirsute-updates main" > /etc/apt/sources.list.d/hirsute.list
-        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C
-        apt-get update
-        #DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
-        #add-apt-repository deb http://de.archive.ubuntu.com/ubuntu hirsute-updates main
-        DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux lsof
-        # killing in the name of..
-        ps faux
+        #- name: Install something
+        #  run: |
+        #    #echo "deb http://deb.debian.org/debian/ testing main" > /etc/apt/sources.list.d/testing.list
+        #    apt-get update
+        #    echo "deb http://de.archive.ubuntu.com/ubuntu/ hirsute-updates main" > /etc/apt/sources.list.d/hirsute.list
+        #    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C
+        #    apt-get update
+        #    #DEBIAN_FRONTEND='noninteractive' apt-get install -qy software-properties-common
+        #    #add-apt-repository deb http://de.archive.ubuntu.com/ubuntu hirsute-updates main
+        #    DEBIAN_FRONTEND='noninteractive' apt-get install -qy util-linux lsof
+        #    # killing in the name of..
+        #    ps faux
 
     - name: Re-Inspect environment
       run: |
