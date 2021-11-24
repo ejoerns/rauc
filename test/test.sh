@@ -69,6 +69,8 @@ ps faux
 # copy content of image
 dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 
+sleep 1
+
 # echo if loop associated
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
