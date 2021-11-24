@@ -95,8 +95,8 @@ dd if=$TMPDIR/test-image of=$TMPDIR/target-dev bs=1M conv=fsync >> $LOGFILE 2>&1
 echo "TP@1: $(losetup -j $TMPDIR/target-dev)" >> $LOGFILE
 
 echo "Drop caches.." >> $LOGFILE
-#time echo 1 > /proc/sys/vm/drop_caches
-sleep 0.5
+time echo 1 > /proc/sys/vm/drop_caches
+#sleep 0.5
 
 #stat $TMPDIR/target-dev
 #lslocks
