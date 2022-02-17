@@ -25,7 +25,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.ifconfig',
+    'sphinxext.opengraph',
 ]
+
+ogp_site_url = 'https://rauc.readthedocs.io/en/latest/'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
