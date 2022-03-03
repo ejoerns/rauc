@@ -1817,6 +1817,8 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, CheckBundleP
 		/* replace sigdata by decrypted payload */
 		g_bytes_unref(ibundle->sigdata);
 		ibundle->sigdata = decrypted_sigdata;
+		/* write marker to memorize for later that we originally had an enveloped CMS */
+		ibundle->was_enveloped = TRUE;
 	}
 
 	if (verify) {
