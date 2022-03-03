@@ -832,8 +832,9 @@ static void formatter_shell_append_n(GString* text, const gchar* varname, gint c
 	g_string_append_printf(text, "%s_%d=%s\n", varname, cnt, quoted);
 }
 
-static gchar *info_formatter_shell(RaucManifest *manifest)
+static gchar *info_formatter_shell(RaucBundle *bundle)
 {
+	RaucManifest *manifest = bundle->manifest;
 	GString *text = g_string_new(NULL);
 	GPtrArray *hooks = NULL;
 	gchar *hookstring = NULL;
@@ -889,8 +890,9 @@ static gchar *info_formatter_shell(RaucManifest *manifest)
 	return g_string_free(text, FALSE);
 }
 
-static gchar *info_formatter_readable(RaucManifest *manifest)
+static gchar *info_formatter_readable(RaucBundle *bundle)
 {
+	RaucManifest *manifest = bundle->manifest;
 	GString *text = g_string_new(NULL);
 	GPtrArray *hooks = NULL;
 	gchar *hookstring = NULL;
@@ -973,9 +975,10 @@ static gchar *info_formatter_readable(RaucManifest *manifest)
 }
 
 
-static gchar* info_formatter_json_base(RaucManifest *manifest, gboolean pretty)
+static gchar* info_formatter_json_base(RaucBundle *bundle, gboolean pretty)
 {
 #if ENABLE_JSON
+	RaucManifest *manifest = bundle->manifest;
 	g_autoptr(JsonGenerator) gen = NULL;
 	g_autoptr(JsonNode) root = NULL;
 	g_autoptr(JsonBuilder) builder = json_builder_new();
@@ -1049,24 +1052,23 @@ static gchar* info_formatter_json_base(RaucManifest *manifest, gboolean pretty)
 #endif
 }
 
-static gchar* info_formatter_json(RaucManifest *manifest)
+static gchar* info_formatter_json(RaucBundle *bundle)
 {
-	return info_formatter_json_base(manifest, FALSE);
+	return info_formatter_json_base(bundle, FALSE);
 }
 
-static gchar* info_formatter_json_pretty(RaucManifest *manifest)
+static gchar* info_formatter_json_pretty(RaucBundle *bundle)
 {
-	return info_formatter_json_base(manifest, TRUE);
+	return info_formatter_json_base(bundle, TRUE);
 }
 
 static gboolean info_start(int argc, char **argv)
 {
 	g_autofree gchar *bundlelocation = NULL;
-	g_autoptr(RaucManifest) manifest = NULL;
 	g_autoptr(RaucBundle) bundle = NULL;
 	GError *error = NULL;
 	gboolean res = FALSE;
-	gchar* (*formatter)(RaucManifest *manifest) = NULL;
+	gchar* (*formatter)(RaucBundle *bundle) = NULL;
 	gchar *text;
 	CheckBundleParams check_bundle_params = CHECK_BUNDLE_DEFAULT;
 
@@ -1112,10 +1114,8 @@ static gboolean info_start(int argc, char **argv)
 		goto out;
 	}
 
-	if (bundle->manifest) {
-		manifest = g_steal_pointer(&bundle->manifest);
-	} else {
-		res = load_manifest_from_bundle(bundle, &manifest, &error);
+	if (!bundle->manifest) {
+		res = load_manifest_from_bundle(bundle, &bundle->manifest, &error);
 		if (!res) {
 			g_printerr("%s\n", error->message);
 			g_clear_error(&error);
@@ -1123,7 +1123,7 @@ static gboolean info_start(int argc, char **argv)
 		}
 	}
 
-	text = formatter(manifest);
+	text = formatter(bundle);
 	g_print("%s\n", text);
 	g_free(text);
 
