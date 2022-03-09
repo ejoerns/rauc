@@ -32,6 +32,7 @@ gboolean trust_environment = FALSE;
 gboolean verification_disabled = FALSE;
 gboolean no_check_time = FALSE;
 gboolean info_dumpcert = FALSE;
+gboolean info_dumprecipients = FALSE;
 gboolean status_detailed = FALSE;
 gchar *output_format = NULL;
 gchar *signing_keyring = NULL;
@@ -1110,6 +1111,14 @@ static gboolean info_start(int argc, char **argv)
 	res = check_bundle(bundlelocation, &bundle, check_bundle_params, &access_args, &error);
 	if (!res) {
 		g_printerr("%s\n", error->message);
+		if (g_error_matches(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_CRYPT)) {
+			if (info_dumprecipients) {
+				g_assert_nonnull(bundle);
+				text = envelopeddata_to_string(bundle->enveloped_data, NULL);
+				g_print("%s\n", text);
+				g_free(text);
+			}
+		}
 		g_clear_error(&error);
 		goto out;
 	}
@@ -1129,6 +1138,12 @@ static gboolean info_start(int argc, char **argv)
 
 	if (info_dumpcert) {
 		text = sigdata_to_string(bundle->sigdata, NULL);
+		g_print("%s\n", text);
+		g_free(text);
+	}
+
+	if (info_dumprecipients) {
+		text = envelopeddata_to_string(bundle->enveloped_data, NULL);
 		g_print("%s\n", text);
 		g_free(text);
 	}
@@ -1990,6 +2005,7 @@ static GOptionEntry entries_info[] = {
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{"output-format", '\0', 0, G_OPTION_ARG_STRING, &output_format, "output format", "FORMAT"},
 	{"dump-cert", '\0', 0, G_OPTION_ARG_NONE, &info_dumpcert, "dump certificate", NULL},
+	{"dump-recipients", '\0', 0, G_OPTION_ARG_NONE, &info_dumprecipients, "dump recipients", NULL},
 	{0}
 };
 
