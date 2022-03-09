@@ -1798,24 +1798,26 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, CheckBundleP
 
 		g_debug("CMS type is 'enveloped'. Attempting to decrypt..");
 
+		ibundle->enveloped_data = ibundle->sigdata;
+
 		if (r_context()->config->encryption_key == NULL) {
-			g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_SIGNATURE, "Encrypted bundle detected, but no decryption key given");
+			g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_CRYPT, "Encrypted bundle detected, but no decryption key given");
+			*bundle = g_steal_pointer(&ibundle);
 			res = FALSE;
 			goto out;
 		}
 
 		decrypted_sigdata = cms_decrypt(ibundle->sigdata, r_context()->config->encryption_cert, r_context()->config->encryption_key, &ierror);
 		if (decrypted_sigdata == NULL) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"Failed to decrypt bundle: ");
+			g_set_error(error, R_BUNDLE_ERROR, R_BUNDLE_ERROR_CRYPT,
+					"Failed to decrypt bundle: %s", ierror->message);
+			g_clear_error(&ierror);
+			*bundle = g_steal_pointer(&ibundle);
 			res = FALSE;
 			goto out;
 		}
 
 		/* replace sigdata by decrypted payload */
-		g_bytes_unref(ibundle->sigdata);
 		ibundle->sigdata = decrypted_sigdata;
 		/* write marker to memorize for later that we originally had an enveloped CMS */
 		ibundle->was_enveloped = TRUE;

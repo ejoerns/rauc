@@ -41,6 +41,7 @@ typedef struct {
 	GInputStream *stream;
 
 	goffset size;
+	GBytes *enveloped_data;
 	GBytes *sigdata;
 	gchar *mount_point;
 	RaucManifest *manifest;
@@ -95,6 +96,9 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param bundle return location for a RaucBundle struct.
  *               This will contain all bundle information obtained by
  *               check_bundle
+ *               Will return NULL on error, except for R_BUNDLE_ERROR_CRYPT where
+ *               an incomplete bundle struct is returned to allow accessing
+ *               bundle->envelopeddata.
  * @param params bit-field enum CheckBundleParams with additional flags for the check
  * @param access_args Optional arguments to control streaming access
  * @param error Return location for a GError
