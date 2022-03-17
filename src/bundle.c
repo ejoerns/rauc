@@ -205,6 +205,8 @@ out:
 	return res;
 }
 
+static gboolean casync_make_blob(const gchar *idxpath, const gchar *contentpath, const gchar *store, GError **error);
+
 static gboolean casync_make_arch(const gchar *idxpath, const gchar *contentpath, const gchar *store, GError **error)
 {
 	g_autoptr(GSubprocess) sproc = NULL;
@@ -213,6 +215,12 @@ static gboolean casync_make_arch(const gchar *idxpath, const gchar *contentpath,
 	GPtrArray *args = g_ptr_array_new_full(15, g_free);
 	GPtrArray *iargs = g_ptr_array_new_full(15, g_free);
 	const gchar *tmpdir = NULL;
+
+	if (r_context()->config->use_desync) {
+		/* Desync is able to handle tar and catar archives directly, there is
+		 * no need to manually extract them. */
+		return casync_make_blob(idxpath, contentpath, store, error);
+	}
 
 	tmpdir = g_dir_make_tmp("arch-XXXXXX", &ierror);
 	if (tmpdir == NULL) {
@@ -293,13 +301,51 @@ static gboolean casync_make_blob(const gchar *idxpath, const gchar *contentpath,
 	gboolean res = FALSE;
 	GPtrArray *args = g_ptr_array_new_full(5, g_free);
 
-	g_ptr_array_add(args, g_strdup("casync"));
-	g_ptr_array_add(args, g_strdup("make"));
-	g_ptr_array_add(args, g_strdup(idxpath));
-	g_ptr_array_add(args, g_strdup(contentpath));
-	if (store) {
+	if (r_context()->config->use_desync) {
+		g_autofree gchar *desync_store = NULL;
+
+		if (store) {
+			desync_store = g_strdup(store);
+		} else {
+			/* With casync the default store is a directory called "default.castr",
+			 * instead, with desync, the default is to skip the store altogether.
+			 * Imitate casync behavior by using "default.castr" if a store was not
+			 * provided. */
+			desync_store = g_build_filename(g_path_get_dirname(idxpath), "default.castr", NULL);
+		}
+
+		/* Desync fails if the store directory is missing. */
+		if (!g_file_test(desync_store, G_FILE_TEST_IS_DIR)) {
+			gint ret_mkdir;
+			ret_mkdir = g_mkdir_with_parents(desync_store, 0755);
+
+			if (ret_mkdir != 0) {
+				g_set_error(
+						error,
+						G_FILE_ERROR,
+						G_FILE_ERROR_FAILED,
+						"Failed creating Desync store directory '%s'",
+						desync_store);
+				res = FALSE;
+				goto out;
+			}
+		}
+
+		g_ptr_array_add(args, g_strdup("desync"));
+		g_ptr_array_add(args, g_strdup("make"));
 		g_ptr_array_add(args, g_strdup("--store"));
-		g_ptr_array_add(args, g_strdup(store));
+		g_ptr_array_add(args, g_steal_pointer(&desync_store));
+		g_ptr_array_add(args, g_strdup(idxpath));
+		g_ptr_array_add(args, g_strdup(contentpath));
+	} else {
+		g_ptr_array_add(args, g_strdup("casync"));
+		g_ptr_array_add(args, g_strdup("make"));
+		g_ptr_array_add(args, g_strdup(idxpath));
+		g_ptr_array_add(args, g_strdup(contentpath));
+		if (store) {
+			g_ptr_array_add(args, g_strdup("--store"));
+			g_ptr_array_add(args, g_strdup(store));
+		}
 	}
 
 	if (r_context()->casync_args != NULL) {
