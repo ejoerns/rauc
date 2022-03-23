@@ -1168,6 +1168,10 @@ gboolean cms_is_detached(GBytes *sig, gboolean *detached, GError **error)
 	}
 
 	*detached = CMS_is_detached(cms);
+	/* prevent from printing
+	 * 8027B93E3E7F0000:error:1700006B:CMS routines:cms_get_enveloped_type:content type not enveloped data:../openssl-3.0.1/crypto/cms/cms_env.c:41:
+	 */
+	g_message("Error: %lu", ERR_get_error());
 
 	res = TRUE;
 
@@ -1298,6 +1302,10 @@ gboolean cms_verify_bytes(GBytes *content, GBytes *sig, X509_STORE *store, CMS_C
 	debug_cms_ci(icms);
 
 	detached = CMS_is_detached(icms);
+	/* prevent from printing
+	 * 8027B93E3E7F0000:error:1700006B:CMS routines:cms_get_enveloped_type:content type not enveloped data:../openssl-3.0.1/crypto/cms/cms_env.c:41:
+	 */
+	g_message("Error: %lu", ERR_get_error());
 	if (detached) {
 		if (content == NULL) {
 			/* we have a detached signature but no content to verify */
