@@ -1,3 +1,12 @@
+/**
+ * SPDX-FileCopyrightText: 2015-2022 Pengutronix
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
+ * @file
+ * @brief Main Program
+ */
+
 #include <errno.h>
 #include <gio/gio.h>
 #include <glib.h>
