@@ -12,9 +12,32 @@
 #include "context.h"
 #include "signature.h"
 
+static const GDBusErrorEntry r_signature_error_entries[] =
+{
+	{ R_SIGNATURE_ERROR_UNKNOWN, "de.pengutronix.rauc.Signature.Error.Unknown"},
+	{ R_SIGNATURE_ERROR_CRYPTOINIT_FAILED, "de.pengutronix.rauc.Signature.Error.CryptoinitFailed"},
+	{ R_SIGNATURE_ERROR_LOAD_FAILED, "de.pengutronix.rauc.Signature.Error.LoadFailed"},
+	{ R_SIGNATURE_ERROR_PARSE_ERROR, "de.pengutronix.rauc.Signature.Error.ParserError"},
+	{ R_SIGNATURE_ERROR_CREATE_SIG, "de.pengutronix.rauc.Signature.Error.CreateSig"},
+	{ R_SIGNATURE_ERROR_SERIALIZE_SIG, "de.pengutronix.rauc.Signature.Error.SerializeSig"},
+	{ R_SIGNATURE_ERROR_X509_CTX_NEW, "de.pengutronix.rauc.Signature.Error.X509CTXNew"},
+	{ R_SIGNATURE_ERROR_X509_CTX_INIT, "de.pengutronix.rauc.Signature.Error.X509CTXInit"},
+	{ R_SIGNATURE_ERROR_VERIFY_CERT, "de.pengutronix.rauc.Signature.Error.VeritfyCert"},
+	{ R_SIGNATURE_ERROR_GET_SIGNER, "de.pengutronix.rauc.Signature.Error.GetSigner"},
+	{ R_SIGNATURE_ERROR_NUM_SIGNER, "de.pengutronix.rauc.Signature.Error.NumSigner"},
+	{ R_SIGNATURE_ERROR_X509_NEW, "de.pengutronix.rauc.Signature.Error.X509New"},
+	{ R_SIGNATURE_ERROR_X509_LOOKUP, "de.pengutronix.rauc.Signature.Error.X509Lookup"},
+	{ R_SIGNATURE_ERROR_X509_PURPOSE, "de.pengutronix.rauc.Signature.Error.X509Purpose"},
+	{ R_SIGNATURE_ERROR_CA_LOAD, "de.pengutronix.rauc.Signature.Error.CALoad"},
+	{ R_SIGNATURE_ERROR_PARSE, "de.pengutronix.rauc.Signature.Error.Parse"},
+	{ R_SIGNATURE_ERROR_INVALID, "de.pengutronix.rauc.Signature.Error.Invalid"}
+};
+
 GQuark r_signature_error_quark(void)
 {
-	return g_quark_from_static_string("r_signature_error_quark");
+	static volatile gsize signature_quark = 0;
+	g_dbus_error_register_error_domain("r_signature_error_quark", 0, r_signature_error_entries, G_N_ELEMENTS(r_signature_error_entries));
+	return (GQuark) signature_quark;
 }
 
 static const gchar *get_openssl_err_string(void)
