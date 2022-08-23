@@ -38,6 +38,7 @@ gchar *output_format = NULL;
 gchar *keypath = NULL;
 gchar *certpath = NULL;
 gchar *signing_keyring = NULL;
+gchar **intermediate = NULL;
 gchar *mksquashfs_args = NULL;
 gchar *casync_args = NULL;
 gchar **recipients = NULL;
@@ -2070,6 +2071,7 @@ static GOptionEntry entries_service[] = {
 static GOptionEntry entries_signing[] = {
 	{"cert", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &certpath, "signing cert file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 	{"key", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keypath, "signing key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
+	{"intermediate", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME_ARRAY, &intermediate, "intermediate CA file name", "PEMFILE"},
 	{0}
 };
 
@@ -2150,7 +2152,7 @@ static void create_option_groups(void)
 static void cmdline_handler(int argc, char **argv)
 {
 	gboolean help = FALSE, debug = FALSE, version = FALSE;
-	gchar *confpath = NULL, **intermediate = NULL;
+	gchar *confpath = NULL;
 	char *cmdarg = NULL;
 	g_autoptr(GOptionContext) context = NULL;
 	GOptionEntry entries[] = {
@@ -2160,7 +2162,8 @@ static void cmdline_handler(int argc, char **argv)
 		{"key", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &keypath, "key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 		/* NOTE: keyring kept for backwards-compatibility, but made invisible */
 		{"keyring", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
-		{"intermediate", '\0', 0, G_OPTION_ARG_FILENAME_ARRAY, &intermediate, "intermediate CA file name", "PEMFILE"},
+		/* NOTE: intermediate kept for backwards-compatibility, but made invisible */
+		{"intermediate", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME_ARRAY, &intermediate, "intermediate CA file name", "PEMFILE"},
 		/* NOTE: mount kept for backwards-compatibility, but made invisible */
 		{"mount", '\0', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
 		{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "enable debug output", NULL},
