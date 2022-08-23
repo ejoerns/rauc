@@ -1995,11 +1995,6 @@ static GOptionEntry entries_install[] = {
 	{"ignore-compatible", '\0', 0, G_OPTION_ARG_NONE, &install_ignore_compatible, "disable compatible check", NULL},
 #if ENABLE_SERVICE == 1
 	{"progress", '\0', 0, G_OPTION_ARG_NONE, &install_progressbar, "show progress bar", NULL},
-#else
-	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra handler arguments", "ARGS"},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "(override) keyring file", "PEMFILE"},
-	{"mount", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &mount, "mount prefix", "PATH"},
-	{"override-boot-slot", '\0', 0, G_OPTION_ARG_STRING, &bootslot, "override auto-detection of booted slot", "BOOTNAME"},
 #endif
 	{0}
 };
@@ -2108,6 +2103,9 @@ static void create_option_groups(void)
 {
 	install_group = g_option_group_new("install", "Install options:", "help dummy", NULL, NULL);
 	g_option_group_add_entries(install_group, entries_install);
+	if (!ENABLE_SERVICE)
+		g_option_group_add_entries(install_group, entries_service);
+
 	if (ENABLE_STREAMING)
 		g_option_group_add_entries(install_group, entries_bundle_access);
 
