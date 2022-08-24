@@ -476,7 +476,7 @@ gboolean check_manifest_external(const RaucManifest *mf, GError **error)
 				goto out;
 			}
 
-			if (mf->bundle_verity_size % 4096) {
+			if (mf->bundle_verity_size != G_MAXUINT64 && mf->bundle_verity_size % 4096) {
 				g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_CHECK_ERROR, "Unaligned size for %s bundle", format);
 				goto out;
 			}

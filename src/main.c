@@ -947,7 +947,11 @@ static gchar *info_formatter_readable(RaucManifest *manifest)
 	if (manifest->bundle_format == R_MANIFEST_FORMAT_VERITY || manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT) {
 		g_string_append_printf(text, "  Verity Salt: \t'%s'\n", manifest->bundle_verity_salt);
 		g_string_append_printf(text, "  Verity Hash: \t'%s'\n", manifest->bundle_verity_hash);
-		g_string_append_printf(text, "  Verity Size: \t%"G_GUINT64_FORMAT "\n", manifest->bundle_verity_size);
+		if (manifest->bundle_verity_size == G_MAXUINT64) {
+			g_string_append(text, "  Verity Size: \tonly-root-hash");
+		} else {
+			g_string_append_printf(text, "  Verity Size: \t%"G_GUINT64_FORMAT "\n", manifest->bundle_verity_size);
+		}
 	}
 
 	g_ptr_array_unref(hooks);
