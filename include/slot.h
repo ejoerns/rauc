@@ -225,14 +225,11 @@ GList* r_slot_get_all_children(GHashTable *slots, RaucSlot *parent)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
- * Returns mount options for currently mounted slot
- *
- * Note: To actually return the full option list, g_unix_mount_get_options()
- * should be used which is available since glib 2.58
+ * Returns if currently mounted slot is mounted readonly.
  *
  * @param slot Slot to get options for
  *
- * @return String of current options [nullable]
+ * @return TRUE if 'ro' is in mount options. FALSE otherwise
  */
-gchar* r_slot_get_current_mount_options(RaucSlot *slot)
+gboolean r_slot_mount_is_readonly(RaucSlot *slot)
 G_GNUC_WARN_UNUSED_RESULT;

@@ -1,11 +1,10 @@
 #include <errno.h>
+#include <gio/gio.h>
+#include <gio/gunixmounts.h>
 
 #include "slot.h"
 
 #include "utils.h"
-
-#include <gio/gio.h>
-#include <gio/gunixmounts.h>
 
 void r_slot_free(gpointer value)
 {
@@ -354,10 +353,10 @@ GList* r_slot_get_all_children(GHashTable *slots, RaucSlot *parent)
 	return retlist;
 }
 
-gchar* r_slot_get_current_mount_options(RaucSlot *slot)
+gboolean r_slot_mount_is_readonly(RaucSlot *slot)
 {
-	g_return_val_if_fail(slot, NULL);
-	g_return_val_if_fail(slot->device, NULL);
+	g_return_val_if_fail(slot, FALSE);
+	g_return_val_if_fail(slot->device, FALSE);
 
 	for (GList *l = g_unix_mounts_get(NULL); l != NULL; l = l->next) {
 		GUnixMountEntry *m = (GUnixMountEntry*)l->data;
@@ -365,11 +364,8 @@ gchar* r_slot_get_current_mount_options(RaucSlot *slot)
 		if (g_strcmp0(g_unix_mount_get_device_path(m), slot->device) != 0)
 			continue;
 
-		if (g_unix_mount_is_readonly(m))
-			return g_strdup("ro");
-		else
-			return g_strdup("rw");
+		return g_unix_mount_is_readonly(m);
 	}
 
-	return '\0';
+	return FALSE;
 }
