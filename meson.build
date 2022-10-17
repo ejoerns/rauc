@@ -4,6 +4,7 @@ project(
   version : '1.8',
   meson_version : '>=0.51',
   default_options: [
+    'c_std=gnu11',
     'warning_level=2',
   ],
   license : 'LGPL-2.1-or-later',
@@ -91,8 +92,9 @@ c_warn_flags = '''
 c_warn_flags += '-Wno-error=deprecated-declarations'
 c_flags += cc.get_supported_arguments(c_warn_flags)
 c_flags += ['-fdata-sections', '-ffunction-sections', '-fno-strict-aliasing']
-c_flags += ['-Wl,--gc-sections', '-Wl,-Map,$@.map']
+ld_flags = ['-Wl,--gc-sections', '-Wl,-Map,$@.map']
 add_project_arguments(c_flags, language : 'c')
+add_project_link_arguments(ld_flags, language : 'c')
 # set logging domain to 'rauc'
 add_project_arguments('-DG_LOG_DOMAIN="rauc"', language : 'c')
 # enable GNU extensions (required!)
