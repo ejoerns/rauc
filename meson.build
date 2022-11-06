@@ -25,7 +25,7 @@ conf.set('bindir', bindir)
 libexecdir = join_paths(prefixdir, get_option('libexecdir'))
 conf.set('libexecdir', libexecdir)
 
-glibdep = dependency('glib-2.0', version : '>=2.50')
+glibdep = dependency('glib-2.0', version : '>=2.56')
 
 # Sanity checks to not use new glib methods unintentionally.
 # package check, minimum and maximum required version must be updated
