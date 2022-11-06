@@ -15,7 +15,7 @@ jobs:
         whoami
         gcc --version
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Run autogen.sh
       run: |
@@ -85,7 +85,7 @@ jobs:
         - armel
         - i386
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Prepare ${{ matrix.architecture }} container
       run: |
@@ -120,7 +120,7 @@ jobs:
         - "20.04"
         - "22.04"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Prepare ubuntu ${{ matrix.release }} container
       run: |
@@ -155,7 +155,7 @@ jobs:
   uncrustify:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install codespell
       run: |
