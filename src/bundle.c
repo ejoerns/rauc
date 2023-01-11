@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 
 #include "bundle.h"
+#include "config.h"
 #include "context.h"
 #include "crypt.h"
 #include "mount.h"
