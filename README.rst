@@ -142,6 +142,12 @@ If you intend to use json-support you also need
 
     sudo apt-get install libjson-glib-dev
 
+For straming support, you also need
+
+::
+
+    sudo apt-get install libnl-genl-3-dev
+
 Target Prerequisites
 ~~~~~~~~~~~~~~~~~~~~
 
