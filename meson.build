@@ -176,6 +176,7 @@ librauc = static_library('rauc',
 
 executable('rauc',
   'src/main.c',
+  dbus_sources,
   include_directories : incdir,
   dependencies : rauc_deps,
   link_with : librauc,
