@@ -28,7 +28,7 @@ jobs:
 
     - name: Run scan-build
       run: |
-        scan-build --status-bugs ninja -C build
+        SCANBUILD=$(pwd)/scan-build-wrapper.sh ninja -C build scan-build
 
     - name: Upload scan-build report
       if: failure()
