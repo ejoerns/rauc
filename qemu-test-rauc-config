@@ -11,10 +11,12 @@ path=ca.cert.pem
 [slot.rootfs.0]
 device=/dev/root
 bootname=A
+type=ext4
 
 [slot.rootfs.1]
 device=/tmp/rootdev
 bootname=B
+type=ext4
 
 [slot.appfs.0]
 device=/dev/null
