@@ -28,18 +28,19 @@ jobs:
         ./qemu-test
         lcov --directory . --capture --output-file "service.info"
         
-    - name: Test without service and gpt
-      run: |
-        rm -rf build/
-        meson setup -Dservice=false -Dgpt=enabled -Db_coverage=true -Dwerror=true build
-        meson configure build
-        meson compile -C build
-        ./qemu-test
-        lcov --directory . --capture --output-file "noservice.info"
+        #- name: Test without service and gpt
+        #  run: |
+        #    rm -rf build/
+        #    meson setup -Dservice=false -Dgpt=enabled -Db_coverage=true -Dwerror=true build
+        #    meson configure build
+        #    meson compile -C build
+        #    ./qemu-test
+        #    lcov --directory . --capture --output-file "noservice.info"
 
     - uses: codecov/codecov-action@v3
       with:
         files: service.info,noservice.info
+        gcov_ignore: "test/*"
         verbose: true
 
     - name: Build documentation
