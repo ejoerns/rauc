@@ -246,11 +246,10 @@ static gboolean file_to_outstream(const gchar *filename,
 		GOutputStream *out_stream, GError **error)
 {
 	GError *ierror = NULL;
-	gboolean res = FALSE;
 	g_autoptr(GFile) image_file;
 	g_autoptr(GFileInfo) image_info;
 	goffset image_size;
-	GFileInputStream *image_stream;
+	g_autoptr(GFileInputStream) image_stream = NULL;
 
 	image_file = g_file_new_for_path(filename);
 	image_info = g_file_query_info(image_file,
@@ -260,7 +259,7 @@ static gboolean file_to_outstream(const gchar *filename,
 			&ierror);
 	if (image_info == NULL) {
 		g_propagate_error(error, ierror);
-		goto out;
+		return FALSE;
 	}
 
 	image_size = g_file_info_get_size(image_info);
@@ -270,16 +269,20 @@ static gboolean file_to_outstream(const gchar *filename,
 				error,
 				ierror,
 				"failed to read image file for copying ");
-		goto out;
+		return FALSE;
 	}
 
-	res = instream_to_outstream(G_INPUT_STREAM(image_stream), out_stream, image_size, error);
+	if (!instream_to_outstream(G_INPUT_STREAM(image_stream), out_stream, image_size, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
 	if (g_output_stream_close(out_stream, NULL, &ierror) != TRUE) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"failed closing output pipe: ");
-		goto out_image_stream;
+		return FALSE;
 	}
 
 	if (g_input_stream_close(G_INPUT_STREAM(image_stream), NULL,
@@ -288,15 +291,10 @@ static gboolean file_to_outstream(const gchar *filename,
 				error,
 				ierror,
 				"failed closing image file: ");
-		goto out_image_stream;
+		return FALSE;
 	}
 
-	res = TRUE;
-
-out_image_stream:
-	g_object_unref(image_stream);
-out:
-	return res;
+	return TRUE;
 }
 
 static gboolean file_to_process_stdin(const gchar *filename, GSubprocess *sproc,
