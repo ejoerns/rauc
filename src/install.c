@@ -891,7 +891,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 	if (manifest->hook_name)
 		hook_name = g_build_filename(bundledir, manifest->hook_name, NULL);
 
-	r_context_begin_step("update_slots", "Updating slots", g_list_length(install_images) * 2);
+	r_context_begin_step_weighted("update_slots", "Updating slots", g_list_length(install_images) * 2, 6);
 	install_args_update(args, "Updating slots...");
 	for (GList *l = install_images; l != NULL; l = l->next) {
 		RaucImage *mfimage = l->data;
@@ -1063,7 +1063,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 	g_assert_nonnull(bundlefile);
 	g_assert_null(r_context()->install_info->mounted_bundle);
 
-	r_context_begin_step("do_install_bundle", "Installing", 5);
+	r_context_begin_step("do_install_bundle", "Installing", 10);
 
 	r_context_begin_step("determine_slot_states", "Determining slot states", 0);
 	res = determine_slot_states(&ierror);
