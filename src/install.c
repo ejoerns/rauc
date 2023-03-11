@@ -732,7 +732,7 @@ static gboolean launch_and_wait_custom_handler(RaucInstallArgs *args, gchar* bun
 	g_autofree gchar* handler_name = NULL;
 	gboolean res = FALSE;
 
-	r_context_begin_step("launch_and_wait_custom_handler", "Launching update handler", 0);
+	r_context_begin_step_weighted("launch_and_wait_custom_handler", "Launching update handler", 0, 6);
 
 	/* Allow overriding compatible check by hook */
 	if (manifest->hooks.install_check) {
@@ -891,7 +891,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 	if (manifest->hook_name)
 		hook_name = g_build_filename(bundledir, manifest->hook_name, NULL);
 
-	r_context_begin_step("update_slots", "Updating slots", g_list_length(install_images) * 2);
+	r_context_begin_step_weighted("update_slots", "Updating slots", g_list_length(install_images) * 10, 6);
 	install_args_update(args, "Updating slots...");
 	for (GList *l = install_images; l != NULL; l = l->next) {
 		RaucImage *mfimage = l->data;
@@ -911,7 +911,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 		install_args_update(args, g_strdup_printf("Checking slot %s", dest_slot->name));
 
-		r_context_begin_step_formatted("check_slot", 0, "Checking slot %s", dest_slot->name);
+		r_context_begin_step_weighted_formatted("check_slot", 0, 1, "Checking slot %s", dest_slot->name);
 
 		load_slot_status(dest_slot);
 		slot_state = dest_slot->status;
@@ -957,7 +957,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 				g_message("Updating %s with %s", dest_slot->device, mfimage->filename);
 		}
 
-		r_context_begin_step_formatted("copy_image", 0, "Copying image to %s", dest_slot->name);
+		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Copying image to %s", dest_slot->name);
 
 		res = update_handler(
 				mfimage,
@@ -1063,7 +1063,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 	g_assert_nonnull(bundlefile);
 	g_assert_null(r_context()->install_info->mounted_bundle);
 
-	r_context_begin_step("do_install_bundle", "Installing", 5);
+	r_context_begin_step("do_install_bundle", "Installing", 10);
 
 	r_context_begin_step("determine_slot_states", "Determining slot states", 0);
 	res = determine_slot_states(&ierror);

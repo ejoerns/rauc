@@ -461,6 +461,12 @@ static void r_context_send_progress(gboolean op_finished, gboolean success)
 void r_context_begin_step(const gchar *name, const gchar *description,
 		gint substeps)
 {
+	r_context_begin_step_weighted(name, description, substeps, 1);
+}
+
+void r_context_begin_step_weighted(const gchar *name, const gchar *description,
+		gint substeps, gint weight)
+{
 	RaucProgressStep *step = g_new0(RaucProgressStep, 1);
 	RaucProgressStep *parent;
 
@@ -470,6 +476,7 @@ void r_context_begin_step(const gchar *name, const gchar *description,
 	/* set properties */
 	step->name = g_strdup(name);
 	step->description = g_strdup(description);
+	step->weight = weight;
 	step->substeps_total = substeps;
 	step->substeps_done = 0;
 	step->percent_done = 0;
@@ -487,7 +494,7 @@ void r_context_begin_step(const gchar *name, const gchar *description,
 					parent->substeps_done + 1,
 					parent->substeps_total);
 
-		step->percent_total = parent->percent_total
+		step->percent_total = step->weight * parent->percent_total
 		                      / parent->substeps_total;
 
 		g_assert_cmpint(step->percent_total, <=,
@@ -517,6 +524,21 @@ void r_context_begin_step_formatted(const gchar *name, gint substeps, const gcha
 	va_end(args);
 
 	r_context_begin_step(name, desc_formatted, substeps);
+}
+
+void r_context_begin_step_weighted_formatted(const gchar *name, gint substeps, gint weight, const gchar *description, ...)
+{
+	va_list args;
+	g_autofree gchar *desc_formatted = NULL;
+
+	g_return_if_fail(name);
+	g_return_if_fail(description);
+
+	va_start(args, description);
+	desc_formatted = g_strdup_vprintf(description, args);
+	va_end(args);
+
+	r_context_begin_step_weighted(name, desc_formatted, substeps, weight);
 }
 
 void r_context_end_step(const gchar *name, gboolean success)
@@ -558,7 +580,7 @@ void r_context_end_step(const gchar *name, gboolean success)
 	/* increment step count and percentage on parent step */
 	if (g_list_next(context->progress)) {
 		parent = g_list_next(context->progress)->data;
-		parent->substeps_done++;
+		parent->substeps_done += step->weight;
 
 		/* clean up explicit percentage */
 		if (step->last_explicit_percent != 0)
