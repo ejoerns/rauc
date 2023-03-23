@@ -122,6 +122,11 @@ For interactive access to the test environment, use::
 
   ./qemu-test shell
 
+To get an interactive dummy test system where you can test installing bundles
+or introspect system status, run::
+
+  ./qemu-test system
+
 Developer's Certificate of Origin
 ---------------------------------
 
