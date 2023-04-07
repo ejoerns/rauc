@@ -44,6 +44,7 @@ librauc_la_SOURCES = \
 	src/context.c \
 	src/crypt.c \
 	src/dm.c \
+	src/global_state.c \
 	src/hash_index.c \
 	src/install.c \
 	src/manifest.c \
@@ -64,6 +65,7 @@ librauc_la_SOURCES = \
 	include/context.h \
 	include/crypt.h \
 	include/dm.h \
+	include/global_state.h \
 	include/hash_index.h \
 	include/emmc.h \
 	include/gpt.h \
