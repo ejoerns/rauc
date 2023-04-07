@@ -16,6 +16,7 @@
 #include "bootchooser.h"
 #include "config_file.h"
 #include "context.h"
+#include "event-log.h"
 #include "install.h"
 #include "rauc-installer-generated.h"
 #include "service.h"

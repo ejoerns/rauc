@@ -1,4 +1,5 @@
 #include "bootchooser.h"
+#include "event-log.h"
 #include "context.h"
 #include "install.h"
 #include "mark.h"
@@ -148,6 +149,10 @@ gboolean mark_run(const gchar *state,
 out:
 	if (res && slot_name)
 		*slot_name = g_strdup(slot->name);
+
+	if (res) {
+		r_event_log_message(R_EVENT_LOG_SERVICE, "%s", *message);
+	}
 
 	g_clear_error(&ierror);
 

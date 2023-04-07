@@ -15,6 +15,7 @@
 #include "bootchooser.h"
 #include "bundle.h"
 #include "context.h"
+#include "event-log.h"
 #include "install.h"
 #include "manifest.h"
 #include "mark.h"
@@ -863,6 +864,7 @@ static gboolean handle_slot_install_plan(const RaucManifest *manifest, const RIm
 	r_context_end_step("check_slot", TRUE);
 
 	install_args_update(args, "Updating slot %s", plan->target_slot->name);
+	r_event_log_message(R_EVENT_LOG_WRITE_SLOT, "Updating slot %s", plan->target_slot->name);
 
 	/* update slot */
 	if (plan->image->hooks.install) {
@@ -1043,7 +1045,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	r_context_begin_step("do_install_bundle", "Installing", 10);
 
-	g_message("Installation %s started", args->transaction);
+	r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s started", args->transaction);
 
 	r_context_begin_step("determine_slot_states", "Determining slot states", 0);
 	res = update_external_mount_points(&ierror);
@@ -1058,11 +1060,13 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	res = check_bundle(bundlefile, &bundle, CHECK_BUNDLE_DEFAULT, &args->access_args, &ierror);
 	if (!res) {
+		r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s rejected", args->transaction);
 		g_propagate_error(error, ierror);
 		goto out;
 	}
 
 	if (bundle->manifest && bundle->manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT && !bundle->was_encrypted) {
+		r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s rejected", args->transaction);
 		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_REJECTED, "Refusing to install unencrypted crypt bundles");
 		res = FALSE;
 		goto out;
@@ -1129,6 +1133,7 @@ umount:
 	r_context()->install_info->mounted_bundle = NULL;
 
 out:
+	r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s %s", args->transaction, res ? "succeeded" : "failed");
 	r_context_end_step("do_install_bundle", res);
 
 	return res;

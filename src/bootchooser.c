@@ -5,6 +5,7 @@
 #include "bootchooser.h"
 #include "config_file.h"
 #include "context.h"
+#include "event-log.h"
 #include "install.h"
 #include "utils.h"
 
@@ -1701,11 +1702,20 @@ gboolean r_boot_set_state(RaucSlot *slot, gboolean good, GError **error)
 	}
 
 	if (!res) {
+		r_event_log_message(R_EVENT_LOG_BOOT_SELECTION, "Failed setting slot %s state", slot->name);
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"%s backend: ", r_context()->config->system_bootloader);
 	}
+
+	// TODO: continue
+	r_event_log_message(R_EVENT_LOG_BOOT_SELECTION,
+			"Slot %s set %s", slot->name, good ? "good" : "bad");
+	//r_event_log_message(R_EVENT_LOG_BOOT_SELECTION,
+	//		"Slot %s set %s", slot->name, good ? "good" : "bad",
+	//		"RAUC_SLOT_NAME=%s", slot->name,
+	//		"RAUC_DEVICE_NAME=%s", slot->device);
 
 	return res;
 }
@@ -1777,11 +1787,14 @@ gboolean r_boot_set_primary(RaucSlot *slot, GError **error)
 	}
 
 	if (!res) {
+		r_event_log_message(R_EVENT_LOG_BOOT_SELECTION, "Failed setting slot %s primary", slot->name);
 		g_propagate_prefixed_error(
 				error,
 				ierror,
 				"%s backend: ", r_context()->config->system_bootloader);
 	}
+
+	r_event_log_message(R_EVENT_LOG_BOOT_SELECTION, "Slot %s set primary", slot->name);
 
 	return res;
 }
