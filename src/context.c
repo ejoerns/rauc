@@ -4,6 +4,7 @@
 
 #include "config_file.h"
 #include "context.h"
+#include "status_file.h"
 #include "network.h"
 #include "install.h"
 #include "signature.h"
@@ -313,6 +314,15 @@ static gboolean r_context_configure_target(GError **error)
 					g_strerror(err));
 			return FALSE;
 		}
+	}
+
+	/* load global state */
+	g_clear_pointer(&context->statepath, g_free);
+	g_clear_pointer(&context->system_state, r_system_state_free);
+	context->statepath = g_build_filename(context->config->data_directory, "state", NULL);
+	context->system_state = g_new0(RSystemState, 1);
+	if (!r_system_state_load(context->statepath, context->system_state, &ierror)) {
+		g_message("Failed to load global state: %s\n", ierror->message);
 	}
 
 	if (context->config->system_variant_type == R_CONFIG_SYS_VARIANT_DTB) {
