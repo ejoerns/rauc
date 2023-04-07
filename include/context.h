@@ -6,6 +6,7 @@
 
 
 #include "config_file.h"
+#include "global_state.h"
 #include "bundle.h"
 
 typedef void (*progress_callback) (gint percentage, const gchar *message,
@@ -31,6 +32,9 @@ typedef struct {
 	RContextConfigMode configmode;
 	gchar *configpath;
 	RaucConfig *config;
+
+	gchar *statepath;
+	RGlobalState *global_state;
 
 	GList *progress;
 	progress_callback progress_callback;

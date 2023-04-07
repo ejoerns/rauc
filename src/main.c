@@ -2013,6 +2013,23 @@ static gboolean service_start(int argc, char **argv)
 		return TRUE;
 	}
 
+	/* Boot ID-based boot vs service restart detection */
+	if (g_strcmp0(r_context()->global_state->boot_id, r_context()->boot_id) == 0) {
+		g_message("Restarted RAUC service");
+	} else {
+		RaucSlot *booted_slot = r_slot_get_booted(r_context()->config->slots);
+		g_message("Booted into %s (%s)", booted_slot->name, booted_slot->bootname);
+
+		/* update boot ID */
+		g_free(r_context()->global_state->boot_id);
+		r_context()->global_state->boot_id = g_strdup(r_context()->boot_id);
+
+		if (!r_global_state_save(r_context()->statepath, r_context()->global_state, &ierror)) {
+			g_warning("Failed saving global state");
+			g_clear_error(&ierror);
+		}
+	}
+
 	r_exit_status = r_service_run() ? 0 : 1;
 
 	return TRUE;
