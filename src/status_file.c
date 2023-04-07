@@ -351,3 +351,54 @@ gboolean r_slot_status_save(RaucSlot *dest_slot, GError **error)
 	else
 		return save_slot_status_globally(error);
 }
+
+gboolean r_system_state_load(const gchar *filename, RSystemState *state, GError **error)
+{
+	g_autoptr(GKeyFile) key_file = NULL;
+	GError *ierror = NULL;
+
+	g_return_val_if_fail(filename, FALSE);
+	g_return_val_if_fail(state, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	key_file = g_key_file_new();
+
+	if (!g_key_file_load_from_file(key_file, filename, G_KEY_FILE_NONE, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	state->boot_id = g_key_file_get_string(key_file, "system", "boot-id", NULL);
+
+	return TRUE;
+}
+
+gboolean r_system_state_save(GError **error)
+{
+	g_autoptr(GKeyFile) key_file = NULL;
+	GError *ierror = NULL;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	key_file = g_key_file_new();
+
+	if (!g_key_file_load_from_file(key_file, r_context()->statepath, G_KEY_FILE_NONE, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	g_key_file_set_string(key_file, "system", "boot-id", r_context()->system_state->boot_id);
+
+	if (!g_key_file_save_to_file(key_file, r_context()->statepath, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+void r_system_state_free(RSystemState *state)
+{
+	g_free(state->boot_id);
+	g_free(state);
+}

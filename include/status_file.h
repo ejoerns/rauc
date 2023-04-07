@@ -59,3 +59,40 @@ void r_slot_status_load(RaucSlot *dest_slot);
  */
 gboolean r_slot_status_save(RaucSlot *dest_slot, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
+
+typedef struct {
+	gchar *boot_id;
+} RSystemState;
+
+/**
+ * Load global state from file.
+ *
+ * Note that filename and state are passed explicitly here since the method is
+ * desinged to be called during context setup where we cannot access context,
+ * yet.
+ *
+ * @param filename File name to load state from
+ * @param state RGlobalState to update from file
+ * @param[out] error Return location for a GError, or NULL
+ *
+ * @return
+ */
+gboolean r_system_state_load(const gchar *filename, RSystemState *state, GError **error)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Save global state to file.
+ *
+ * @param filename File name to save state to
+ * @param state RGlobalState to save
+ * @param[out] error Return location for a GError, or NULL
+ */
+gboolean r_system_state_save(GError **error)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Free state.
+ *
+ * @param state RGlobalState to free
+ */
+void r_system_state_free(RSystemState *state);
