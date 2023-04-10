@@ -2561,6 +2561,9 @@ int main(int argc, char **argv)
 	fatal_mask |= G_LOG_LEVEL_CRITICAL;
 	g_log_set_always_fatal(fatal_mask);
 
+	/* set up structured logging */
+	g_log_set_writer_func(r_event_log_writer, NULL, NULL);
+
 	/* disable remote VFS */
 	g_assert(g_setenv("GIO_USE_VFS", "local", TRUE));
 
