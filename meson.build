@@ -199,6 +199,13 @@ if systemdunitdir == ''
   endif
 endif
 
+systemdcatalogdir = get_option('systemdcatalogdir')
+if systemdcatalogdir == ''
+  if systemddep.found()
+    systemdcatalogdir = prefixdir / 'lib/systemd/catalog'
+  endif
+endif
+
 datadir = get_option('datadir')
 
 dbussystemservicedir = get_option('dbussystemservicedir')
