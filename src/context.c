@@ -4,6 +4,7 @@
 
 #include "config_file.h"
 #include "context.h"
+#include "event-log.h"
 #include "global_state.h"
 #include "network.h"
 #include "install.h"
@@ -319,6 +320,15 @@ static gboolean r_context_configure_target(GError **error)
 	context->global_state = g_new0(RGlobalState, 1);
 	if (!r_global_state_load(context->statepath, context->global_state, &ierror)) {
 		g_message("Failed to load global state: %s\n", ierror->message);
+	}
+
+	/* set up logging */
+	if (context->config->logger) {
+		for (GList *l = context->config->logger; l != NULL; l = l->next) {
+			REventLogger* logger = l->data;
+
+			r_event_log_setup_logger(logger);
+		}
 	}
 
 	if (context->config->system_variant_type == R_CONFIG_SYS_VARIANT_DTB) {
