@@ -10,6 +10,34 @@ data-directory=/tmp/rauc
 filename=event.log
 events=all
 
+[log.logger1]
+filename=boot.log
+events=boot
+
+[log.ganzlogger2]
+filename=logging.log
+events=all
+
+[log.jsonpretty]
+filename=json-pretty.log
+events=all
+format=json-pretty
+max-size=1K
+max-files=5
+
+[log.json]
+filename=json.log
+events=all
+format=json
+max-size=1K
+
+[log.shortlogger]
+filename=short.log
+events=all
+format=short
+max-size=300
+max-files=3
+
 [keyring]
 path=ca.cert.pem
 
