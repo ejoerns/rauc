@@ -4,6 +4,7 @@
 #include "bootchooser.h"
 #include "config_file.h"
 #include "context.h"
+#include "event-log.h"
 #include "manifest.h"
 #include "mount.h"
 #include "utils.h"
@@ -154,6 +155,100 @@ out:
 	if (res)
 		*mask = imask;
 	return res;
+}
+
+#define RAUC_LOG_EVENT_CONF_PREFIX "log"
+
+static gboolean r_event_log_parse_config_sections(GKeyFile *key_file, RaucConfig *config, GError **error)
+{
+	gsize group_count;
+	g_auto(GStrv) groups = NULL;
+
+	g_return_val_if_fail(key_file, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	g_assert_null(config->logger);
+
+	/* parse [log.*] sections */
+	groups = g_key_file_get_groups(key_file, &group_count);
+	for (gchar **group = groups; *group != NULL; group++) {
+		GError *ierror = NULL;
+		g_autoptr(REventLogger) logger = NULL;
+		gchar *logger_name;
+		g_autofree gchar *log_format = NULL;
+		g_auto(GStrv) events = NULL;
+		gsize entries;
+
+		if (!g_str_has_prefix(*group, RAUC_LOG_EVENT_CONF_PREFIX "."))
+			continue;
+
+		logger_name = *group + strlen(RAUC_LOG_EVENT_CONF_PREFIX ".");
+
+		logger = g_new0(REventLogger, 1);
+		logger->name = g_strdup(logger_name);
+
+		logger->filename = key_file_consume_string(key_file, *group, "filename", NULL);
+		/* relative paths are resolved relative to the data-directory */
+		if (logger->filename && !g_path_is_absolute(logger->filename)) {
+			gchar *abspath;
+			if (!config->data_directory) {
+				g_set_error_literal(
+						error,
+						G_KEY_FILE_ERROR,
+						G_KEY_FILE_ERROR_INVALID_VALUE,
+						"Relative filename requires data-directory to be set");
+				return FALSE;
+			}
+
+			abspath = g_build_filename(config->data_directory, logger->filename, NULL);
+			g_free(logger->filename);
+			logger->filename = abspath;
+		}
+
+		log_format = key_file_consume_string(key_file, *group, "format", &ierror);
+		if (g_error_matches(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND)) {
+			log_format = g_strdup("readable");
+			g_clear_error(&ierror);
+		} else if (ierror) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+
+		if (g_strcmp0(log_format, "readable") == 0) {
+			logger->format = R_EVENT_LOGFMT_READABLE;
+		} else if (g_strcmp0(log_format, "short") == 0) {
+			logger->format = R_EVENT_LOGFMT_READABLE_SHORT;
+		} else if (g_strcmp0(log_format, "json") == 0) {
+			logger->format = R_EVENT_LOGFMT_JSON;
+		} else if (g_strcmp0(log_format, "json-pretty") == 0) {
+			logger->format = R_EVENT_LOGFMT_JSON_PRETTY;
+		} else {
+			g_set_error(
+					error,
+					G_KEY_FILE_ERROR,
+					G_KEY_FILE_ERROR_INVALID_VALUE,
+					"Unknown log format '%s'", log_format);
+			return FALSE;
+		}
+
+		logger->events = g_key_file_get_string_list(key_file, *group, "events", &entries, NULL);
+		for (gsize j = 0; j < entries; j++) {
+			/* FIXME: handle invalid values */
+		}
+		g_key_file_remove_key(key_file, *group, "events", NULL);
+
+		if (!check_remaining_keys(key_file, *group, &ierror)) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+
+		g_key_file_remove_group(key_file, *group, NULL);
+
+		/* insert new logger in list */
+		config->logger = g_list_append(config->logger, g_steal_pointer(&logger));
+	}
+
+	return TRUE;
 }
 
 static GHashTable *parse_slots(const char *filename, const char *data_directory, GKeyFile *key_file, GError **error)
@@ -811,6 +906,11 @@ gboolean load_config(const gchar *filename, RaucConfig **config, GError **error)
 		return FALSE;
 	}
 	g_key_file_remove_group(key_file, "handlers", NULL);
+
+	if (!r_event_log_parse_config_sections(key_file, c, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
 
 	/* parse [slot.*.#] sections */
 	c->slots = parse_slots(filename, c->data_directory, key_file, &ierror);

@@ -83,6 +83,9 @@ typedef struct {
 	gchar *encryption_key;
 	gchar *encryption_cert;
 
+	/* logging */
+	GList *logger;
+
 	GHashTable *slots;
 	/* flag to ensure slot states were determined */
 	gboolean slot_states_determined;
