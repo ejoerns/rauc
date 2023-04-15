@@ -25,15 +25,17 @@ conf.set('bindir', bindir)
 libexecdir = join_paths(prefixdir, get_option('libexecdir'))
 conf.set('libexecdir', libexecdir)
 
-glibdep = dependency('glib-2.0', version : '>=2.50')
+glibdep = dependency('glib-2.0', version : '>=2.56')
 
 # Sanity checks to not use new glib methods unintentionally.
 # package check, minimum and maximum required version must be updated
 # explicitly when using newer glib APIs
 c_flags = [
-  '-DGLIB_VERSION_MAX_ALLOWED=G_ENCODE_VERSION(2,52)',
-  '-DGLIB_VERSION_MIN_REQUIRED=G_ENCODE_VERSION(2,50)'
+  '-DGLIB_VERSION_MAX_ALLOWED=G_ENCODE_VERSION(2,56)',
+  '-DGLIB_VERSION_MIN_REQUIRED=G_ENCODE_VERSION(2,56)'
 ]
+# enable glib structured logging
+c_flags += ['-DG_LOG_USE_STRUCTURED']
 
 giodep = dependency('gio-2.0', version : '>=2.26.0')
 giounixdep = dependency('gio-unix-2.0', version : '>=2.26.0')
