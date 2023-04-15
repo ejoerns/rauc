@@ -26,7 +26,7 @@ static gboolean service_install_notify(gpointer data)
 	g_mutex_lock(&args->status_mutex);
 	while (!g_queue_is_empty(&args->status_messages)) {
 		g_autofree gchar *msg = g_queue_pop_head(&args->status_messages);
-		g_message("installing %s: %s", args->name, msg);
+		g_message("%s", msg);
 	}
 	g_mutex_unlock(&args->status_mutex);
 
