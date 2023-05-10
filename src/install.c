@@ -664,26 +664,35 @@ static gchar **prepare_environment(gchar *update_source, RaucManifest *manifest,
 	return envp;
 }
 
-static gboolean launch_and_wait_handler(RaucInstallArgs *args, gchar *handler_name, const gchar *handler_args, gchar **setenv, GError **error)
+static gboolean launch_and_wait_handler(RaucInstallArgs *args, gchar *handler_name, gchar **handler_argv, gchar **setenv, GError **error)
 {
 	g_autoptr(GSubprocessLauncher) handlelaunch = NULL;
 	g_autoptr(GSubprocess) handleproc = NULL;
 	GError *ierror = NULL;
 	gboolean res = FALSE;
+	g_autoptr(GPtrArray) args_array = NULL;
 	GInputStream *instream = NULL;
 	g_autoptr(GDataInputStream) datainstream = NULL;
 	gchar *outline;
+
+	g_return_val_if_fail(args, FALSE);
+	g_return_val_if_fail(handler_name, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	handlelaunch = g_subprocess_launcher_new(G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_MERGE);
 
 	if (setenv)
 		g_subprocess_launcher_set_environ(handlelaunch, setenv);
 
-	handleproc = g_subprocess_launcher_spawn(
-			handlelaunch, &ierror,
-			handler_name,
-			handler_args,
-			NULL);
+	args_array = g_ptr_array_new();
+	g_ptr_array_add(args_array, handler_name);
+	if (handler_argv) {
+		r_g_ptr_array_addv(args_array, handler_argv, FALSE);
+	}
+	g_ptr_array_add(args_array, NULL);
+
+	handleproc = g_subprocess_launcher_spawnv(
+			handlelaunch, (const gchar *const *) args_array->pdata, &ierror);
 	if (handleproc == NULL) {
 		g_propagate_error(error, ierror);
 		goto out;
@@ -798,7 +807,7 @@ static gboolean launch_and_wait_custom_handler(RaucInstallArgs *args, gchar* bun
 {
 	GError *ierror = NULL;
 	g_autofree gchar* handler_name = NULL;
-	g_autoptr(GString) handler_args = NULL;
+	g_autoptr(GPtrArray) handler_args = NULL;
 	g_auto(GStrv) env = NULL;
 	gboolean res = FALSE;
 
@@ -819,15 +828,29 @@ static gboolean launch_and_wait_custom_handler(RaucInstallArgs *args, gchar* bun
 	}
 
 	handler_name = g_build_filename(bundledir, manifest->handler_name, NULL);
-	handler_args = g_string_new(manifest->handler_args);
-	if (r_context()->handlerextra) {
-		if (handler_args->len)
-			g_string_append_c(handler_args, ' ');
-		g_string_append(handler_args, r_context()->handlerextra);
+	handler_args = g_ptr_array_new_full(0, g_free);
+	if (manifest->handler_args) {
+		g_auto(GStrv) handler_argvp = NULL;
+		res = g_shell_parse_argv(manifest->handler_args, NULL, &handler_argvp, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+		r_g_ptr_array_addv(handler_args, handler_argvp, TRUE);
 	}
+	if (r_context()->handlerextra) {
+		g_auto(GStrv) extra_argvp = NULL;
+		res = g_shell_parse_argv(r_context()->handlerextra, NULL, &extra_argvp, &ierror);
+		if (!res) {
+			g_propagate_error(error, ierror);
+			goto out;
+		}
+		r_g_ptr_array_addv(handler_args, extra_argvp, TRUE);
+	}
+	g_ptr_array_add(handler_args, NULL);
 
 	env = prepare_environment(bundledir, manifest, target_group);
-	res = launch_and_wait_handler(args, handler_name, handler_args->str, env, error);
+	res = launch_and_wait_handler(args, handler_name, (gchar**) handler_args->pdata, env, error);
 
 out:
 	r_context_end_step("launch_and_wait_custom_handler", res);
