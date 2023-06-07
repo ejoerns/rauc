@@ -63,7 +63,7 @@ Obtaining Bundle Information
 
 .. code-block:: sh
 
-  rauc info [--output-format=<format>] <input-file>
+  rauc info [--output-format=<format>] <input-bundle>
 
 The ``info`` command lists the basic meta data of a bundle (compatible, version,
 build-id, description) and the images and hooks contained in the bundle.
@@ -82,7 +82,10 @@ To actually install an update bundle on your target hardware, RAUC provides the
 
 .. code-block:: sh
 
-  rauc install <input-file>
+  rauc install <input-bundle>
+
+Where ``<input-bundle>`` can either be a file system path to a bundle, or a URL
+to a remote bundle (see :ref:`http-streaming`).
 
 Alternatively you can trigger a bundle installation `using the D-Bus API`_.
 
@@ -205,7 +208,7 @@ In general, there exist three major types of customization:
 * handlers (executables in rootfs)
 * hooks (executables in bundle)
 
-The first type, configuration parameters, allow controlling parameters of the
+The first type, configuration parameters, allows controlling parameters of the
 update in a predefined way.
 
 The second type, using `handlers`, allows extending or replacing the
