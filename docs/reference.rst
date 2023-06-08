@@ -669,6 +669,30 @@ No built-in slot update will run and no hook will be executed.
   ``<key>``.
   ``-`` is converted to ``_`` for use as an environment variable name.
 
+**[log.<logger>] sections**
+
+With a logger section, a *RAUC event logger* can be configured.
+The ``<logger>`` suffix determines the internal name of the logger and must be
+unique per ``system.conf``.
+
+``filename``
+  The log file name used for logging.
+
+``events``
+  Colon-separated list of events to log. Currently supported event types are:
+
+  * ``install`` - Logs start and end of installation
+  * ``boot`` - Logs boot information
+  * ...
+
+``format``
+  The output format used for the logger. Supported values are
+
+  * ``readable``
+  * ``short``
+  * ``json``
+  * ``json-pretty``
+
 .. _sec_ref_formats:
 
 Bundle Formats

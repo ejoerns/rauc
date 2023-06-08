@@ -10,7 +10,6 @@ filename=boot.log
 events=boot;install
 
 [log.ganzlogger2]
-bing=bung
 filename=logging.log
 events=all
 

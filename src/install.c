@@ -937,6 +937,37 @@ static RaucSlot* get_boot_mark_slot(const GPtrArray *install_plans)
 	return bootslot;
 }
 
+#define MESSAGE_ID_INSTALLATION_SUCCEEDED "0163db54-68ac-4237-b090-d28490c301ed"
+
+static void r_event_log_installation(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
+__attribute__((__format__(__printf__, 3, 4)));
+
+static void r_event_log_installation(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
+{
+	va_list list;
+	g_autofree gchar *formatted = NULL;
+
+	g_return_if_fail(args);
+	g_return_if_fail(message);
+
+	va_start(list, message);
+	formatted = g_strdup_vprintf(message, list);
+	va_end(list);
+
+	const GLogField fields[] = {
+		{"MESSAGE", formatted, -1 },
+		{"MESSAGE_ID", MESSAGE_ID_INSTALLATION_SUCCEEDED, -1 },
+		{"GLIB_DOMAIN", "rauc-event", -1},
+		{"RAUC_EVENT_TYPE", "install", -1},
+		{"BUNDLE_HASH", manifest ? manifest->hash : NULL, -1},
+		{"BUNDLE_DESCRIPTION", manifest ? manifest->update_description : NULL, -1},
+		{"BUNDLE_VERSION", manifest ? manifest->update_version : NULL, -1},
+		{"TRANSACTION_ID", args->transaction, -1},
+	};
+
+	g_log_structured_array(G_LOG_LEVEL_INFO, fields, G_N_ELEMENTS(fields));
+}
+
 static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bundledir, RaucManifest *manifest, GHashTable *target_group, GError **error)
 {
 	g_autofree gchar *hook_name = NULL;
@@ -1045,7 +1076,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	r_context_begin_step("do_install_bundle", "Installing", 10);
 
-	r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s started", args->transaction);
+	r_event_log_message(R_EVENT_LOG_INSTALL, "Installation started");
 
 	r_context_begin_step("determine_slot_states", "Determining slot states", 0);
 	res = update_external_mount_points(&ierror);
@@ -1060,7 +1091,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	res = check_bundle(bundlefile, &bundle, CHECK_BUNDLE_DEFAULT, &args->access_args, &ierror);
 	if (!res) {
-		r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s rejected", args->transaction);
+		//r_event_log_installation(args, bundle->manifest, "Installation rejected: %s",ierror->message);
 		g_propagate_error(error, ierror);
 		goto out;
 	}
@@ -1133,7 +1164,8 @@ umount:
 	r_context()->install_info->mounted_bundle = NULL;
 
 out:
-	r_event_log_message(R_EVENT_LOG_INSTALL, "Installation %s %s", args->transaction, res ? "succeeded" : "failed");
+	r_event_log_installation(args, bundle ? bundle->manifest : NULL, "Installation %s%s", res ? "succeeded" : "failed: ", res ? "" : ierror->message);
+
 	r_context_end_step("do_install_bundle", res);
 
 	return res;
