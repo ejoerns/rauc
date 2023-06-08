@@ -31,6 +31,11 @@ typedef struct _REventLogger {
 } REventLogger;
 
 /**
+ * @param type
+ */
+gboolean r_event_log_is_supported_type(const gchar *type);
+
+/**
  * Custom structured logging func.
  */
 GLogWriterOutput r_event_log_writer(GLogLevelFlags log_level, const GLogField *fields, gsize n_fields, gpointer user_data);

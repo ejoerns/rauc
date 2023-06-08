@@ -176,7 +176,6 @@ static gboolean r_event_log_parse_config_sections(GKeyFile *key_file, RaucConfig
 		g_autoptr(REventLogger) logger = NULL;
 		gchar *logger_name;
 		g_autofree gchar *log_format = NULL;
-		g_auto(GStrv) events = NULL;
 		gsize entries;
 
 		if (!g_str_has_prefix(*group, RAUC_LOG_EVENT_CONF_PREFIX "."))
@@ -233,7 +232,14 @@ static gboolean r_event_log_parse_config_sections(GKeyFile *key_file, RaucConfig
 
 		logger->events = g_key_file_get_string_list(key_file, *group, "events", &entries, NULL);
 		for (gsize j = 0; j < entries; j++) {
-			/* FIXME: handle invalid values */
+			if (!r_event_log_is_supported_type(logger->events[j])) {
+				g_set_error(
+						error,
+						G_KEY_FILE_ERROR,
+						G_KEY_FILE_ERROR_INVALID_VALUE,
+						"Unsupported event type '%s'", logger->events[j]);
+				return FALSE;
+			}
 		}
 		g_key_file_remove_key(key_file, *group, "events", NULL);
 

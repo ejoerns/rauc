@@ -7,11 +7,16 @@ data-directory=/tmp/rauc
 
 [log.logger1]
 filename=boot.log
-events=boot;install
+events=boot
 
 [log.ganzlogger2]
 filename=logging.log
 events=all
+
+[log.jsonlogger]
+filename=json.log
+events=boot;install
+format=json-pretty
 
 [keyring]
 path=ca.cert.pem

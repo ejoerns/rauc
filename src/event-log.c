@@ -7,6 +7,20 @@
 #include "context.h"
 #include "event-log.h"
 
+static const gchar *supported_event_types[] = {
+	"all",
+	R_EVENT_LOG_BOOT,
+	R_EVENT_LOG_INSTALL,
+	R_EVENT_LOG_SERVICE,
+	R_EVENT_LOG_WRITE_SLOT,
+	R_EVENT_LOG_BOOT_SELECTION,
+};
+
+gboolean r_event_log_is_supported_type(const gchar *type)
+{
+	return g_strv_contains(supported_event_types, type);
+}
+
 void r_event_log_message(const gchar *type, const gchar *message, ...)
 {
 	va_list list;
