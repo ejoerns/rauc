@@ -1999,10 +1999,34 @@ static gboolean status_start(int argc, char **argv)
 	return TRUE;
 }
 
+#define MESSAGE_ID_BOOTED "e60e0add-d345-4cb8-b796-eae0d497af96"
+
+static void r_event_log_booted(const RaucSlot *booted_slot) {
+	g_autofree gchar *message = NULL;
+	GLogField fields[] = {
+		{"MESSAGE", NULL, -1 },
+		{"MESSAGE_ID", MESSAGE_ID_BOOTED, -1 },
+		{"GLIB_DOMAIN", R_EVENT_LOG_DOMAIN, -1},
+		{"RAUC_EVENT_TYPE", "boot", -1},
+		{"BOOT_ID", NULL, -1},
+		{"BUNDLE_HASH", NULL, -1},
+	};
+
+	g_return_if_fail(booted_slot);
+	g_return_if_fail(booted_slot->status);
+
+	message = g_strdup_printf("Booted into %s (%s)", booted_slot->name, booted_slot->bootname);
+	fields[0].value = message;
+	fields[4].value = r_context()->boot_id;
+	fields[5].value = booted_slot->status->bundle_hash ?: "unknown";
+	g_log_structured_array(G_LOG_LEVEL_INFO, fields, G_N_ELEMENTS(fields));
+}
+
 G_GNUC_UNUSED
 static gboolean service_start(int argc, char **argv)
 {
 	g_autoptr(GError) ierror = NULL;
+	RaucSlot *booted_slot = NULL;
 
 	g_debug("service start");
 
@@ -2012,12 +2036,15 @@ static gboolean service_start(int argc, char **argv)
 		return TRUE;
 	}
 
+	/* We are interested in the status of the booted slot... */
+	booted_slot = r_slot_get_booted(r_context()->config->slots);
+	load_slot_status(booted_slot);
+
 	/* Boot ID-based boot vs service restart detection */
 	if (g_strcmp0(r_context()->global_state->boot_id, r_context()->boot_id) == 0) {
 		g_message("Restarted RAUC service");
 	} else {
-		RaucSlot *booted_slot = r_slot_get_booted(r_context()->config->slots);
-		g_message("Booted into %s (%s)", booted_slot->name, booted_slot->bootname);
+		r_event_log_booted(booted_slot);
 
 		/* update boot ID */
 		g_free(r_context()->global_state->boot_id);
