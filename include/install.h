@@ -49,28 +49,6 @@ gboolean update_external_mount_points(GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
- * Determines the states (ACTIVE | INACTIVE | BOOTED) of the slots specified in
- * system configuration.
- *
- * @param error return location for a GError
- *
- * @return TRUE if succeeded, FALSE if failed
- */
-gboolean determine_slot_states(GError **error)
-G_GNUC_WARN_UNUSED_RESULT;
-
-/**
- * Obtains boot status information for all relevant slots and stores
- * information into context.
- *
- * @param error return location for a GError
- *
- * @return TRUE if succeeded, FALSE if failed
- */
-gboolean determine_boot_states(GError **error)
-G_GNUC_WARN_UNUSED_RESULT;
-
-/**
  * Returns hash table of slot classes for that a potential installation target
  * slot could be determined.
  *

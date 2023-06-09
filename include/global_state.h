@@ -37,3 +37,25 @@ G_GNUC_WARN_UNUSED_RESULT;
  * @param state RGlobalState to free
  */
 void r_global_state_free(RGlobalState *state);
+
+/**
+ * Determines the states (ACTIVE | INACTIVE | BOOTED) of the slots specified in
+ * system configuration.
+ *
+ * @param error return location for a GError
+ *
+ * @return TRUE if succeeded, FALSE if failed
+ */
+gboolean determine_slot_states(GError **error)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Obtains boot status information for all relevant slots and stores
+ * information into context.
+ *
+ * @param error return location for a GError
+ *
+ * @return TRUE if succeeded, FALSE if failed
+ */
+gboolean determine_boot_states(GError **error)
+G_GNUC_WARN_UNUSED_RESULT;
