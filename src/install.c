@@ -937,15 +937,25 @@ static RaucSlot* get_boot_mark_slot(const GPtrArray *install_plans)
 	return bootslot;
 }
 
-#define MESSAGE_ID_INSTALLATION_SUCCEEDED "0163db54-68ac-4237-b090-d28490c301ed"
+#define MESSAGE_ID_INSTALLATION_DONE "0163db54-68ac-4237-b090-d28490c301ed"
 
-static void r_event_log_installation(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
+static void r_event_log_installation_done(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
 __attribute__((__format__(__printf__, 3, 4)));
 
-static void r_event_log_installation(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
+static void r_event_log_installation_done(RaucInstallArgs *args, RaucManifest *manifest, const gchar *message, ...)
 {
 	va_list list;
 	g_autofree gchar *formatted = NULL;
+	GLogField fields[] = {
+		{"MESSAGE", NULL, -1 },
+		{"MESSAGE_ID", MESSAGE_ID_INSTALLATION_DONE, -1 },
+		{"GLIB_DOMAIN", R_EVENT_LOG_DOMAIN, -1},
+		{"RAUC_EVENT_TYPE", "install", -1},
+		{"BUNDLE_HASH", NULL, -1},
+		{"BUNDLE_DESCRIPTION", NULL, -1},
+		{"BUNDLE_VERSION", NULL, -1},
+		{"TRANSACTION_ID", args->transaction, -1},
+	};
 
 	g_return_if_fail(args);
 	g_return_if_fail(message);
@@ -954,16 +964,12 @@ static void r_event_log_installation(RaucInstallArgs *args, RaucManifest *manife
 	formatted = g_strdup_vprintf(message, list);
 	va_end(list);
 
-	const GLogField fields[] = {
-		{"MESSAGE", formatted, -1 },
-		{"MESSAGE_ID", MESSAGE_ID_INSTALLATION_SUCCEEDED, -1 },
-		{"GLIB_DOMAIN", "rauc-event", -1},
-		{"RAUC_EVENT_TYPE", "install", -1},
-		{"BUNDLE_HASH", manifest ? manifest->hash : NULL, -1},
-		{"BUNDLE_DESCRIPTION", manifest ? manifest->update_description : NULL, -1},
-		{"BUNDLE_VERSION", manifest ? manifest->update_version : NULL, -1},
-		{"TRANSACTION_ID", args->transaction, -1},
-	};
+	fields[0].value = formatted;
+	if (manifest) {
+		fields[4].value = manifest->hash;
+		fields[5].value = manifest->update_description;
+		fields[6].value = manifest->update_version;
+	}
 
 	g_log_structured_array(G_LOG_LEVEL_INFO, fields, G_N_ELEMENTS(fields));
 }
@@ -1091,7 +1097,6 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	res = check_bundle(bundlefile, &bundle, CHECK_BUNDLE_DEFAULT, &args->access_args, &ierror);
 	if (!res) {
-		//r_event_log_installation(args, bundle->manifest, "Installation rejected: %s",ierror->message);
 		g_propagate_error(error, ierror);
 		goto out;
 	}
@@ -1164,7 +1169,7 @@ umount:
 	r_context()->install_info->mounted_bundle = NULL;
 
 out:
-	r_event_log_installation(args, bundle ? bundle->manifest : NULL, "Installation %s%s", res ? "succeeded" : "failed: ", res ? "" : ierror->message);
+	r_event_log_installation_done(args, bundle ? bundle->manifest : NULL, "Installation %s%s", res ? "succeeded" : "failed: ", res ? "" : ierror->message);
 
 	r_context_end_step("do_install_bundle", res);
 
