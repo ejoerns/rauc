@@ -127,6 +127,7 @@ gboolean determine_slot_states(GError **error)
 		}
 
 		if (extboot) {
+			RaucSlot *ext_dummy = NULL;
 			/* mark all as inactive */
 			g_debug("Marking all slots as 'inactive'");
 			for (GList *l = slotlist; l != NULL; l = l->next) {
@@ -135,6 +136,17 @@ gboolean determine_slot_states(GError **error)
 
 				s->state = ST_INACTIVE;
 			}
+
+			/* Create and add dummy external slot */
+			ext_dummy = g_new0(RaucSlot, 1);
+			ext_dummy->name = g_strdup("external");
+			ext_dummy->sclass = g_strdup("external");
+			ext_dummy->type = g_strdup("virtual");
+			ext_dummy->device = g_strdup(r_context()->bootslot);
+			ext_dummy->readonly = TRUE;
+			ext_dummy->state = ST_BOOTED;
+
+			g_hash_table_insert(r_context()->config->slots, (gchar*)ext_dummy->name, ext_dummy);
 
 			r_context()->config->slot_states_determined = TRUE;
 
