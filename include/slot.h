@@ -111,6 +111,18 @@ RaucSlot *r_slot_find_by_bootname(GHashTable *slots, const gchar *bootname)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
+ * Returns the slot detected as bootslot.
+ *
+ * Cannot return NULL.
+ *
+ * @param slots a GHashTable containing (gchar, RaucSlot) entries
+ *
+ * @return a RaucSlot pointer
+ */
+RaucSlot *r_slot_get_booted(GHashTable *slots)
+G_GNUC_WARN_UNUSED_RESULT;
+
+/**
  * Get string representation of slot state
  *
  * @param slotstate state to turn into string

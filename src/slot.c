@@ -93,6 +93,25 @@ out:
 	return slot;
 }
 
+RaucSlot *r_slot_get_booted(GHashTable *slots)
+{
+	GHashTableIter iter;
+	RaucSlot *slot;
+
+	g_return_val_if_fail(slots, NULL);
+
+	g_hash_table_iter_init(&iter, slots);
+	while (g_hash_table_iter_next(&iter, NULL, (gpointer*) &slot)) {
+		if (slot->state == ST_BOOTED) {
+			return slot;
+		}
+	}
+
+	/* Since we ensure that we always have a slot in ST_BOOTED, this should
+	 * not be reached */
+	g_error("No slot with ST_BOOTED found in slot list");
+}
+
 /* returns string representation of slot state */
 gchar* r_slot_slotstate_to_str(SlotState slotstate)
 {
