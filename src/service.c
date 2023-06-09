@@ -407,11 +407,8 @@ static gboolean r_on_handle_get_slot_status(RInstaller *interface,
 {
 	GVariant *slotstatus;
 	GError *ierror = NULL;
-	gboolean res;
 
-	res = !r_context_get_busy();
-
-	if (!res) {
+	if (r_context_get_busy()) {
 		g_dbus_method_invocation_return_error(invocation,
 				G_IO_ERROR,
 				G_IO_ERROR_FAILED_HANDLED,
