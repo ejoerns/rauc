@@ -1390,14 +1390,12 @@ static gchar* r_status_formatter_readable(RaucStatusPrint *status)
 
 	g_return_val_if_fail(status, NULL);
 
-	bootedfrom = r_slot_find_by_device(status->slots, status->bootslot);
-	if (!bootedfrom)
-		bootedfrom = r_slot_find_by_bootname(status->slots, status->bootslot);
+	bootedfrom = r_slot_get_booted(status->slots);
 
 	g_string_append(text, "=== System Info ===\n");
 	g_string_append_printf(text, "Compatible:  %s\n", status->compatible);
 	g_string_append_printf(text, "Variant:     %s\n", status->variant);
-	g_string_append_printf(text, "Booted from: %s (%s)\n\n", bootedfrom ? bootedfrom->name : NULL, status->bootslot);
+	g_string_append_printf(text, "Booted from: %s (%s)\n\n", bootedfrom->name, bootedfrom->bootname);
 
 	g_string_append(text, "=== Bootloader ===\n");
 	g_string_append_printf(text, "Activated: %s (%s)\n\n", status->primary ? status->primary->name : NULL, status->primary ? status->primary->bootname : NULL);
