@@ -15,7 +15,7 @@ events=all
 
 [log.jsonlogger]
 filename=json.log
-events=boot;install
+events=all
 format=json-pretty
 
 [keyring]
