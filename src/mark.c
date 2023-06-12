@@ -1,4 +1,5 @@
 #include "bootchooser.h"
+#include "event_log.h"
 #include "context.h"
 #include "install.h"
 #include "mark.h"
@@ -75,6 +76,61 @@ static RaucSlot* get_slot_by_identifier(const gchar *identifier, GError **error)
 	return slot;
 }
 
+#define MESSAGE_ID_MARKED_ACTIVE "8b5e7435-e105-4d86-8582-78e7544fe6da"
+#define MESSAGE_ID_MARKED_GOOD   "3304e15a-7a9a-4478-85eb-208ba7ae3a05"
+#define MESSAGE_ID_MARKED_BAD    "ccb0e584-a470-43d7-a531-6994bce77ae5"
+
+void r_event_log_mark_active(RaucSlot *slot, const gchar *message, ...)
+__attribute__((__format__(__printf__, 2, 3)));
+
+void r_event_log_mark_active(RaucSlot *slot, const gchar *message, ...)
+{
+	va_list list;
+	g_autofree gchar *formatted = NULL;
+	GLogField fields[] = {
+		{"MESSAGE", NULL, -1 },
+		{"MESSAGE_ID", MESSAGE_ID_MARKED_ACTIVE, -1 },
+		{"GLIB_DOMAIN", R_EVENT_LOG_DOMAIN, -1},
+		{"RAUC_EVENT_TYPE", "mark", -1},
+		{"RAUC_SLOT", NULL, -1},
+		{"BUNDLE_HASH", NULL, -1},
+		{"SLOT_BOOTNAME", NULL, -1},
+	};
+
+	g_return_if_fail(message);
+
+	va_start(list, message);
+	formatted = g_strdup_vprintf(message, list);
+	va_end(list);
+
+	fields[0].value = formatted;
+	fields[4].value = slot->name ?: "";
+	fields[5].value = slot->status->bundle_hash ?: "";
+	fields[6].value = slot->bootname ?: "";
+
+	g_log_structured_array(G_LOG_LEVEL_MESSAGE, fields, G_N_ELEMENTS(fields));
+}
+
+static void r_event_log_mark_good(RaucSlot *slot)
+{
+	g_log_structured(R_EVENT_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
+			"RAUC_EVENT_TYPE", "mark",
+			"MESSAGE_ID", MESSAGE_ID_MARKED_GOOD,
+			"RAUC_SLOT", slot->name,
+			"MESSAGE", "Marked slot %s good", slot->name
+			);
+}
+
+static void r_event_log_mark_bad(RaucSlot *slot)
+{
+	g_log_structured(R_EVENT_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
+			"RAUC_EVENT_TYPE", "mark",
+			"MESSAGE_ID", MESSAGE_ID_MARKED_BAD,
+			"RAUC_SLOT", slot->name,
+			"MESSAGE", "Marked slot %s bad", slot->name
+			);
+}
+
 gboolean r_mark_active(RaucSlot *slot, GError **error)
 {
 	RaucSlotStatus *slot_state;
@@ -93,6 +149,8 @@ gboolean r_mark_active(RaucSlot *slot, GError **error)
 		g_error_free(ierror);
 		return FALSE;
 	}
+
+	r_event_log_mark_active(slot, "Marked slot %s as active.", slot->name);
 
 	g_free(slot_state->activated_timestamp);
 	now = g_date_time_new_now_utc();
@@ -121,6 +179,9 @@ gboolean r_mark_good(RaucSlot *slot, GError **error)
 		return FALSE;
 	}
 
+	g_message("Marked slot %s as good.", slot->name);
+	r_event_log_mark_good(slot);
+
 	return TRUE;
 }
 
@@ -137,6 +198,9 @@ gboolean r_mark_bad(RaucSlot *slot, GError **error)
 		g_error_free(ierror);
 		return FALSE;
 	}
+
+	g_message("Marked slot %s as bad.", slot->name);
+	r_event_log_mark_bad(slot);
 
 	return TRUE;
 }
