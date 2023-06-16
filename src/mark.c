@@ -85,7 +85,7 @@ void mark_active(RaucSlot *slot, GError **error)
 	g_return_if_fail(slot);
 	g_return_if_fail(error == NULL || *error == NULL);
 
-	load_slot_status(slot);
+	r_slot_status_load(slot);
 	slot_state = slot->status;
 
 	res = r_boot_set_primary(slot, &ierror);
@@ -102,7 +102,7 @@ void mark_active(RaucSlot *slot, GError **error)
 	slot_state->activated_count++;
 	g_date_time_unref(now);
 
-	res = save_slot_status(slot, &ierror);
+	res = r_slot_status_save(slot, &ierror);
 	if (!res) {
 		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_FAILED, "%s", ierror->message);
 		g_error_free(ierror);

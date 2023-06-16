@@ -118,7 +118,7 @@ static void status_file_set_slot_status(GKeyFile *key_file, const gchar *group, 
 	return;
 }
 
-gboolean read_slot_status(const gchar *filename, RaucSlotStatus *slotstatus, GError **error)
+gboolean r_slot_status_read(const gchar *filename, RaucSlotStatus *slotstatus, GError **error)
 {
 	GError *ierror = NULL;
 	gboolean res = FALSE;
@@ -143,7 +143,7 @@ free:
 	return res;
 }
 
-gboolean write_slot_status(const gchar *filename, RaucSlotStatus *ss, GError **error)
+gboolean r_slot_status_write(const gchar *filename, RaucSlotStatus *ss, GError **error)
 {
 	GError *ierror = NULL;
 	g_autoptr(GKeyFile) key_file = NULL;
@@ -192,7 +192,7 @@ static void load_slot_status_locally(RaucSlot *dest_slot)
 			dest_slot->ext_mount_point ? dest_slot->ext_mount_point : dest_slot->mount_point,
 			"slot.raucs", NULL);
 
-	if (!read_slot_status(slotstatuspath, dest_slot->status, &ierror)) {
+	if (!r_slot_status_read(slotstatuspath, dest_slot->status, &ierror)) {
 		g_message("Failed to load status file %s: %s", slotstatuspath, ierror->message);
 		g_clear_error(&ierror);
 	}
@@ -250,7 +250,7 @@ static void load_slot_status_globally(void)
 	}
 }
 
-void load_slot_status(RaucSlot *dest_slot)
+void r_slot_status_load(RaucSlot *dest_slot)
 {
 	g_return_if_fail(dest_slot);
 
@@ -289,7 +289,7 @@ static gboolean save_slot_status_locally(RaucSlot *dest_slot, GError **error)
 	slotstatuspath = g_build_filename(dest_slot->mount_point, "slot.raucs", NULL);
 	g_message("Updating slot file %s", slotstatuspath);
 
-	res = write_slot_status(slotstatuspath, dest_slot->status, &ierror);
+	res = r_slot_status_write(slotstatuspath, dest_slot->status, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		r_umount_slot(dest_slot, NULL);
@@ -339,7 +339,7 @@ static gboolean save_slot_status_globally(GError **error)
 	return res;
 }
 
-gboolean save_slot_status(RaucSlot *dest_slot, GError **error)
+gboolean r_slot_status_save(RaucSlot *dest_slot, GError **error)
 {
 	g_return_val_if_fail(dest_slot, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
