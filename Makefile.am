@@ -54,6 +54,7 @@ librauc_la_SOURCES = \
 	src/signature.c \
 	src/slot.c \
 	src/stats.c \
+	src/status_file.c \
 	src/utils.c \
 	src/update_handler.c \
 	src/verity_hash.c \
@@ -76,6 +77,7 @@ librauc_la_SOURCES = \
 	include/signature.h \
 	include/slot.h \
 	include/stats.h \
+	include/status_file.h \
 	include/update_handler.h \
 	include/utils.h \
 	include/verity_hash.h
@@ -166,6 +168,7 @@ check_PROGRAMS = \
 	test/utils.test \
 	test/install.test \
 	test/service.test \
+	test/status_file.test \
 	test/bundle.test \
 	test/progress.test \
 	test/slot.test \
