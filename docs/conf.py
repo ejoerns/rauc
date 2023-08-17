@@ -29,6 +29,7 @@ extensions = [
 ]
 
 ogp_site_url = 'https://rauc.readthedocs.io/en/latest/'
+ogp_image = 'https://rauc.readthedocs.io/en/latest/_static/RAUC_Logo_outline.svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
