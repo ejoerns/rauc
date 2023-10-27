@@ -558,7 +558,7 @@ static gboolean input_stream_read_bytes_all(GInputStream *stream,
 	return TRUE;
 }
 
-static gboolean sign_bundle(const gchar *bundlename, RaucManifest *manifest, GError **error)
+static gboolean sign_bundle(const gchar *bundlename, RaucManifest *manifest, gboolean create_verity_hash, GError **error)
 {
 	GError *ierror = NULL;
 	g_autoptr(GBytes) sig = NULL;
@@ -628,48 +628,50 @@ static gboolean sign_bundle(const gchar *bundlename, RaucManifest *manifest, GEr
 
 		g_print("Creating bundle in '%s' format\n", r_manifest_bundle_format_to_str(manifest->bundle_format));
 
-		/* check we have a clean manifest */
-		g_assert(manifest->bundle_verity_salt == NULL);
-		g_assert(manifest->bundle_verity_hash == NULL);
-		g_assert(manifest->bundle_verity_size == 0);
+		if (create_verity_hash) {
+			/* check we have a clean manifest */
+			g_assert(manifest->bundle_verity_salt == NULL);
+			g_assert(manifest->bundle_verity_hash == NULL);
+			g_assert(manifest->bundle_verity_size == 0);
 
-		/* dm-verity hash table generation */
-		if (RAND_bytes((unsigned char *)&salt, sizeof(salt)) != 1) {
-			g_set_error(error,
-					R_BUNDLE_ERROR,
-					R_BUNDLE_ERROR_VERITY,
-					"failed to generate verity salt");
-			return FALSE;
-		}
-		if (offset % 4096 != 0) {
-			g_set_error(error,
-					R_BUNDLE_ERROR,
-					R_BUNDLE_ERROR_VERITY,
-					"squashfs size (%"G_GUINT64_FORMAT ") is not a multiple of 4096 bytes", offset);
-			return FALSE;
-		}
-		if (offset <= 4096) {
-			g_set_error(error,
-					R_BUNDLE_ERROR,
-					R_BUNDLE_ERROR_VERITY,
-					"squashfs size (%"G_GUINT64_FORMAT ") must be larger than 4096 bytes", offset);
-			return FALSE;
-		}
-		if (r_verity_hash_create(bundlefd, offset/4096, &combined_size, hash, salt) != 0) {
-			g_set_error(error,
-					R_BUNDLE_ERROR,
-					R_BUNDLE_ERROR_VERITY,
-					"failed to generate verity hash tree");
-			return FALSE;
-		}
-		/* for a squashfs <= 4096 bytes, we don't have a hash table */
-		g_assert(combined_size*4096 > (uint64_t)offset);
-		verity_size = combined_size*4096 - offset;
-		g_assert(verity_size % 4096 == 0);
+			/* dm-verity hash table generation */
+			if (RAND_bytes((unsigned char *)&salt, sizeof(salt)) != 1) {
+				g_set_error(error,
+						R_BUNDLE_ERROR,
+						R_BUNDLE_ERROR_VERITY,
+						"failed to generate verity salt");
+				return FALSE;
+			}
+			if (offset % 4096 != 0) {
+				g_set_error(error,
+						R_BUNDLE_ERROR,
+						R_BUNDLE_ERROR_VERITY,
+						"squashfs size (%"G_GUINT64_FORMAT ") is not a multiple of 4096 bytes", offset);
+				return FALSE;
+			}
+			if (offset <= 4096) {
+				g_set_error(error,
+						R_BUNDLE_ERROR,
+						R_BUNDLE_ERROR_VERITY,
+						"squashfs size (%"G_GUINT64_FORMAT ") must be larger than 4096 bytes", offset);
+				return FALSE;
+			}
+			if (r_verity_hash_create(bundlefd, offset/4096, &combined_size, hash, salt) != 0) {
+				g_set_error(error,
+						R_BUNDLE_ERROR,
+						R_BUNDLE_ERROR_VERITY,
+						"failed to generate verity hash tree");
+				return FALSE;
+			}
+			/* for a squashfs <= 4096 bytes, we don't have a hash table */
+			g_assert(combined_size*4096 > (uint64_t)offset);
+			verity_size = combined_size*4096 - offset;
+			g_assert(verity_size % 4096 == 0);
 
-		manifest->bundle_verity_salt = r_hex_encode(salt, sizeof(salt));
-		manifest->bundle_verity_hash = r_hex_encode(hash, sizeof(hash));
-		manifest->bundle_verity_size = verity_size;
+			manifest->bundle_verity_salt = r_hex_encode(salt, sizeof(salt));
+			manifest->bundle_verity_hash = r_hex_encode(hash, sizeof(hash));
+			manifest->bundle_verity_size = verity_size;
+		}
 
 		if (!check_manifest_external(manifest, &ierror)) {
 			g_propagate_prefixed_error(
@@ -912,7 +914,7 @@ gboolean create_bundle(const gchar *bundlename, const gchar *contentdir, GError 
 		}
 	}
 
-	res = sign_bundle(bundlename, manifest, &ierror);
+	res = sign_bundle(bundlename, manifest, TRUE, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
@@ -1045,7 +1047,7 @@ gboolean resign_bundle(RaucBundle *bundle, const gchar *outpath, GError **error)
 		goto out;
 	}
 
-	res = sign_bundle(outpath, manifest, &ierror);
+	res = sign_bundle(outpath, manifest, TRUE, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
@@ -1181,7 +1183,7 @@ static gboolean convert_to_casync_bundle(RaucBundle *bundle, const gchar *outbun
 		goto out;
 	}
 
-	res = sign_bundle(outbundle, manifest, &ierror);
+	res = sign_bundle(outbundle, manifest, TRUE, &ierror);
 	if (!res) {
 		g_propagate_error(error, ierror);
 		goto out;
