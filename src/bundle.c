@@ -707,8 +707,6 @@ static GBytes *generate_bundle_signature(const gchar *bundlename, RaucManifest *
 	g_assert_nonnull(r_context()->keypath);
 
 	if (manifest->bundle_format == R_MANIFEST_FORMAT_PLAIN) {
-		g_print("Creating bundle in 'plain' format\n");
-
 		if (!check_manifest_internal(manifest, &ierror)) {
 			g_propagate_prefixed_error(
 					error,
@@ -730,8 +728,6 @@ static GBytes *generate_bundle_signature(const gchar *bundlename, RaucManifest *
 			return NULL;
 		}
 	} else if ((manifest->bundle_format == R_MANIFEST_FORMAT_VERITY) || (manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT)) {
-		g_print("Creating bundle in '%s' format\n", r_manifest_bundle_format_to_str(manifest->bundle_format));
-
 		if (!check_manifest_external(manifest, &ierror)) {
 			g_propagate_prefixed_error(
 					error,
@@ -940,6 +936,8 @@ gboolean create_bundle(const gchar *bundlename, const gchar *contentdir, GError 
 		goto out;
 	}
 
+	g_print("Creating '%s' format bundle\n", r_manifest_bundle_format_to_str(manifest->bundle_format));
+
 	/* print warnings collected while parsing */
 	for (guint i =  0; i < manifest->warnings->len; i++) {
 		g_print("%s\n", (gchar *)g_ptr_array_index(manifest->warnings, i));
@@ -1087,16 +1085,7 @@ gboolean resign_bundle(RaucBundle *bundle, const gchar *outpath, GError **error)
 		manifest = loaded_manifest;
 	}
 
-	if (manifest->bundle_format == R_MANIFEST_FORMAT_PLAIN) {
-		g_print("Reading bundle in 'plain' format\n");
-	} else if (manifest->bundle_format == R_MANIFEST_FORMAT_VERITY || manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT) {
-		g_print("Reading bundle in '%s' format\n", manifest->bundle_format == R_MANIFEST_FORMAT_VERITY ? "verity" : "crypt");
-		g_assert(bundle->size > (goffset)manifest->bundle_verity_size);
-	} else {
-		g_error("unsupported bundle format");
-		res = FALSE;
-		goto out;
-	}
+	g_print("Resigning '%s' format bundle\n", r_manifest_bundle_format_to_str(manifest->bundle_format));
 
 	res = truncate_bundle(bundle->path, outpath, bundle->size, &ierror);
 	if (!res) {
