@@ -706,6 +706,14 @@ static gboolean sign_bundle(const gchar *bundlename, RaucManifest *manifest, gbo
 	g_assert_nonnull(r_context()->certpath);
 	g_assert_nonnull(r_context()->keypath);
 
+	if ((manifest->bundle_format == R_MANIFEST_FORMAT_VERITY) || (manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT)) {
+
+		if (!create_verity(bundlename, manifest, &ierror)) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+	}
+
 	if (manifest->bundle_format == R_MANIFEST_FORMAT_PLAIN) {
 		g_print("Creating bundle in 'plain' format\n");
 
@@ -730,12 +738,6 @@ static gboolean sign_bundle(const gchar *bundlename, RaucManifest *manifest, gbo
 			return FALSE;
 		}
 	} else if ((manifest->bundle_format == R_MANIFEST_FORMAT_VERITY) || (manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT)) {
-
-		if (!create_verity(bundlename, manifest, &ierror)) {
-			g_propagate_error(error, ierror);
-			return FALSE;
-		}
-
 		g_print("Creating bundle in '%s' format\n", r_manifest_bundle_format_to_str(manifest->bundle_format));
 
 		if (!check_manifest_external(manifest, &ierror)) {
