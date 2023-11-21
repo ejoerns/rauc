@@ -9,6 +9,23 @@ from conftest import have_http
 from conftest import have_streaming
 
 
+def test_install_invalid_local_paths():
+    out, err, exitcode = run("rauc install foo")
+
+    assert exitcode == 1
+    assert "No such file" in err
+
+    out, err, exitcode = run("rauc install foo.raucb")
+
+    assert exitcode == 1
+    assert "No such file" in err
+
+    out, err, exitcode = run("rauc install /path/to/foo.raucb")
+
+    assert exitcode == 1
+    assert "No such file" in err
+
+
 @root
 def test_install(rauc_service, rauc_dbus_service_with_system, tmp_path):
     assert os.path.exists("images/rootfs-1")
