@@ -1030,6 +1030,7 @@ static gchar *info_formatter_readable(RaucManifest *manifest)
 			g_string_append_printf(text, "\tFilename:  %s\n", img->filename);
 			g_string_append_printf(text, "\tChecksum:  %s\n", img->checksum.digest);
 			g_string_append_printf(text, "\tSize:      %s\n", formatted_size);
+			g_string_append_printf(text, "\tType:      %s\n", "FIXME");
 		} else {
 			g_string_append_printf(text, "\t(no image file)\n");
 		}
