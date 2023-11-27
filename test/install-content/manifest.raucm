@@ -6,9 +6,10 @@ version=2011.03-2
 format=verity
 
 [image.rootfs]
-sha256=de2f256064a0af797747c2b97505dc0b9f3df0de4f489eac731c23ae9ca9cc31
-size=65536
-filename=rootfs.img
+sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+size=0
+filename=rootfs.fixme
+type=ext4
 
 [image.appfs]
 sha256=c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479
