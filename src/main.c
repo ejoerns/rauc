@@ -1046,9 +1046,11 @@ static gchar *info_formatter_readable(RaucManifest *manifest)
 		}
 		g_ptr_array_add(hooks, NULL);
 
-		temp_string = g_strjoinv(" ", (gchar**) hooks->pdata);
-		g_string_append_printf(text, "\tHooks:     %s\n", temp_string);
-		g_free(temp_string);
+		if (g_strv_length((gchar**)hooks->pdata) > 0) {
+			temp_string = g_strjoinv(" ", (gchar**) hooks->pdata);
+			g_string_append_printf(text, "\tHooks:     %s\n", temp_string);
+			g_free(temp_string);
+		}
 
 		g_ptr_array_unref(hooks);
 
