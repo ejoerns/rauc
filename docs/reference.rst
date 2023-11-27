@@ -986,6 +986,12 @@ processes.
 To ensure exclusive access, RAUC takes ownership of the file (using chown) and
 uses file leases to detect other open file descriptors.
 
+.. figure:: images/plain-bundle-create-verify.svg
+  :width: 400
+  :align: center
+
+  Plain format bundle creation and verification
+
 .. _sec_ref_format_verity:
 
 verity Format
@@ -998,6 +1004,12 @@ In this case, a bundle consists of:
   hash tree over the squashfs filesystem
 - CMS signature over an inline manifest (with verity metadata)
 - size of the CMS signature
+
+.. figure:: images/verity-bundle-creation.svg
+  :width: 400px
+  :align: center
+
+  Verity format bundle creation
 
 With this format, the manifest is contained in the CMS signature itself, making
 it accessible without first hashing the full squashfs.
@@ -1014,6 +1026,12 @@ without using the kernel's device mapper target, as they are often used by
 normal users on their development hosts.
 It this case, the same mechanism for ensuring exclusive access as with plain
 bundles is used.
+
+.. figure:: images/verity-bundle-authentication.svg
+  :width: 400px
+  :align: center
+
+  Verity format bundle authentication
 
 .. _sec_ref_format_crypt:
 
@@ -1035,6 +1053,12 @@ To protect the payload key, the signed manifest is then encrypted.
 
 During installation, the kernel's crypt and verity device mapper targets are used on top of the
 loopback or network block device to authenticate and then decrypt each payload block as needed.
+
+.. figure:: images/verity-bundle-encryption.svg
+  :width: 400px
+  :align: center
+
+  Crypt format bundle two-step encryption
 
 .. _sec_ref_external_signing:
 
