@@ -110,6 +110,15 @@ void r_event_log_mark_active(RaucSlot *slot, const gchar *message, ...)
 	fields[6].value = slot->bootname ?: "";
 
 	g_log_structured_array(G_LOG_LEVEL_MESSAGE, fields, G_N_ELEMENTS(fields));
+	*/
+	g_log_structured(R_EVENT_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
+			"RAUC_EVENT_TYPE", "mark",
+			"MESSAGE_ID", MESSAGE_ID_MARKED_GOOD,
+			"RAUC_SLOT", slot->name,
+			"BUNDLE_HASH", slot->status->bundle_hash ?: "",
+			"SLOT_BOOTNAME", slot->bootname,
+			"MESSAGE", "Marked slot %s good", slot->name
+			);
 }
 
 static void r_event_log_mark_good(RaucSlot *slot)
