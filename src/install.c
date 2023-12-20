@@ -1110,7 +1110,7 @@ static void log_event_installation_started(RaucInstallArgs *args)
 			"RAUC_EVENT_TYPE", "install",
 			"MESSAGE_ID", MESSAGE_ID_INSTALLATION_STARTED,
 			"TRANSACTION_ID", args->transaction,
-			"MESSAGE", "Installation %.8s started", args->transaction
+			"MESSAGE", "Installation %.8s started", args->transaction // truncate ID for readability
 			);
 }
 
