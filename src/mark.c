@@ -85,6 +85,7 @@ __attribute__((__format__(__printf__, 2, 3)));
 
 void r_event_log_mark_active(RaucSlot *slot, const gchar *message, ...)
 {
+	/*
 	va_list list;
 	g_autofree gchar *formatted = NULL;
 	GLogField fields[] = {
