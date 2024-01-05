@@ -123,6 +123,7 @@ jobs:
         - "ubuntu:20.04"
         - "ubuntu:22.04"
         - "debian:bullseye"
+        - "debian:bookworm"
         - "debian:testing"
     steps:
     - uses: actions/checkout@v3
