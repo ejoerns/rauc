@@ -125,6 +125,7 @@ jobs:
         - "debian:bullseye"
         - "debian:bookworm"
         - "debian:testing"
+        - "debian:experimental"
     steps:
     - uses: actions/checkout@v3
 
