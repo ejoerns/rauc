@@ -55,9 +55,9 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, 
 		return X509_check_ca(x);
 	}
 
-	/* If key usage is present, it must contain digitalSignature. */
-	if ((ex_flags & EXFLAG_KUSAGE) && !(ex_kusage & KU_DIGITAL_SIGNATURE)) {
-		g_message("Signer certificate key usage does not allow digital signatures");
+	/* key usage digitalSignature must be present on the leaf. */
+	if (!(ex_flags & EXFLAG_KUSAGE) || !(ex_kusage & KU_DIGITAL_SIGNATURE)) {
+		g_message("Signer certificate key usage does specify key usage digital signature");
 		return 0;
 	}
 
