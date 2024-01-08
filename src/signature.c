@@ -32,6 +32,7 @@ static const gchar *get_openssl_err_string(void)
 	return (errflags & ERR_TXT_STRING) ? data : ERR_error_string(err, NULL);
 }
 
+#ifndef X509_PURPOSE_CODE_SIGN
 /* return 0 for error, 1 for success */
 static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, int ca)
 {
@@ -68,6 +69,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, 
 
 	return 1;
 }
+#endif
 
 gboolean signature_init(GError **error)
 {
@@ -85,6 +87,7 @@ gboolean signature_init(GError **error)
 		return FALSE;
 	}
 
+#ifndef X509_PURPOSE_CODE_SIGN
 	id = X509_PURPOSE_get_count() + 1;
 	if (X509_PURPOSE_get_by_id(id) >= 0) {
 		g_set_error_literal(
@@ -105,6 +108,7 @@ gboolean signature_init(GError **error)
 				"Failed to configure OpenSSL X509 purpose: %s", get_openssl_err_string());
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }
