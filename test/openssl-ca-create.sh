@@ -112,6 +112,7 @@ extendedKeyUsage=critical,emailProtection
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid:always,issuer:always
 basicConstraints = CA:FALSE
+keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=critical,codeSigning
 
 [ v3_leaf_client ]
