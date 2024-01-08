@@ -112,6 +112,13 @@ extendedKeyUsage=critical,emailProtection
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid:always,issuer:always
 basicConstraints = CA:FALSE
+keyUsage=critical,digitalSignature,keyEncipherment
+extendedKeyUsage=critical,codeSigning
+
+[ v3_leaf_codesign_compat ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+basicConstraints = CA:FALSE
 extendedKeyUsage=critical,codeSigning
 
 [ v3_leaf_client ]
@@ -181,6 +188,11 @@ echo "Signing Key with XKU codeSigning"
 cd $BASE/dev
 openssl req -newkey rsa -keyout private/xku-codeSigning.pem -out xku-codeSigning.csr.pem -subj "/O=$ORG/CN=$ORG XKU codeSigning"
 openssl ca -batch -extensions v3_leaf_codesign -in xku-codeSigning.csr.pem -out xku-codeSigning.cert.pem
+
+echo "Signing Key with XKU codeSigning (missing keyUsage)"
+cd $BASE/dev
+openssl req -newkey rsa -keyout private/xku-codeSigning-compat.pem -out xku-codeSigning-compat.csr.pem -subj "/O=$ORG/CN=$ORG XKU codeSigning Compat"
+openssl ca -batch -extensions v3_leaf_codesign_compat -in xku-codeSigning-compat.csr.pem -out xku-codeSigning-compat.cert.pem
 
 echo "Web Intermediate CA"
 cd $BASE/web
