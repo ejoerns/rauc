@@ -33,7 +33,7 @@ static const gchar *get_openssl_err_string(void)
 }
 
 /* return 0 for error, 1 for success */
-static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, int ca)
+static int check_purpose_code_sign_compat(const X509_PURPOSE *xp, const X509 *const_x, int ca, gboolean warn)
 {
 	/* The external OpenSSL API only takes a non-const X509 pointer, but
 	 * the ex_ variables have already been calculated by other code when
@@ -54,6 +54,12 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, 
 		return X509_check_ca(x);
 	}
 
+	if (warn && !(ex_flags & EXFLAG_KUSAGE)) {
+		g_warning("Signer certificate does not specify key usage."
+				"This is incompatible with OpenSSL >3.2.0.\n"
+				"Consider fixing certificate or set 'check-purpose=codesign-rauc'");
+	}
+
 	/* If key usage is present, it must contain digitalSignature. */
 	if ((ex_flags & EXFLAG_KUSAGE) && !(ex_kusage & KU_DIGITAL_SIGNATURE)) {
 		g_message("Signer certificate key usage does not allow digital signatures");
@@ -67,6 +73,16 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *const_x, 
 	}
 
 	return 1;
+}
+
+static int check_purpose_code_sign_rauc(const X509_PURPOSE *xp, const X509 *const_x, int ca)
+{
+	return check_purpose_code_sign_compat(xp, const_x, ca, FALSE);
+}
+
+static int check_purpose_code_sign_warn(const X509_PURPOSE *xp, const X509 *const_x, int ca)
+{
+	return check_purpose_code_sign_compat(xp, const_x, ca, TRUE);
 }
 
 gboolean signature_init(GError **error)
@@ -99,7 +115,7 @@ gboolean signature_init(GError **error)
 	/* only add 'codesign' purpose if not yet defined by OpenSSL itself (will be for >= 3.2.0) */
 	if (X509_PURPOSE_get_by_sname("codesign") == -1) {
 		/* X509_TRUST_OBJECT_SIGN maps to the Code Signing ID (via OpenSSL's NID_code_sign) */
-		ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign, "Code signing", "codesign", NULL);
+		ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign_warn, "Code signing", "codesign", NULL);
 		if (!ret) {
 			g_set_error(
 					error,
@@ -114,7 +130,7 @@ gboolean signature_init(GError **error)
 	/* Since the 'codesign' purpose provided by OpenSSL is more strict than what we implemented in RAUC,
 	 * always provide a 'codesign-rauc' purpose (configurable via 'check-purpose=codesign-rauc') with the original
 	 * RAUC implementation of the check. This allows to use existing certificates that would be rejected by OpenSSL. */
-	ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign, "Code signing", "codesign-rauc", NULL);
+	ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign_rauc, "Code signing", "codesign-rauc", NULL);
 	if (!ret) {
 		g_set_error(
 				error,
