@@ -269,6 +269,13 @@ signature.
   See ``-purpose`` and ``VERIFY OPERATION`` in the OpenSSL verify_ manual page
   and the :ref:`sec-key-usage` section for more information.
 
+  .. warning:: With OpenSSL 3.2.0, OpenSSL defines the purpose ``codesign``
+     itself.
+     Since this check is more strict than what we had in RAUC before,
+     existing certificates may be rejected.
+     If this is the case for you, either fix your certificates or switch to the
+     compatiblity ``check-purpose`` named ``codesign-rauc``.
+
 .. _verify: https://www.openssl.org/docs/man1.1.1/man1/verify.html
 
 .. _streaming-config-section:

@@ -95,8 +95,26 @@ gboolean signature_init(GError **error)
 		return FALSE;
 	}
 
-	/* X509_TRUST_OBJECT_SIGN maps to the Code Signing ID (via OpenSSL's NID_code_sign) */
-	ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign, "Code signing", "codesign", NULL);
+
+	/* only add 'codesign' purpose if not yet defined by OpenSSL itself (will be for >= 3.2.0) */
+	if (X509_PURPOSE_get_by_sname("codesign") == -1) {
+		/* X509_TRUST_OBJECT_SIGN maps to the Code Signing ID (via OpenSSL's NID_code_sign) */
+		ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign, "Code signing", "codesign", NULL);
+		if (!ret) {
+			g_set_error(
+					error,
+					R_SIGNATURE_ERROR,
+					R_SIGNATURE_ERROR_CRYPTOINIT_FAILED,
+					"Failed to configure OpenSSL X509 purpose: %s", get_openssl_err_string());
+			return FALSE;
+		}
+		id++;
+	}
+
+	/* Since the 'codesign' purpose provided by OpenSSL is more strict than what we implemented in RAUC,
+	 * always provide a 'codesign-rauc' purpose (configurable via 'check-purpose=codesign-rauc') with the original
+	 * RAUC implementation of the check. This allows to use existing certificates that would be rejected by OpenSSL. */
+	ret = X509_PURPOSE_add(id, X509_TRUST_OBJECT_SIGN, 0, check_purpose_code_sign, "Code signing", "codesign-rauc", NULL);
 	if (!ret) {
 		g_set_error(
 				error,
