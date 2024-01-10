@@ -26,6 +26,14 @@ typedef enum {
 } RInstallError;
 
 typedef struct {
+	gchar *id;
+} RaucTransaction;
+
+RaucTransaction *r_transaction_new(gchar *preset_id);
+
+void r_transaction_free(RaucTransaction *transaction);
+
+typedef struct {
 	gchar *name;
 	GSourceFunc notify;
 	GSourceFunc cleanup;
@@ -34,7 +42,7 @@ typedef struct {
 	gint status_result;
 	/* install options */
 	gboolean ignore_compatible;
-	gchar *transaction;
+	RaucTransaction *transaction;
 	RaucBundleAccessArgs access_args;
 } RaucInstallArgs;
 

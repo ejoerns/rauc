@@ -246,7 +246,8 @@ static gboolean install_start(int argc, char **argv)
 	args->status_result = 2;
 
 	args->ignore_compatible = install_ignore_compatible;
-	args->transaction = installation_txn;
+	if (installation_txn)
+		args->transaction = r_transaction_new(installation_txn);
 	if (access_args.tls_cert)
 		args->access_args.tls_cert = g_strdup(access_args.tls_cert);
 	if (access_args.tls_key)
@@ -264,7 +265,7 @@ static gboolean install_start(int argc, char **argv)
 
 		g_variant_dict_insert(&dict, "ignore-compatible", "b", args->ignore_compatible);
 		if (args->transaction)
-			g_variant_dict_insert(&dict, "transaction-id", "s", args->transaction);
+			g_variant_dict_insert(&dict, "transaction-id", "s", args->transaction->id);
 		if (args->access_args.tls_cert)
 			g_variant_dict_insert(&dict, "tls-cert", "s", args->access_args.tls_cert);
 		if (args->access_args.tls_key)

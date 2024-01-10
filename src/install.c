@@ -953,7 +953,7 @@ static void update_slot_status(RaucSlotStatus *slot_state, const gchar* status, 
 	slot_state->checksum.type = plan->image->checksum.type;
 	slot_state->checksum.digest = g_strdup(plan->image->checksum.digest);
 	slot_state->checksum.size = plan->image->checksum.size;
-	slot_state->installed_txn = g_strdup(args->transaction);
+	slot_state->installed_txn = g_strdup(args->transaction->id);
 	slot_state->installed_timestamp = g_date_time_format(now, "%Y-%m-%dT%H:%M:%SZ");
 	slot_state->installed_count++;
 }
@@ -1109,8 +1109,8 @@ static void log_event_installation_started(RaucInstallArgs *args)
 	g_log_structured(R_EVENT_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
 			"RAUC_EVENT_TYPE", "install",
 			"MESSAGE_ID", MESSAGE_ID_INSTALLATION_STARTED,
-			"TRANSACTION_ID", args->transaction,
-			"MESSAGE", "Installation %.8s started", args->transaction // truncate ID for readability
+			"TRANSACTION_ID", args->transaction->id,
+			"MESSAGE", "Installation %.8s started", args->transaction->id // truncate ID for readability
 			);
 }
 
@@ -1130,7 +1130,7 @@ static void log_event_installation_done(RaucInstallArgs *args, RaucManifest *man
 		{"BUNDLE_HASH", "", -1},
 		{"BUNDLE_DESCRIPTION", "", -1},
 		{"BUNDLE_VERSION", "", -1},
-		{"TRANSACTION_ID", args->transaction, -1},
+		{"TRANSACTION_ID", args->transaction->id, -1},
 	};
 
 	g_return_if_fail(args);
@@ -1138,14 +1138,14 @@ static void log_event_installation_done(RaucInstallArgs *args, RaucManifest *man
 	if (error) {
 		if (g_error_matches(error, R_INSTALL_ERROR, R_INSTALL_ERROR_REJECTED) ||
 		    g_error_matches(error, R_INSTALL_ERROR, R_INSTALL_ERROR_COMPAT_MISMATCH)) {
-			formatted = g_strdup_printf("Installation %.8s rejected: %s", args->transaction, error->message);
+			formatted = g_strdup_printf("Installation %.8s rejected: %s", args->transaction->id, error->message);
 			fields[1].value = MESSAGE_ID_INSTALLATION_REJECTED;
 		} else {
-			formatted = g_strdup_printf("Installation %.8s failed: %s", args->transaction, error->message);
+			formatted = g_strdup_printf("Installation %.8s failed: %s", args->transaction->id, error->message);
 			fields[1].value = MESSAGE_ID_INSTALLATION_FAILED;
 		}
 	} else {
-		formatted = g_strdup_printf("Installation %.8s succeeded", args->transaction);
+		formatted = g_strdup_printf("Installation %.8s succeeded", args->transaction->id);
 		fields[1].value = MESSAGE_ID_INSTALLATION_SUCCEEDED;
 	}
 
@@ -1288,7 +1288,7 @@ static gchar **assemble_info_headers(RaucInstallArgs *args)
 			g_ptr_array_add(headers, g_strdup_printf("RAUC-Variant: %s", r_context()->config->system_variant));
 		/* Add per-installation information */
 		if (g_strcmp0(*header, "transaction-id") == 0)
-			g_ptr_array_add(headers, g_strdup_printf("RAUC-Transaction-ID: %s", args->transaction));
+			g_ptr_array_add(headers, g_strdup_printf("RAUC-Transaction-ID: %s", args->transaction->id));
 		/* Add live information */
 		if (g_strcmp0(*header, "uptime") == 0) {
 			g_autofree gchar *uptime = get_uptime();
@@ -1315,6 +1315,27 @@ no_std_headers:
 	return (gchar**) g_ptr_array_free(headers, FALSE);
 }
 
+RaucTransaction *r_transaction_new(gchar *preset_id)
+{
+	RaucTransaction *transaction = g_new0(RaucTransaction, 1);
+
+	if (preset_id)
+		transaction->id = g_strdup(preset_id);
+	else
+		transaction->id = g_uuid_string_random();
+
+	return transaction;
+}
+
+void r_transaction_free(RaucTransaction *transaction)
+{
+	if (!transaction)
+		return;
+
+	g_free(transaction->id);
+	g_free(transaction);
+}
+
 gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 {
 	const gchar* bundlefile = args->name;
@@ -1329,7 +1350,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 	g_assert_true(r_context()->config->slot_states_determined);
 
 	if (!args->transaction)
-		args->transaction = g_uuid_string_random();
+		args->transaction = r_transaction_new(NULL);
 
 	r_context_begin_step("do_install_bundle", "Installing", 10);
 
@@ -1355,7 +1376,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 	}
 
 	if (bundle->manifest && bundle->manifest->bundle_format == R_MANIFEST_FORMAT_CRYPT && !bundle->was_encrypted) {
-		r_event_log_message(R_EVENT_LOG_TYPE_INSTALL, "Installation %.8s rejected: Refusing to install unencrypted crypt bundles", args->transaction);
+		r_event_log_message(R_EVENT_LOG_TYPE_INSTALL, "Installation %.8s rejected: Refusing to install unencrypted crypt bundles", args->transaction->id);
 		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_REJECTED, "Refusing to install unencrypted crypt bundles");
 		res = FALSE;
 		goto out;
@@ -1380,7 +1401,7 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 	}
 
 	handler_env = prepare_environment(bundle->mount_point, bundle->manifest, target_group);
-	handler_env = g_environ_setenv(handler_env, "RAUC_TRANSACTION_ID", args->transaction, TRUE);
+	handler_env = g_environ_setenv(handler_env, "RAUC_TRANSACTION_ID", args->transaction->id, TRUE);
 
 	if (r_context()->config->preinstall_handler) {
 		g_message("Starting pre install handler: %s", r_context()->config->preinstall_handler);
@@ -1510,7 +1531,7 @@ RaucInstallArgs *install_args_new(void)
 void install_args_free(RaucInstallArgs *args)
 {
 	g_free(args->name);
-	g_free(args->transaction);
+	r_transaction_free(args->transaction);
 	g_mutex_clear(&args->status_mutex);
 	g_assert_cmpint(args->status_result, >=, 0);
 	g_assert_true(g_queue_is_empty(&args->status_messages));
