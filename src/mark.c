@@ -174,6 +174,21 @@ gboolean r_mark_good(RaucSlot *slot, GError **error)
 		return FALSE;
 	}
 
+	g_message("DEBUG: %p", r_context()->system_status->transaction);
+	g_message("DEBUG: %s", r_context()->system_status->transaction->id);
+	g_message("DEBUG: %s", r_context()->system_status->transaction->state);
+	// FIXME: How to ensure we execute this from a new boot?
+	if (r_context()->system_status->transaction &&
+			g_strcmp0(r_context()->system_status->transaction->state, "await-reboot") == 0) {
+		g_message("WHOOOP WHOOOP. Finalizing transaction %s", r_context()->system_status->transaction->id);
+		g_free(r_context()->system_status->transaction->state);
+		r_context()->system_status->transaction->state = g_strdup("done");;
+		if (!r_system_status_save(&ierror)) {
+			g_warning("Failed to save system status: %s", ierror->message);
+			g_clear_error(&ierror);
+		}
+	}
+
 	r_event_log_mark_good(slot);
 
 	return TRUE;

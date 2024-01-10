@@ -1218,9 +1218,28 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 						"Failed marking slot %s bootable: ", boot_mark_slot->name);
 				return FALSE;
 			}
+			/* Life-cycle: slot is marked active, thus we await a reboot */
+			g_free(r_context()->system_status->transaction->state);
+			r_context()->system_status->transaction->state = g_strdup("await-reboot");;
+			r_context()->system_status->transaction->bootslot = g_strdup(boot_mark_slot->name);;
 		} else {
 			g_message("Leaving target slot non-bootable as requested by activate_installed == false.");
+
+			/* Life-cycle: slot is not activated yet, thus just set it to 'installed' */
+			g_free(r_context()->system_status->transaction->state);
+			r_context()->system_status->transaction->state = g_strdup("installed");;
+			r_context()->system_status->transaction->bootslot = g_strdup(boot_mark_slot->name);;
 		}
+	} else {
+		g_message("No bootable slot updated, thus no reboot expected");
+
+		/* Life-cycle: transaction is done since no reboot is required to activate slot */
+		g_free(r_context()->system_status->transaction->state);
+		r_context()->system_status->transaction->state = g_strdup("completed");;
+	}
+	if (!r_system_status_save(&ierror)) {
+		g_warning("Failed to save system status: %s", ierror->message);
+		g_clear_error(&ierror);
 	}
 
 
@@ -1355,6 +1374,13 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	if (!args->transaction)
 		args->transaction = r_transaction_new(NULL);
+
+	r_context()->system_status->transaction = args->transaction;
+
+	if (!r_system_status_save(&ierror)) {
+		g_warning("Failed to save system status: %s", ierror->message);
+		g_clear_error(&ierror);
+	}
 
 	r_context_begin_step("do_install_bundle", "Installing", 10);
 
@@ -1535,7 +1561,7 @@ RaucInstallArgs *install_args_new(void)
 void install_args_free(RaucInstallArgs *args)
 {
 	g_free(args->name);
-	r_transaction_free(args->transaction);
+	//r_transaction_free(args->transaction); FIXME who should own this?
 	g_mutex_clear(&args->status_mutex);
 	g_assert_cmpint(args->status_result, >=, 0);
 	g_assert_true(g_queue_is_empty(&args->status_messages));
