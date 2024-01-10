@@ -1324,6 +1324,8 @@ RaucTransaction *r_transaction_new(gchar *preset_id)
 	else
 		transaction->id = g_uuid_string_random();
 
+	transaction->state = g_strdup("idle");
+
 	return transaction;
 }
 
@@ -1333,6 +1335,8 @@ void r_transaction_free(RaucTransaction *transaction)
 		return;
 
 	g_free(transaction->id);
+	g_free(transaction->state);
+	g_free(transaction->bootslot);
 	g_free(transaction);
 }
 

@@ -27,6 +27,8 @@ typedef enum {
 
 typedef struct {
 	gchar *id;
+	gchar *state;
+	gchar *bootslot;
 } RaucTransaction;
 
 RaucTransaction *r_transaction_new(gchar *preset_id);

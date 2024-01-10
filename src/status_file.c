@@ -3,6 +3,7 @@
 #include <glib/gstdio.h>
 
 #include "context.h"
+#include "install.h"
 #include "mount.h"
 #include "status_file.h"
 #include "utils.h"
@@ -419,6 +420,7 @@ gboolean r_system_status_load(const gchar *filename, RSystemStatus *status, GErr
 {
 	g_autoptr(GKeyFile) key_file = NULL;
 	GError *ierror = NULL;
+	gchar *transaction_id = NULL;
 
 	g_return_val_if_fail(filename, FALSE);
 	g_return_val_if_fail(status, FALSE);
@@ -432,6 +434,13 @@ gboolean r_system_status_load(const gchar *filename, RSystemStatus *status, GErr
 	}
 
 	status->boot_id = g_key_file_get_string(key_file, "system", "boot-id", NULL);
+
+	transaction_id = g_key_file_get_string(key_file, "transaction", "id", NULL);
+	if (transaction_id) {
+		status->transaction = r_transaction_new(transaction_id);
+		status->transaction->state = g_key_file_get_string(key_file, "transaction", "state", NULL);
+		status->transaction->bootslot = g_key_file_get_string(key_file, "transaction", "bootslot", NULL);
+	}
 
 	return TRUE;
 }
@@ -456,6 +465,13 @@ gboolean r_system_status_save(GError **error)
 	}
 
 	g_key_file_set_string(key_file, "system", "boot-id", r_context()->system_status->boot_id);
+
+	if (r_context()->system_status->transaction) {
+		g_key_file_set_string(key_file, "transaction", "id", r_context()->system_status->transaction->id);
+		g_key_file_set_string(key_file, "transaction", "state", r_context()->system_status->transaction->state);
+		if (r_context()->system_status->transaction->bootslot)
+			g_key_file_set_string(key_file, "transaction", "bootslot", r_context()->system_status->transaction->bootslot);
+	}
 
 	if (!g_key_file_save_to_file(key_file, r_context()->config->statusfile_path, &ierror)) {
 		g_propagate_error(error, ierror);

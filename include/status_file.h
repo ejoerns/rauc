@@ -2,6 +2,7 @@
 
 #include <glib.h>
 
+#include "install.h"
 #include "slot.h"
 
 #define RAUC_SLOT_PREFIX	"slot"
@@ -62,6 +63,7 @@ G_GNUC_WARN_UNUSED_RESULT;
 
 typedef struct {
 	gchar *boot_id;
+	RaucTransaction *transaction;
 } RSystemStatus;
 
 /**
