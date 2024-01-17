@@ -725,6 +725,7 @@ static gboolean finish_configure(struct RaucNBDContext *ctx, struct RaucNBDTrans
 	}
 
 	if (xfer->buffer_size != xfer->buffer_pos) {
+		g_warning("incomplete HTTP response");
 		g_variant_dict_insert(&dict, "error", "s", "incomplete HTTP response");
 		res = FALSE;
 		goto reply;
@@ -732,6 +733,7 @@ static gboolean finish_configure(struct RaucNBDContext *ctx, struct RaucNBDTrans
 
 	/* any other error detected by curl */
 	if (xfer->reply.error) {
+		g_warning("%s", xfer->errbuf);
 		g_variant_dict_insert(&dict, "error", "s", xfer->errbuf);
 		res = FALSE;
 		goto reply;
