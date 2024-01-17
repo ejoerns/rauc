@@ -661,8 +661,9 @@ static gboolean finish_read(struct RaucNBDContext *ctx, struct RaucNBDTransfer *
 	code = curl_easy_getinfo(xfer->easy, CURLINFO_RESPONSE_CODE, &response_code);
 	if (code != CURLE_OK)
 		g_error("unexpected error from curl_easy_getinfo in %s", G_STRFUNC);
-	if (response_code != 206)
+	if ((xfer->reply.error == 0) && (response_code != 206)) {
 		g_error("unexpected HTTP response code %ld from curl_easy_getinfo in %s", response_code, G_STRFUNC);
+	}
 
 	if (!r_write_exact(ctx->sock, (guint8*)&xfer->reply, sizeof(xfer->reply), NULL))
 		g_error("failed to send nbd read reply header");
