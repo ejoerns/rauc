@@ -2494,7 +2494,7 @@ static void cmdline_handler(int argc, char **argv)
 	if (debug) {
 		const gchar *domains = g_getenv("G_MESSAGES_DEBUG");
 		if (!domains) {
-			g_assert(g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN, TRUE));
+			g_assert(g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN "rauc-nbd", TRUE));
 		} else if (!g_str_equal(domains, "all")) {
 			gchar *newdomains = g_strdup_printf("%s %s", domains, G_LOG_DOMAIN);
 			g_setenv("G_MESSAGES_DEBUG", newdomains, TRUE);
