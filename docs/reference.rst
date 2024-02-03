@@ -1933,3 +1933,32 @@ EFI
   targets etc. It may also depend on the actual implementation if EFI variable
   writing is atomic or not.
   Thus make sure your EFI works as expected and required.
+
+Event Logging
+-------------
+
+Log domains:
+
+* ``install`` - Logs start and end of installation
+* ``boot`` - Logs boot information
+* ``mark`` - sets ``SLOT_NAME``, ``SLOT_BOOTNAME``, ``BUNDLE_HASH``
+* ``all`` - Log all events (default, cannot be combined with other events)
+
+
+MESSAGE_ID_INSTALLATION_STARTED   "b05410e8a93345389cd061aab1e9516d"
+MESSAGE_ID_INSTALLATION_SUCCEEDED "0163db5468ac4237b090d28490c301ed"
+MESSAGE_ID_INSTALLATION_FAILED    "c48141f7fd49443aafff862b4809168f"
+MESSAGE_ID_INSTALLATION_REJECTED  "60bea7e4fea549ccad68af457308b13a"
+MESSAGE_ID_BOOTED "e60e0addd3454cb8b796eae0d497af96"
+MESSAGE_ID_BOOTED_EXTERNAL "dd237efdad1945d9b1e471bc2b994532"
+MESSAGE_ID_MARKED_ACTIVE "8b5e7435e1054d86858278e7544fe6da"
+MESSAGE_ID_MARKED_GOOD   "3304e15a7a9a447885eb208ba7ae3a05"
+MESSAGE_ID_MARKED_BAD    "ccb0e584a47043d7a5316994bce77ae5"
+
+
+:TRANSACTION_ID: transaction ID
+:BOOT_ID: boot ID
+:BUNDLE_HASH: bundle hash
+:BUNDLE_VERSION: bundle version
+:SLOT_NAME: slot name
+:SLOT_BOOTNAME: slot bootname
