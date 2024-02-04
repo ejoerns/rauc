@@ -1172,12 +1172,12 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 		return FALSE;
 	}
 
-	boot_mark_slot = get_boot_mark_slot(install_plans);
-
 	if (!pre_install_checks(bundledir, install_plans, target_group, &ierror)) {
 		g_propagate_error(error, ierror);
 		return FALSE;
 	}
+
+	boot_mark_slot = get_boot_mark_slot(install_plans);
 
 	if (boot_mark_slot) {
 		/* Mark boot slot non-bootable */
