@@ -1350,7 +1350,8 @@ gboolean do_install_bundle(RaucInstallArgs *args, GError **error)
 
 	res = check_bundle(bundlefile, &bundle, CHECK_BUNDLE_DEFAULT, &args->access_args, &ierror);
 	if (!res) {
-		g_propagate_error(error, ierror);
+		g_set_error(error, R_INSTALL_ERROR, R_INSTALL_ERROR_REJECTED, "%s", ierror->message);
+		g_clear_error(&ierror);
 		goto out;
 	}
 
