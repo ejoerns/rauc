@@ -2035,6 +2035,8 @@ static void r_event_log_booted(const RaucSlot *booted_slot)
 		{"MESSAGE_ID", MESSAGE_ID_BOOTED, -1 },
 		{"GLIB_DOMAIN", R_EVENT_LOG_DOMAIN, -1},
 		{"RAUC_EVENT_TYPE", "boot", -1},
+		{"SLOT_NAME", NULL, -1},
+		{"SLOT_BOOTNAME", NULL, -1},
 		{"BOOT_ID", NULL, -1},
 		{"BUNDLE_HASH", NULL, -1},
 	};
@@ -2043,11 +2045,13 @@ static void r_event_log_booted(const RaucSlot *booted_slot)
 
 	message = g_strdup_printf("Booted into %s (%s)", booted_slot->name, booted_slot->bootname);
 	fields[0].value = message;
-	fields[4].value = r_context()->boot_id;
+	fields[4].value =  booted_slot->name;
+	fields[5].value =  booted_slot->bootname;
+	fields[6].value = r_context()->boot_id;
 	if (booted_slot->status && booted_slot->status->bundle_hash) {
-		fields[5].value =  booted_slot->status->bundle_hash;
+		fields[7].value =  booted_slot->status->bundle_hash;
 	} else {
-		fields[5].value =  "unknown";
+		fields[7].value =  "unknown";
 	}
 	g_log_structured_array(G_LOG_LEVEL_INFO, fields, G_N_ELEMENTS(fields));
 }
