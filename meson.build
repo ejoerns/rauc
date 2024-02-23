@@ -202,7 +202,7 @@ endif
 systemdcatalogdir = get_option('systemdcatalogdir')
 if systemdcatalogdir == ''
   if systemddep.found()
-    systemdcatalogdir = prefixdir / 'lib/systemd/catalog'
+    systemdcatalogdir = systemddep.get_variable(pkgconfig : 'catalogdir')
   endif
 endif
 
