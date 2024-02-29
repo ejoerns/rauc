@@ -25,7 +25,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: cpp
-          queries: +security-and-quality
+          queries: +security-extended
 
       - name: Install Dependencies
         run: |
