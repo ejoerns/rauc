@@ -30,6 +30,10 @@ gboolean r_slot_status_write(const gchar *filename, RaucSlotStatus *ss, GError *
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
+ */
+void r_slot_status_load_globally(const gchar *filename, GHashTable *slots);
+
+/**
  * Load slot status.
  *
  * Takes care to fill in slot status information into the designated component
