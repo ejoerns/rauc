@@ -325,6 +325,7 @@ static void status_file_test_save_slot_status_existing_system_status(StatusFileF
 	g_autoptr(GKeyFile) keyfile = NULL;
 	g_auto(GStrv) groups = NULL;
 	gsize num_groups;
+	g_autofree gchar* checksum = NULL;
 
 	const gchar *status_file = "\
 [system]\n\
@@ -353,11 +354,15 @@ boot-id=e02a2afe-cf45-4d50-a3f3-c223ca0f480a\n\
 	g_assert_no_error(ierror);
 	g_assert_true(res);
 
-	/* assert loaded key file contains both existing [system] group and added slot status group*/
+	/* assert loaded key file contains both existing [system] group and saved slot status group*/
 	groups = g_key_file_get_groups(keyfile, &num_groups);
-	g_assert_cmpint(num_groups, ==, 2);
+	g_message("%s", g_strjoinv(",", groups));
+	g_assert_cmpint(num_groups, ==, 6); // Will also load defaults for slots
 	g_assert_true(g_strv_contains((const gchar * const *)groups, "system"));
 	g_assert_true(g_strv_contains((const gchar * const *)groups, "slot.rootfs.0"));
+	checksum = g_key_file_get_string(keyfile, "slot.rootfs.0", "sha256", &ierror);
+	g_assert_no_error(ierror);
+	g_assert_cmpstr(checksum, ==, "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551");
 }
 
 int main(int argc, char *argv[])
