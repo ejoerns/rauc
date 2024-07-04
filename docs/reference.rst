@@ -581,7 +581,7 @@ Each artifact repository is identified by a section starting with ``artifacts.``
 followed by the repository name.
 The ``<repo-name>`` name is used in the *update manifest* to target the correct
 repository.
-It must not contain any `.` (dots) as these are used as
+It must not contain any ``.`` (dots) as these are used as
 hierarchical separator.
 The name must be different from any slot class names.
 
