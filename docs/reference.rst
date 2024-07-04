@@ -585,9 +585,10 @@ It must not contain any ``.`` (dots) as these are used as
 hierarchical separator.
 The name must be different from any slot class names.
 
-``path`` (required)
-  Full path to a directory to be used to store the artifacts.
-  It must be mounted before starting RAUC.
+``path=</repo/path>`` (required)
+  Full path to a directory (on a shared partition) to be used to store the
+  artifacts.
+  The underlying shared partition must be mounted before starting RAUC.
 
 ``type`` (required)
   The type of this repository.
