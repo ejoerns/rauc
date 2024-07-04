@@ -325,5 +325,5 @@ In RAUC, we use *artifacts* as a general term for these components.
 They are not installed to slots, but to *artifact repositories*.
 Similar to slots, each repository has a name and a type, which determines how
 artifact are installed and managed.
-As artifacts are replaced when new ones installed under the same name, they
-should be treated as read-only by the rest of the system.
+As artifacts are replaced when new ones are installed under the same name, the
+rest of the system should treat them as read-only.
