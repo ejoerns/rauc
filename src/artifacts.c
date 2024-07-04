@@ -309,7 +309,7 @@ gboolean r_artifact_repo_prepare(RArtifactRepo *repo, GError **error)
 	return TRUE;
 }
 
-static gboolean r_artifact_repo_prune_subdir(RArtifactRepo *repo, const gchar *parent, GError **error)
+static gboolean artifact_repo_prune_subdir(RArtifactRepo *repo, const gchar *parent, GError **error)
 {
 	GError *ierror = NULL;
 	g_autofree gchar *path = g_build_filename(repo->path, parent, NULL);
