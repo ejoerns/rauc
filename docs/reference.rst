@@ -590,7 +590,7 @@ The name must be different from any slot class names.
   artifacts.
   The underlying shared partition must be mounted before starting RAUC.
 
-``type`` (required)
+``type=<type>`` (required)
   The type of this repository.
   Currently supported values are ``files`` and ``trees``.
   For ``files``, each artifact is a single file.
