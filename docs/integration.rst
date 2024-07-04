@@ -270,7 +270,7 @@ Each artifact repository needs its own directory on this shared partition.
 To configure a repository, you need to add an :ref:`[artifacts.\<repo-name\>] section
 <sec_ref_artifacts>` to your ``system.conf``.
 An artifact repository is referenced from the manifest using its name, so that
-name needs to be unique across all slot and repo names.
+the name needs to be unique across all slot and repo names.
 
 .. code-block:: cfg
 
