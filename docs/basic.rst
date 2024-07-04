@@ -301,7 +301,7 @@ This handling is up to your bootloader.
 Artifact Repositories
 ---------------------
 
-In some cases, it can be useful to let RAUC update parts of the the system that
+In some cases, it can be useful to let RAUC update parts of the system that
 should not be represented as slots.
 
 For example, in addition to the root filesystem, which is created in one step
