@@ -310,6 +310,7 @@ software components that are more loosely coupled.
 They could be included in the root filesystem, but when using a :ref:`symmetric A/B
 root filesystem setup <sec-scenarios-symmetric>`, they would need to be stored twice,
 wasting storage space.
+FIXME: Is this our major point here?..
 
 These other components might be:
 
@@ -327,3 +328,5 @@ Similar to slots, each repository has a name and a type, which determines how
 artifact are installed and managed.
 As artifacts are replaced when new ones are installed under the same name, the
 rest of the system should treat them as read-only.
+
+FIXME: add link to artifact documentation

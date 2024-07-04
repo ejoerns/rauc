@@ -577,6 +577,8 @@ a look at :ref:`sec-advanced-event-log`.
 ``[artifacts.<repo-name>]`` Sections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+FIXME: Add link to generic artifacts doc?
+
 Each artifact repository is identified by a section starting with ``artifacts.``
 followed by the repository name.
 The ``<repo-name>`` name is used in the *update manifest* to target the correct
@@ -598,11 +600,13 @@ The name must be different from any slot class names.
 
 ``description=<string>`` (optional)
   A description of this repository.
+  FIXME: Where will this be used for?
 
 ``parent-class=<slot-class>`` (optional)
   Reference to a slot class, if the set of installed artifacts should be managed
   separately for each instance of that class, instead of globally.
   If so, it should refer to the class of the rootfs slots.
+  FIXME: Might need more explanation
 
 .. _sec_ref_manifest:
 

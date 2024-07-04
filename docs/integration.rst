@@ -304,6 +304,9 @@ TODO document how to remove artifacts
 Repository Type
 ^^^^^^^^^^^^^^^
 
+FIXME: make clear how type is configured.
+FIXME: Maybe Move to generic artifact documentation?
+
 Each repository is configured with a type which specifies how it stores and
 manages artifacts.
 
