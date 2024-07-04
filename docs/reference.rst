@@ -596,7 +596,7 @@ The name must be different from any slot class names.
   For ``files``, each artifact is a single file.
   For ``trees``, each artifact is a directory tree containing files.
 
-``description`` (optional)
+``description=<string>`` (optional)
   A description of this repository.
 
 ``parent-class=<slot-class>`` (optional)
