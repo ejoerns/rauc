@@ -363,7 +363,7 @@ gboolean r_artifact_repo_prune(RArtifactRepo *repo, GError **error)
 		for (GList *l = parent_slots; l != NULL; l = l->next) {
 			const RaucSlot *parent_slot = l->data;
 
-			if (!r_artifact_repo_prune_subdir(repo, parent_slot->name, &ierror)) {
+			if (!artifact_repo_prune_subdir(repo, parent_slot->name, &ierror)) {
 				g_propagate_prefixed_error(
 						error,
 						ierror,
