@@ -158,7 +158,7 @@ GVariant *r_artifacts_to_dict(void)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
- * Try to find an existing artififact given a name and checksum.
+ * Try to find an existing artifact given a name and checksum.
  *
  * @param repo RArtifactRepo to search
  * @param name the name to search for
