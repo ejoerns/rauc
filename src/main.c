@@ -1467,6 +1467,59 @@ static void r_string_append_slot(GString *text, RaucSlot *slot, RaucStatusPrint 
 	g_string_append_c(text, '\n');
 }
 
+static void r_string_append_repo(GString *text, GVariant *repo_var, RaucStatusPrint *status)
+{
+	const gchar *tmp = NULL;
+	if (g_variant_lookup(repo_var, "name", "&s", &tmp)) {
+		g_string_append_printf(text, "%s\n", tmp);
+	}
+	if (g_variant_lookup(repo_var, "path", "&s", &tmp)) {
+		g_string_append_printf(text, "path:  %s\n", tmp);
+	}
+	if (g_variant_lookup(repo_var, "type", "&s", &tmp)) {
+		g_string_append_printf(text, "type:  %s\n", tmp);
+	}
+
+	gboolean has_parent = FALSE;
+	if (g_variant_lookup(repo_var, "parent-class", "&s", &tmp)) {
+		g_string_append_printf(text, "parent-class:  %s\n", tmp);
+		has_parent = TRUE;
+	}
+
+	g_autoptr(GVariant) artifacts_var = NULL;
+	if (g_variant_lookup(repo_var, "artifacts", "@aa{sv}", &artifacts_var)) {
+		GVariantIter artifact_iter;
+		g_variant_iter_init(&artifact_iter, artifacts_var);
+		GVariant *artifact_var;
+		while (g_variant_iter_loop(&artifact_iter, "@a{sv}", &artifact_var)) {
+			if (g_variant_lookup(artifact_var, "name", "&s", &tmp)) {
+				g_string_append_printf(text, "name:    %s\n", tmp);
+			}
+			if (g_variant_lookup(artifact_var, "checksum", "&s", &tmp)) {
+				g_string_append_printf(text, "checksum:    %s\n", tmp);
+			}
+
+			g_autofree gchar **references = NULL;
+			if (g_variant_lookup(artifact_var, "references", "^a&s", &references)) {
+				if (!has_parent) {
+					if (references[0]) {
+						g_string_append_printf(text, "active\n");
+					} else {
+						g_string_append_printf(text, "inactive\n");
+					}
+				} else {
+					g_autofree gchar *joined = g_strjoinv(" ", references);
+					if (references[0]) {
+						g_string_append_printf(text, "references: %s\n", joined);
+					} else {
+						g_string_append_printf(text, "references: (none)");
+					}
+				}
+			}
+		}
+	}
+}
+
 static gchar* r_status_formatter_readable(RaucStatusPrint *status)
 {
 	GString *text = g_string_new(NULL);
@@ -1520,57 +1573,7 @@ static gchar* r_status_formatter_readable(RaucStatusPrint *status)
 		g_variant_iter_init(&repo_iter, status->artifacts);
 		GVariant *repo_var;
 		while (g_variant_iter_loop(&repo_iter, "@a{sv}", &repo_var)) {
-			g_message("repo_var: %s", g_variant_get_type_string(repo_var));
-
-			const gchar *tmp = NULL;
-			if (g_variant_lookup(repo_var, "name", "&s", &tmp)) {
-				g_string_append_printf(text, "name:  %s\n", tmp);
-			}
-			if (g_variant_lookup(repo_var, "path", "&s", &tmp)) {
-				g_string_append_printf(text, "path:  %s\n", tmp);
-			}
-			if (g_variant_lookup(repo_var, "type", "&s", &tmp)) {
-				g_string_append_printf(text, "type:  %s\n", tmp);
-			}
-
-			gboolean has_parent = FALSE;
-			if (g_variant_lookup(repo_var, "parent-class", "&s", &tmp)) {
-				g_string_append_printf(text, "parent-class:  %s\n", tmp);
-				has_parent = TRUE;
-			}
-
-			g_autoptr(GVariant) artifacts_var = NULL;
-			if (g_variant_lookup(repo_var, "artifacts", "@aa{sv}", &artifacts_var)) {
-				GVariantIter artifact_iter;
-				g_variant_iter_init(&artifact_iter, artifacts_var);
-				GVariant *artifact_var;
-				while (g_variant_iter_loop(&artifact_iter, "@a{sv}", &artifact_var)) {
-					if (g_variant_lookup(artifact_var, "name", "&s", &tmp)) {
-						g_string_append_printf(text, "name:    %s\n", tmp);
-					}
-					if (g_variant_lookup(artifact_var, "checksum", "&s", &tmp)) {
-						g_string_append_printf(text, "checksum:    %s\n", tmp);
-					}
-
-					g_autofree gchar **references = NULL;
-					if (g_variant_lookup(artifact_var, "references", "^a&s", &references)) {
-						if (!has_parent) {
-							if (references[0]) {
-								g_string_append_printf(text, "active\n");
-							} else {
-								g_string_append_printf(text, "inactive\n");
-							}
-						} else {
-							g_autofree gchar *joined = g_strjoinv(" ", references);
-							if (references[0]) {
-								g_string_append_printf(text, "references: %s\n", joined);
-							} else {
-								g_string_append_printf(text, "references: (none)");
-							}
-						}
-					}
-				}
-			}
+			r_string_append_repo(text, repo_var, status);
 		}
 	}
 
