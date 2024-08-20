@@ -282,7 +282,7 @@ the name needs to be unique across all slot and repository names.
 
 This example specifies one repository stored in the ``add-ons`` directory on the
 shared data partition mounted on ``/srv``.
-It's name is ``add-ons`` as well, so it could be targeted for installation with an
+Its name is ``add-ons`` as well, so it could be targeted for installation with an
 :ref:`[image.add-ons/app-1] section <image-section>` in the manifest.
 In that case, RAUC would install the contents of the archive specified in the
 image to the repository and make it available via a link at
