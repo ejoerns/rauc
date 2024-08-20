@@ -192,8 +192,8 @@ G_GNUC_WARN_UNUSED_RESULT;
  * separately persisted by r_artifact_repo_commit.
  *
  * @param artifact RArtifact to activate
- * @param parent NULL or name of the parent slot
- * @param error a GError, or NULL
+ * @param parent "" or name of the parent slot
+ * @param[out] error Return location for a GError, or NULL
  */
 void r_artifact_activate(const RArtifact *artifact, const gchar *parent);
 
