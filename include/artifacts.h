@@ -204,6 +204,6 @@ void r_artifact_activate(const RArtifact *artifact, const gchar *parent);
  *
  * @param artifact RArtifact to deactivate
  * @param parent NULL or name of the parent slot
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  */
 void r_artifact_deactivate(const RArtifact *artifact, const gchar *parent);
