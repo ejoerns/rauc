@@ -1455,7 +1455,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 				r_context_end_step("update_slots", FALSE);
 				return FALSE;
 			}
-			install_args_update(args, "Updating artifact %s in repo %s done", plan->image->artifact, plan->target_repo->name);
 		}
 	}
 
