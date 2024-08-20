@@ -135,7 +135,7 @@ gboolean r_artifact_repo_insert(RArtifactRepo *repo, RArtifact *artifact, GError
 				error,
 				R_ARTIFACTS_ERROR,
 				R_ARTIFACTS_ERROR_DUPLICATE,
-				"Failed to insert artifact %s into repo %s, as it exists already.",
+				"Failed to insert artifact '%s' into repo '%s', as it exists already.",
 				artifact->name, repo->name);
 		return FALSE;
 	}
