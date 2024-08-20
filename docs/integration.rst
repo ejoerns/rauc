@@ -300,7 +300,7 @@ symlink is removed or replaced.
 
 .. note::
 
-  There is currently no way to remove all artifacts from a repository.
+  There is currently no way to remove *all* artifacts from a repository.
   If you need that functionality, please reach out to us!
 
 Internally, artifacts are stored under their image hash in the repository's
