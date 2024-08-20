@@ -1378,7 +1378,7 @@ static gboolean handle_artifact_install_plan(const RaucManifest *manifest, const
 			return FALSE;
 		}
 	} else {
-		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Reusing artifact image in repo %s", plan->target_repo->name);
+		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Reusing artifact image in repo '%s'", plan->target_repo->name);
 	}
 
 	/* update links (commit) */
