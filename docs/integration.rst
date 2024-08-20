@@ -291,7 +291,7 @@ image to the repository and make it available via a link at
 A single bundle can contain images for multiple artifacts across multiple
 repositories.
 The bundle defines the intended target state of each repository mentioned in
-it's manifest.
+its manifest.
 This means that previously installed artifacts can be removed from a repository
 by installing a bundle which contains a different artifact for that repository.
 Artifacts which are currently in use (i.e. which have open files that can be
