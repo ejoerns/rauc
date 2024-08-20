@@ -93,7 +93,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @param repo RArtifactRepo to insert into
  * @param artifact RArtifact to insert
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the insertion was successful, otherwise FALSE
  */
@@ -104,7 +104,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * Scan the repo on disk for installed artifacts and load their information.
  *
  * @param repo RArtifactRepo to prepare
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the perparation was successful, otherwise FALSE
  */
@@ -116,7 +116,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * downloads.
  *
  * @param repo RArtifactRepo to prune
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the pruning was successful, otherwise FALSE
  */
@@ -129,7 +129,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * This will create and remove links to artifacts as needed.
  *
  * @param repo RArtifactRepo to commit
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the commit was successful, otherwise FALSE
  */
@@ -141,7 +141,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * configured repositories.
  *
  * @param prune whether to prune invalid data
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the initialization was successful, otherwise FALSE
  */
@@ -178,7 +178,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  *
  * @param artifact RArtifact to install to
  * @param image RaucImage to install from
- * @param error a GError, or NULL
+ * @param[out] error Return location for a GError, or NULL
  *
  * @return TRUE if the installation was successful, otherwise FALSE
  */
