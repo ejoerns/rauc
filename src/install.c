@@ -1398,7 +1398,7 @@ static gboolean handle_artifact_install_plan(const RaucManifest *manifest, const
 	//	return FALSE;
 	//}
 
-	install_args_update(args, "Updating repo %s for artifact %s done", plan->target_repo->name, plan->image->artifact);
+	install_args_update(args, "Updating artifact '%s' in repo '%s' done", plan->image->artifact, plan->target_repo->name);
 	return TRUE;
 }
 
