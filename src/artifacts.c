@@ -141,7 +141,7 @@ gboolean r_artifact_repo_insert(RArtifactRepo *repo, RArtifact *artifact, GError
 	}
 	g_hash_table_insert(inner, (gpointer)g_intern_string(artifact->checksum.digest), artifact);
 
-	g_message("inserted into %s: %s %s", repo->name, artifact->name, artifact->checksum.digest);
+	g_message("inserted into repo '%s': '%s' %s", repo->name, artifact->name, artifact->checksum.digest);
 
 	return TRUE;
 }
