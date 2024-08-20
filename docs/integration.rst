@@ -303,8 +303,8 @@ symlink is removed or replaced.
   There is currently no way to remove *all* artifacts from a repository.
   If you need that functionality, please reach out to us!
 
-Internally, artifacts are stored under their image hash in the repository's
-directory.
+Internally, artifacts are stored under their artifact name and image hash in
+the repository's directory.
 This means that artifacts are installed only if a given version is not yet
 available in the repository.
 A symlink is created from the image name to the actual artifact, making it
