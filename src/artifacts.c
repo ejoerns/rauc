@@ -146,7 +146,19 @@ gboolean r_artifact_repo_insert(RArtifactRepo *repo, RArtifact *artifact, GError
 	return TRUE;
 }
 
-static gboolean r_artifact_repo_read_links(RArtifactRepo *repo, const gchar *parent, GError **error)
+/**
+ * Reads all potential symlink files in repo and resolves them to their target artifact.
+ *
+ * In a valid artifact repo, all non-hidden files should be symlinks to an
+ * internal artifact path (.artifact-<name>-<hash>).
+ *
+ * @param repo The repo to read
+ * @param parent parent name or "" for no parent
+ * @param[out] error Return location for a GError, or NULL
+ *
+ * @return TRUE if successful, FALSE otherwise
+ */
+static gboolean artifact_repo_read_links(RArtifactRepo *repo, const gchar *parent, GError **error)
 {
 	GError *ierror = NULL;
 
@@ -288,7 +300,7 @@ gboolean r_artifact_repo_prepare(RArtifactRepo *repo, GError **error)
 
 			g_ptr_array_add(repo->possible_references, (gpointer)g_intern_string(parent_slot->name));
 
-			if (!r_artifact_repo_read_links(repo, parent_slot->name, &ierror)) {
+			if (!artifact_repo_read_links(repo, parent_slot->name, &ierror)) {
 				g_propagate_error(error, ierror);
 				return FALSE;
 			}
@@ -296,7 +308,7 @@ gboolean r_artifact_repo_prepare(RArtifactRepo *repo, GError **error)
 	} else { /* no parent */
 		g_ptr_array_add(repo->possible_references, (gpointer)g_intern_static_string(""));
 
-		if (!r_artifact_repo_read_links(repo, "", &ierror)) {
+		if (!artifact_repo_read_links(repo, "", &ierror)) {
 			g_propagate_error(error, ierror);
 			return FALSE;
 		}
