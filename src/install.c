@@ -1370,7 +1370,7 @@ static gboolean handle_artifact_install_plan(const RaucManifest *manifest, const
 	r_context_end_step("check_repo", TRUE);
 
 	if (need_install) {
-		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Copying artifact image to repo %s", plan->target_repo->name);
+		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Copying artifact image to repo '%s'", plan->target_repo->name);
 
 		if (!r_artifact_install(artifact, plan->image, &ierror)) {
 			g_propagate_error(error, ierror);
