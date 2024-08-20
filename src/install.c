@@ -1332,7 +1332,7 @@ static gboolean handle_artifact_install_plan(const RaucManifest *manifest, const
 	g_return_val_if_fail(args, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	r_context_begin_step_weighted_formatted("check_repo", 0, 1, "Checking repo %s", plan->target_repo->name);
+	r_context_begin_step_weighted_formatted("check_repo", 0, 1, "Checking repo '%s'", plan->target_repo->name);
 	if (!remove_old_artifacts(manifest, plan->target_repo, &ierror)) {
 		g_propagate_error(error, ierror);
 		r_context_end_step("check_repo", FALSE);
