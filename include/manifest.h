@@ -204,7 +204,7 @@ GVariant *r_manifest_to_dict(const RaucManifest *manifest)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**
- * Checks is the manifest has an artifact image:
+ * Checks if the manifest has an artifact image:
  * - for any repository
  * - for a specific repository
  * - for a specific name in a specific repository
