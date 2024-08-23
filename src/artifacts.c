@@ -188,6 +188,7 @@ static gboolean artifact_repo_read_links(RArtifactRepo *repo, const gchar *paren
 	show_repo(repo);
 	const gchar *name;
 	while ((name = g_dir_read_name(dir))) {
+		/* skip .artifact-* files that are not supposed to be artifact symlinks */
 		if (g_str_has_prefix(name, "."))
 			continue;
 
