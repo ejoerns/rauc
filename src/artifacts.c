@@ -407,7 +407,7 @@ gboolean r_artifact_repo_prune(RArtifactRepo *repo, GError **error)
 				continue;
 		}
 
-		/* TODO allow repo type specific files here */
+		/* TODO allow repo type-specific files here */
 
 		g_message("Removing unexpected data in artifact repo: %s", full_name);
 		if (!rm_tree(full_name, &ierror)) {
