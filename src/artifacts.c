@@ -790,7 +790,6 @@ gboolean r_artifact_install(const RArtifact *artifact, const RaucImage *image, G
 
 	g_assert(!g_file_test(artifact->path, G_FILE_TEST_EXISTS));
 	g_assert(!g_file_test(artifact->path_tmp, G_FILE_TEST_EXISTS));
-	g_print("image filename %s\n", image->filename);
 	g_assert(g_path_is_absolute(image->filename));
 
 	if (g_strcmp0(artifact->repo->type, "files") == 0) {
