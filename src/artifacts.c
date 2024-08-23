@@ -40,7 +40,7 @@ static void show_repo(RArtifactRepo *repo)
 
 			for (guint i = 0; i < artifact->references->len; i++) {
 				const gchar *parent = g_ptr_array_index(artifact->references, i);
-				g_debug("        referenced by: %s", parent);
+				g_debug("        referenced by: '%s'", parent);
 				g_assert(parent == g_intern_string(parent));
 			}
 		}
