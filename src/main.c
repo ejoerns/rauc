@@ -1497,24 +1497,32 @@ static void r_string_append_repo(GString *text, GVariant *repo_var, RaucStatusPr
 			if (g_variant_lookup(artifact_var, "name", "&s", &tmp)) {
 				g_string_append_printf(text, "  - "KBLD "/%s"KNRM "\n", tmp);
 			}
-			if (g_variant_lookup(artifact_var, "checksum", "&s", &tmp)) {
-				g_string_append_printf(text, "    checksum:    %s\n", tmp);
-			}
-
-			g_autofree gchar **references = NULL;
-			if (g_variant_lookup(artifact_var, "references", "^a&s", &references)) {
-				if (!has_parent) {
-					if (references[0]) {
-						g_string_append_printf(text, "    active\n");
-					} else {
-						g_string_append_printf(text, "    inactive\n");
+			g_autoptr(GVariant) digests_var = NULL;
+			if (g_variant_lookup(artifact_var, "digests", "@aa{sv}", &digests_var)) {
+				GVariantIter digest_iter;
+				g_variant_iter_init(&digest_iter, digests_var);
+				GVariant *digest_var;
+				while (g_variant_iter_loop(&digest_iter, "@a{sv}", &digest_var)) {
+					if (g_variant_lookup(digest_var, "checksum", "&s", &tmp)) {
+						g_string_append_printf(text, "    checksum:   %s\n", tmp);
 					}
-				} else {
-					g_autofree gchar *joined = g_strjoinv(" ", references);
-					if (references[0]) {
-						g_string_append_printf(text, "    references: %s\n", joined);
-					} else {
-						g_string_append_printf(text, "    references: (none)");
+
+					g_autofree gchar **references = NULL;
+					if (g_variant_lookup(digest_var, "references", "^a&s", &references)) {
+						if (!has_parent) {
+							if (references[0]) {
+								g_string_append_printf(text, "    active\n");
+							} else {
+								g_string_append_printf(text, "    inactive\n");
+							}
+						} else {
+							g_autofree gchar *joined = g_strjoinv(" ", references);
+							if (references[0]) {
+								g_string_append_printf(text, "    references: '%s'\n", joined);
+							} else {
+								g_string_append_printf(text, "    references: (none)\n");
+							}
+						}
 					}
 				}
 			}

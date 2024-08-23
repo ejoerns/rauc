@@ -572,11 +572,19 @@ gboolean r_artifacts_init(gboolean prune, GError **error)
  *         "artifacts": aa{sv}  // Array of artifact dictionaries
  *         [
  *             {
- *                 "name": s,       // string: Name of the artifact
- *                 "checksum": s,   // string: Checksum of the artifact
- *                 "references": as // array of strings: Optional references for the artifact
- *             },
- *             ...
+ *                 "name": aa{sv}       // string: Name of the artifact
+ *                 "checksums:" aa{sv}
+ *                 [
+ *                     {
+ *                         "checksum": s,   // string: Checksum of the artifact
+ *                         "references": as // array of strings: Optional references for the artifact
+ *                     },
+ *                     {
+ *                         "checksum": s,   // string: Checksum of the artifact
+ *                         "references": as // array of strings: Optional references for the artifact
+ *                     },
+ *                 ...
+ *             }
  *         ]
  *     },
  *     ...
@@ -608,21 +616,28 @@ GVariant *r_artifacts_to_dict(void)
 		g_hash_table_iter_init(&a_iter_name, repo->artifacts);
 		GHashTable *inner = NULL;
 		g_auto(GVariantBuilder) artifacts_builder = G_VARIANT_BUILDER_INIT(G_VARIANT_TYPE("aa{sv}"));
-		while (g_hash_table_iter_next(&a_iter_name, NULL, (gpointer*)&inner)) {
+		const gchar *a_name = NULL;
+		while (g_hash_table_iter_next(&a_iter_name, (gpointer*)&a_name, (gpointer*)&inner)) {
+			g_variant_builder_open(&artifacts_builder, G_VARIANT_TYPE("a{sv}"));
+			g_variant_builder_add(&artifacts_builder, "{sv}", "name", g_variant_new_string(a_name));
+
 			GHashTableIter a_iter_digest;
 			g_hash_table_iter_init(&a_iter_digest, inner);
 			RArtifact *artifact = NULL;
+			g_auto(GVariantBuilder) digests_builder = G_VARIANT_BUILDER_INIT(G_VARIANT_TYPE("aa{sv}"));
 			while (g_hash_table_iter_next(&a_iter_digest, NULL, (gpointer*)&artifact)) {
-				g_variant_builder_open(&artifacts_builder, G_VARIANT_TYPE("a{sv}"));
+				g_variant_builder_open(&digests_builder, G_VARIANT_TYPE("a{sv}"));
 
-				g_variant_builder_add(&artifacts_builder, "{sv}", "name", g_variant_new_string(artifact->name));
-				g_variant_builder_add(&artifacts_builder, "{sv}", "checksum", g_variant_new_string(artifact->checksum.digest));
+				g_variant_builder_add(&digests_builder, "{sv}", "checksum", g_variant_new_string(artifact->checksum.digest));
 				/* TODO add bundle metadata */
-				g_variant_builder_add(&artifacts_builder, "{sv}", "references",
+				g_variant_builder_add(&digests_builder, "{sv}", "references",
 						g_variant_new_strv((const gchar **)artifact->references->pdata, artifact->references->len));
 
-				g_variant_builder_close(&artifacts_builder);
+				g_variant_builder_close(&digests_builder);
 			}
+			g_variant_builder_add(&artifacts_builder, "{sv}", "digests", g_variant_builder_end(&digests_builder));
+
+			g_variant_builder_close(&artifacts_builder);
 		}
 		g_variant_builder_add(&repos_builder, "{sv}", "artifacts", g_variant_builder_end(&artifacts_builder));
 
