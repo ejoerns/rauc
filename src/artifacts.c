@@ -561,6 +561,28 @@ gboolean r_artifacts_init(gboolean prune, GError **error)
 	return TRUE;
 }
 
+/*
+ * aa{sv}  // Array of dictionaries, where each dictionary represents a repository
+ * [
+ *     {
+ *         "name": s,           // string: Name of the repository
+ *         "description": s,    // string: Optional description of the repository
+ *         "path": s,           // string: Filesystem path to the repository
+ *         "type": s,           // string: Type of the repository
+ *         "parent-class": s,   // string: Optional parent class of the repository
+ *         "artifacts": aa{sv}  // Array of artifact dictionaries
+ *         [
+ *             {
+ *                 "name": s,       // string: Name of the artifact
+ *                 "checksum": s,   // string: Checksum of the artifact
+ *                 "references": as // array of strings: Optional references for the artifact
+ *             },
+ *             ...
+ *         ]
+ *     },
+ *     ...
+ * ]
+ */
 GVariant *r_artifacts_to_dict(void)
 {
 	g_assert(r_context()->config);
