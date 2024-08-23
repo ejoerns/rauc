@@ -211,7 +211,7 @@ static gboolean artifact_repo_read_links(RArtifactRepo *repo, const gchar *paren
 
 		GHashTable *inner = g_hash_table_lookup(repo->artifacts, g_intern_string(a_name));
 		if (inner == NULL) {
-			g_warning("invalid artifact link %s in repository %s (unknown artifact name %s)", entry_path, repo->name, a_name);
+			g_warning("invalid artifact link %s in repo '%s' (unknown artifact name '%s')", entry_path, repo->name, a_name);
 			continue;
 		}
 
