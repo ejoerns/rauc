@@ -202,7 +202,7 @@ static gboolean artifact_repo_read_links(RArtifactRepo *repo, const gchar *paren
 
 		g_autoptr(GMatchInfo) match = NULL;
 		if (!g_regex_match(artifact_regex, target, 0, &match)) {
-			g_warning("invalid artifact link %s in repository %s (invalid target %s)", entry_path, repo->name, target);
+			g_warning("invalid artifact link %s in repo '%s' (invalid target '%s')", entry_path, repo->name, target);
 			continue;
 		}
 
