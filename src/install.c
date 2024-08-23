@@ -1381,15 +1381,6 @@ static gboolean handle_artifact_install_plan(const RaucManifest *manifest, const
 		r_context_begin_step_weighted_formatted("copy_image", 0, 9, "Reusing artifact image in repo '%s'", plan->target_repo->name);
 	}
 
-	/* update links (commit) */
-	g_assert(artifact->repo->parent_class == NULL); /* TODO handle repos with parents */
-	r_artifact_activate(artifact, (gpointer)g_intern_static_string(""));
-	if (!r_artifact_repo_commit(plan->target_repo, &ierror)) {
-		g_propagate_error(error, ierror);
-		r_context_end_step("copy_image", FALSE);
-		return FALSE;
-	}
-
 	r_context_end_step("copy_image", TRUE);
 
 	//g_message("Updating status for repo '%s'", plan->target_repo->name);
@@ -1459,6 +1450,23 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 
 	r_context_end_step("update_slots", TRUE);
 	install_args_update(args, "All slots updated");
+
+	/* Commit artifacts */
+	for (guint i = 0; i < install_plans->len; i++) {
+		const RImageInstallPlan *plan = g_ptr_array_index(install_plans, i);
+
+		if (plan->target_repo) {
+			RArtifact *artifact = r_artifact_find(plan->target_repo, plan->image->artifact, plan->image->checksum.digest);
+			g_assert(artifact->repo->parent_class == NULL); /* TODO handle repos with parents */
+			r_artifact_activate(artifact, (gpointer)g_intern_static_string(""));
+			if (!r_artifact_repo_commit(plan->target_repo, &ierror)) {
+				g_propagate_error(error, ierror);
+				r_context_end_step("copy_image", FALSE);
+				return FALSE;
+			}
+			install_args_update(args, "Artifacts committed");
+		}
+	}
 
 	if (boot_mark_slot) {
 		if (r_context()->config->activate_installed) {
