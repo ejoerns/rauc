@@ -443,14 +443,14 @@ gboolean r_artifact_repo_prune(RArtifactRepo *repo, GError **error)
 				return FALSE;
 			}
 
+			g_message("Removing unused artifact '%s' with hash '%s' from repo '%s'",
+					artifact->name, artifact->checksum.digest, repo->name
+					);
+
 			if (!rm_tree(artifact->path, &ierror)) {
 				g_propagate_error(error, ierror);
 				return FALSE;
 			}
-
-			g_info("Removed unused artifact '%s' with hash '%s' from repo '%s'",
-					artifact->name, artifact->checksum.digest, repo->name
-					);
 
 			g_hash_table_iter_remove(&inner_iter);
 		}
