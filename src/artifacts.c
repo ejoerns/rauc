@@ -195,7 +195,7 @@ static gboolean artifact_repo_read_links(RArtifactRepo *repo, const gchar *paren
 		g_autofree gchar *entry_path = g_build_filename(path, name, NULL);
 		g_autofree gchar *target = g_file_read_link(entry_path, &ierror);
 		if (target == NULL) {
-			g_warning("invalid artifact link %s in repository %s (%s)", entry_path, repo->name, ierror->message);
+			g_warning("invalid artifact link %s in repo '%s' (%s)", entry_path, repo->name, ierror->message);
 			g_clear_error(&ierror);
 			continue;
 		}
