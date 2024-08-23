@@ -386,6 +386,7 @@ gboolean r_artifact_repo_prune(RArtifactRepo *repo, GError **error)
 		return FALSE;
 	}
 
+	/* remove unexpected data (non-symlinks that do not match internal arifact pattern) */
 	const gchar *name;
 	while ((name = g_dir_read_name(dir))) {
 		g_autofree gchar *full_name = g_build_filename(repo->path, name, NULL);
