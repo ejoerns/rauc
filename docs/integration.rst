@@ -348,8 +348,8 @@ manages artifacts.
 
 ``trees``
   Each artifact is a directory tree containing files.
-  A image should be a tar archive or a tar converted to a directory tree using
-  ``convert=tar-extract``.
+  An image should be a tar archive or a tar converted to a directory tree using
+  ``convert=tar-extract`` in the input manifest.
 
   Possible use-cases for this type are:
 
