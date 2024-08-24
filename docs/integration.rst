@@ -319,7 +319,7 @@ available to the rest of the system atomically.
 
 You can use the :ref:`post-install handler <sec-post-install-handler>` to notify
 the running system about newly installed artifacts.
-By the time the this handler is executed, the symlinks to the artifacts have
+By the time this handler is executed, the symlinks to the artifacts have
 been created.
 For example, you could restart all services or containers running from the
 artifact repositories.
