@@ -200,7 +200,7 @@ void r_artifact_activate(const RArtifact *artifact, const gchar *parent);
 /**
  * Deactivate an artifact for the given parent.
  *
- * This change must be separately persisted by r_artifact_repo_commit.
+ * This change must be separately persisted by r_artifact_repo_commit().
  *
  * @param artifact RArtifact to deactivate
  * @param parent NULL or name of the parent slot
