@@ -188,8 +188,8 @@ G_GNUC_WARN_UNUSED_RESULT;
 /**
  * Activate an artifact for the given parent.
  *
- * Other versions of this artifact are deactivated.  This change must be
- * separately persisted by r_artifact_repo_commit.
+ * Other versions of this artifact are deactivated. This change must be
+ * separately persisted by r_artifact_repo_commit().
  *
  * @param artifact RArtifact to activate
  * @param parent "" or name of the parent slot
