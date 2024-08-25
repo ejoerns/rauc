@@ -721,7 +721,7 @@ static gboolean tree_artifact_install_extracted(const RArtifact *artifact, const
 	g_return_val_if_fail(name, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	g_autoptr(GPtrArray) args = g_ptr_array_new_full(10, g_free);
+	g_autoptr(GPtrArray) args = g_ptr_array_new_full(5, g_free);
 	g_ptr_array_add(args, g_strdup("cp"));
 	g_ptr_array_add(args, g_strdup("-a"));
 	g_ptr_array_add(args, g_strdup(name));
