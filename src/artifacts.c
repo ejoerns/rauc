@@ -729,7 +729,7 @@ static gboolean tree_artifact_install_extracted(const RArtifact *artifact, const
 	g_ptr_array_add(args, NULL);
 
 	if (!r_subprocess_runv(args, G_SUBPROCESS_FLAGS_NONE, &ierror)) {
-		g_propagate_prefixed_error(error, ierror, "failed to copy tree (cp -a): ");
+		g_propagate_prefixed_error(error, ierror, "Failed to copy tree (cp -a): ");
 		return FALSE;
 	}
 	return TRUE;
