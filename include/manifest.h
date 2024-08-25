@@ -108,7 +108,7 @@ G_GNUC_WARN_UNUSED_RESULT;
 
 /**
  * Check a loaded input manifest for consistency. Manifests to be used with 'rauc
- * bundle' must pass this check. They should not contain information will be
+ * bundle' must pass this check. They should not contain information that will be
  * generated (such as hashes or converted filenames);
  *
  * @param manifest Pointer to the manifest to check
