@@ -33,6 +33,7 @@ typedef struct {
 	SlotHooks hooks;
 	GStrv adaptive;
 	GStrv convert;
+	/* String array of converted filenames. Not NULL-terminated! */
 	GPtrArray* converted;
 } RaucImage;
 
