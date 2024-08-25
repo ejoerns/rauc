@@ -450,7 +450,8 @@ out:
 
 static gboolean check_manifest_plain(const RaucManifest *mf, GError **error)
 {
-	gboolean res = FALSE;
+	g_return_val_if_fail(mf, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	g_assert(mf->bundle_format == R_MANIFEST_FORMAT_PLAIN);
 
@@ -460,17 +461,15 @@ static gboolean check_manifest_plain(const RaucManifest *mf, GError **error)
 		/* Check for features not supported in plain bundles */
 		if (image->artifact) {
 			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_CHECK_ERROR, "Artifacts are not supported in plain bundles");
-			goto out;
+			return FALSE;
 		}
 		if (image->convert || (image->converted && image->converted->len)) {
 			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_CHECK_ERROR, "Image converters are not supported in plain bundles");
-			goto out;
+			return FALSE;
 		}
 	}
 
-	res = TRUE;
-out:
-	return res;
+	return TRUE;
 }
 
 /**
