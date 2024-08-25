@@ -2067,7 +2067,6 @@ static gboolean retrieve_status_via_dbus(RaucStatusPrint **status_print, GError 
 static gboolean print_status(RaucStatusPrint *status_print)
 {
 	g_autofree gchar *tmp = g_variant_print(status_print->artifacts, TRUE);
-	g_message("artifacts: %s", tmp);
 
 	g_autofree gchar *text = NULL;
 	if (!output_format || g_strcmp0(output_format, "readable") == 0) {
