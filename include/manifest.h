@@ -208,13 +208,14 @@ G_GNUC_WARN_UNUSED_RESULT;
  * Checks if the manifest has an artifact image:
  * - for any repository
  * - for a specific repository
- * - for a specific name in a specific repository
+ * - for a specific artifact name in a specific repository
  *
  * @param manifest pointer to the manifest
- * @param repo name of the repository
- * @param artifact name of the artifact in the repository
+ * @param repo name of the repository, or NULL.
+ *             Must be set if aritfact is set.
+ * @param artifact name of the artifact in the repository, or NULL
  *
- * @return TRUE on success, FALSE if an error occurred
+ * @return TRUE if image was found, FALSE otherwise
  */
 gboolean r_manifest_has_artifact_image(const RaucManifest *manifest, const gchar *repo, const gchar *artifact)
 G_GNUC_WARN_UNUSED_RESULT;
