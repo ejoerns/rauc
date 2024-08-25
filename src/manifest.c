@@ -580,6 +580,11 @@ gboolean check_manifest_input(const RaucManifest *mf, GError **error)
 					"Unexpected size %"G_GOFFSET_FORMAT " for image %s in input manifest", image->checksum.size, image->filename);
 			return FALSE;
 		}
+		if (image->converted && image->converted->len) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_CHECK_ERROR,
+					"Unexpected 'converted' option in input manifest");
+			return FALSE;
+		}
 	}
 
 	return TRUE;
