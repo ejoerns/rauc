@@ -689,7 +689,7 @@ static gboolean tree_artifact_install_tar(const RArtifact *artifact, const RaucI
 	if (g_mkdir(artifact->path_tmp, S_IRWXU)) {
 		int err = errno;
 		g_set_error(error, G_FILE_ERROR, g_file_error_from_errno(err),
-				"failed to create directory '%s': %s", artifact->path_tmp, g_strerror(err));
+				"Failed to create directory '%s': %s", artifact->path_tmp, g_strerror(err));
 		return FALSE;
 	}
 
