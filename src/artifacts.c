@@ -860,7 +860,7 @@ gboolean r_artifact_install(const RArtifact *artifact, const RaucImage *image, G
 		g_set_error(error,
 				G_FILE_ERROR,
 				g_file_error_from_errno(err),
-				"Failed to call fsync for artifact repo %s: %s", artifact->repo->path,
+				"Failed to call fsync for artifact repo '%s': %s", artifact->repo->path,
 				g_strerror(err));
 		return FALSE;
 	}
