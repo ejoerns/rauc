@@ -706,7 +706,7 @@ static gboolean tree_artifact_install_tar(const RArtifact *artifact, const RaucI
 	g_ptr_array_add(args, NULL);
 
 	if (!r_subprocess_runv(args, G_SUBPROCESS_FLAGS_NONE, &ierror)) {
-		g_propagate_prefixed_error(error, ierror, "failed to extract archive (tar -xf): ");
+		g_propagate_prefixed_error(error, ierror, "Failed to extract archive (tar -xf): ");
 		return FALSE;
 	}
 	return TRUE;
