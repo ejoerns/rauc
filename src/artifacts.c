@@ -313,7 +313,6 @@ gboolean r_artifact_repo_prepare(RArtifactRepo *repo, GError **error)
 			g_propagate_error(error, ierror);
 			return FALSE;
 		}
-		g_ptr_array_add(repo->possible_references, (gpointer)g_intern_static_string(""));
 	}
 
 	return TRUE;
