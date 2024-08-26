@@ -867,6 +867,8 @@ The following fields are supported for image sections:
   ``tar-extract``
     Extract a tar into a directory tree.
 
+    FIXME: Describe purpose / advantage over tar?
+
   ``keep``
     Keep the original image after running the conversion methods.
 

@@ -1432,6 +1432,7 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 	r_context_begin_step_weighted("update_slots", "Updating slots", install_plans->len * 10, 6);
 	install_args_update(args, "Updating slots...");
 
+	// FIXME: install slots first and artifacts second?
 	for (guint i = 0; i < install_plans->len; i++) {
 		const RImageInstallPlan *plan = g_ptr_array_index(install_plans, i);
 
