@@ -1448,7 +1448,6 @@ static gboolean launch_and_wait_default_handler(RaucInstallArgs *args, gchar* bu
 				r_context_end_step("update_slots", FALSE);
 				return FALSE;
 			}
-			install_args_update(args, "Updating slot %s done", plan->target_slot->name);
 		} else if (plan->target_repo) {
 			if (!handle_artifact_install_plan(manifest, plan, args, hook_name, &ierror)) {
 				g_propagate_error(error, ierror);
