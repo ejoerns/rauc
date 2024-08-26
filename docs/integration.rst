@@ -268,6 +268,7 @@ To configure :ref:`Artifact Repositories <sec-basic-artifact-repositories>`, you
 first need to have a shared partition which is mounted before starting the RAUC
 service.
 Each artifact repository needs its own directory on this shared partition.
+The directory must be created outside of RAUC.
 
 For each repository, you need to add an :ref:`[artifacts.\<repo-name\>] section
 <sec_ref_artifacts>` to your ``system.conf``.
