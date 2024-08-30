@@ -157,7 +157,7 @@ jobs:
         podman exec -i stable uname -a
         podman exec -i stable id
         podman exec -i -u root stable apt-get update
-        podman exec -e DEBIAN_FRONTEND='noninteractive' -i -u root stable apt-get install -qy build-essential meson libtool libglib2.0-dev libcurl3-dev libssl-dev libjson-glib-dev libdbus-1-dev libfdisk-dev libnl-genl-3-dev squashfs-tools
+        podman exec -e DEBIAN_FRONTEND='noninteractive' -i -u root stable apt-get install -qy build-essential meson libtool libglib2.0-dev libcurl3-dev libssl-dev libjson-glib-dev libdbus-1-dev libfdisk-dev libnl-genl-3-dev squashfs-tools python3-pytest
 
     - name: Patch & prepare
       run: |
