@@ -171,6 +171,10 @@ jobs:
       run: |
         podman exec -i stable ninja -C build
 
+    - name: Run unprivileged test
+      run: |
+        podman exec -i stable ninja -C build test
+
     - name: Show logs
       if: ${{ failure() }}
       run: |
