@@ -226,19 +226,19 @@ static void hash_index_prepare(RaucHashIndex *idx)
 	idx->match_stats = r_stats_new(idx->label);
 }
 
-RaucHashIndex *r_hash_index_open(const gchar *label, int data_fd, const gchar *hashes_filename, GError **error)
+RaucHashIndex *r_hash_index_open(const gchar *label, int *data_fd, const gchar *hashes_filename, GError **error)
 {
 	GError *ierror = NULL;
 	g_autoptr(RaucHashIndex) idx = g_new0(RaucHashIndex, 1);
 
 	g_return_val_if_fail(label, NULL);
-	g_return_val_if_fail(data_fd >= 0, NULL);
+	g_return_val_if_fail(data_fd || *data_fd >= 0, NULL);
 	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	idx->label = g_strdup(label);
-	idx->data_fd = data_fd;
+	idx->data_fd = *data_fd;
 
-	idx->count = get_chunk_count(data_fd, &ierror);
+	idx->count = get_chunk_count(idx->data_fd, &ierror);
 	if (!idx->count) {
 		g_propagate_error(error, ierror);
 		return NULL;
@@ -273,7 +273,7 @@ RaucHashIndex *r_hash_index_open(const gchar *label, int data_fd, const gchar *h
 
 	if (!idx->hashes) {
 		g_message("Building new hash index for %s with %"G_GUINT32_FORMAT " chunks", label, idx->count);
-		idx->hashes = hash_file(data_fd, idx->count, &ierror);
+		idx->hashes = hash_file(idx->data_fd, idx->count, &ierror);
 		if (!idx->hashes) {
 			g_propagate_error(error, ierror);
 			return NULL;
@@ -281,6 +281,9 @@ RaucHashIndex *r_hash_index_open(const gchar *label, int data_fd, const gchar *h
 	}
 
 	hash_index_prepare(idx);
+
+	/* transfer fd ownership */
+	*data_fd = -1;
 
 	return g_steal_pointer(&idx);
 }
@@ -346,12 +349,11 @@ RaucHashIndex *r_hash_index_open_slot(const gchar *label, const RaucSlot *slot, 
 	index_filename = g_build_filename(dir, "block-hash-index", NULL);
 
 	/* r_hash_index_open handles missing index file */
-	idx = r_hash_index_open(label, data_fd, index_filename, &ierror);
+	idx = r_hash_index_open(label, &data_fd, index_filename, &ierror);
 	if (!idx) {
 		g_propagate_error(error, ierror);
 		goto out;
 	}
-	data_fd = -1; /* belongs to idx now */
 
 	g_debug("opened hash index for slot %s as %s", slot->name, label);
 out:
@@ -384,12 +386,11 @@ RaucHashIndex *r_hash_index_open_image(const gchar *label, const RaucImage *imag
 
 	index_filename = g_strdup_printf("%s.block-hash-index", image->filename);
 
-	idx = r_hash_index_open(label, data_fd, index_filename, &ierror);
+	idx = r_hash_index_open(label, &data_fd, index_filename, &ierror);
 	if (!idx) {
 		g_propagate_error(error, ierror);
 		goto out;
 	}
-	data_fd = -1; /* belongs to idx now */
 
 	g_debug("opened hash index for image %s with index %s", image->filename, index_filename);
 out:

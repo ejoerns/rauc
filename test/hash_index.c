@@ -45,10 +45,9 @@ static void test_basic(Fixture *fixture, gconstpointer user_data)
 	g_assert_cmpint(datafd, >, 0);
 
 	// open and calculate hash index
-	index = r_hash_index_open("test", datafd, NULL, &error);
+	index = r_hash_index_open("test", &datafd, NULL, &error);
 	g_assert_no_error(error);
 	g_assert_nonnull(index);
-	datafd = -1; /* belongs to index now */
 	(void)datafd; /* ignore dead store */
 
 	g_assert_cmpuint(index->count, ==, 132);
@@ -163,15 +162,15 @@ static void test_ranges(Fixture *fixture, gconstpointer user_data)
 	g_assert_true(r_write_exact(datafd, chunk->data, 4096, NULL));
 
 	// open and calculate hash index
-	index = r_hash_index_open("test", datafd, NULL, &error);
+	index = r_hash_index_open("test", &datafd, NULL, &error);
 	g_assert_no_error(error);
 	g_assert_nonnull(index);
 	// keep datafd valid to let us modify it concurrently
 
 	// overwrite chunk 4 (9573e6bd3320b3c85ef09743583ed1af87aa479bff046b32762f935b8ffd5ee8)
 	memset(chunk->data, 0xff, 4096);
-	g_assert_cmpint(lseek(datafd, 4*4096, SEEK_SET), ==, 4*4096);
-	g_assert_true(r_write_exact(datafd, chunk->data, 4096, NULL));
+	g_assert_cmpint(lseek(index->data_fd, 4*4096, SEEK_SET), ==, 4*4096);
+	g_assert_true(r_write_exact(index->data_fd, chunk->data, 4096, NULL));
 
 	g_assert_true(g_close(templatefd, NULL));
 

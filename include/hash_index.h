@@ -38,14 +38,18 @@ typedef struct {
  * If an existing hash index file is provided via 'hashes_filename', this will
  * be used instead of building a new index.
  *
+ * If creating the hash index succeeded, the ownership of the provided file
+ * descriptor will be transferred to the hash index by setting the provided file
+ * descriptor to -1.
+ *
  * @param label label for hash index (used for debugging/identification)
- * @param data_fd open file descriptor of file to hash
+ * @param data_fd pointer to open file descriptor of file to hash
  * @param hashes_filename name of existing hash index file to use instead, or NULL
  * @param error return location for a GError, or NULL
  *
  * @return a newly allocated RaucHashIndex or NULL on error
  */
-RaucHashIndex *r_hash_index_open(const gchar *label, int data_fd, const gchar *hashes_filename, GError **error)
+RaucHashIndex *r_hash_index_open(const gchar *label, int *data_fd, const gchar *hashes_filename, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
 
 /**

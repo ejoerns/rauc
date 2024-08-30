@@ -413,7 +413,7 @@ static gboolean generate_adaptive_data(RaucManifest *manifest, const gchar *dir,
 					return FALSE;
 				}
 
-				index = r_hash_index_open("image", fd, NULL, &ierror);
+				index = r_hash_index_open("image", &fd, NULL, &ierror);
 				if (!index) {
 					g_propagate_prefixed_error(
 							error,
@@ -428,7 +428,9 @@ static gboolean generate_adaptive_data(RaucManifest *manifest, const gchar *dir,
 							error,
 							ierror,
 							"Failed to write hash index for %s: ", image->filename);
-					g_close(fd, NULL);
+					if (fd >= 0) {
+						g_close(fd, NULL);
+					}
 					return FALSE;
 				}
 
