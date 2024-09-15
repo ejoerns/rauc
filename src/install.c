@@ -199,6 +199,25 @@ gboolean determine_slot_states(GError **error)
 		}
 	}
 
+	/* If no known boot slot was detected, check if booted from nfs and add
+	 * pseudo entry */
+	if (!booted) {
+		if (g_strcmp0(bootname, "/dev/nfs") == 0) {
+			RaucSlot *slot = g_new0(RaucSlot, 1);
+			g_message("Booted from nfs, adding dummy slot entry");
+			slot->name = g_strdup("slot.dummy.0");
+			slot->sclass = g_strdup("");
+			slot->device = g_strdup("/dev/nfs");
+			slot->type = g_strdup("nfs");
+			slot->bootname = g_strdup("net");
+			slot->readonly = TRUE;
+
+			g_hash_table_insert(r_context()->config->slots, (gchar*)slot->name, slot);
+
+			booted = slot;
+		}
+	}
+
 	if (!booted) {
 		gboolean extboot = FALSE;
 
