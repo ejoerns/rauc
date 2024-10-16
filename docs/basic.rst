@@ -327,3 +327,6 @@ Similar to slots, each repository has a name and a type, which determines how
 artifacts are installed and managed.
 As artifacts are replaced when new ones are installed under the same name, the
 rest of the system should treat them as read-only.
+
+See :ref:`Artifact Repository Configuration configured <sec-repository-config>`
+for more information on how to set-up artifact repositories.
