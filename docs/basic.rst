@@ -128,7 +128,7 @@ target device / partition on your board.
 In order to allow RAUC to handle your device correctly, we need to give it the
 right view on your system.
 The basic layout of your system is described using :ref:`slots
-<sec-basic-slots>` and optionally :ref:`artifact repositories
+<sec-basic-slots>` and optionally using :ref:`artifact repositories
 <sec-basic-artifact-repositories>`.
 
 .. _sec-basic-slots:
