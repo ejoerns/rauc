@@ -1878,8 +1878,8 @@ static RaucSlotStatus* r_variant_get_slot_state(GVariant *vardict)
 {
 	RaucSlotStatus *slot_state = g_new0(RaucSlotStatus, 1);
 	g_auto(GVariantDict) dict = G_VARIANT_DICT_INIT(vardict);
-	gchar *installed_stamp = NULL;
-	gchar *activated_stamp = NULL;
+	g_autofree gchar *installed_stamp = NULL;
+	g_autofree gchar *activated_stamp = NULL;
 
 	g_variant_dict_lookup(&dict, "bundle.compatible", "s", &slot_state->bundle_compatible);
 	g_variant_dict_lookup(&dict, "bundle.version", "s", &slot_state->bundle_version);
