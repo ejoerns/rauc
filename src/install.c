@@ -374,8 +374,8 @@ static RaucSlot *select_inactive_slot_class_member(const gchar *rootclass)
 		/* if currently checked slot is older than candidate use as new candidate */
 		gint comp = g_date_time_compare(iterslot->status->installed_timestamp, selectslot->status->installed_timestamp);
 		if (comp < 0) {
-			gchar *found = g_date_time_format(iterslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
-			gchar *current = g_date_time_format(selectslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+			g_autofree gchar *found = g_date_time_format(iterslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
+			g_autofree gchar *current = g_date_time_format(selectslot->status->installed_timestamp, RAUC_FORMAT_ISO_8601);
 			g_debug("Slot '%s' has older timestamp (%s) than slot '%s' (%s). Consider as new candidate.", iterslot->name, found, selectslot->name, current);
 			selectslot = iterslot;
 		}
