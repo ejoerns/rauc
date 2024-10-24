@@ -25,3 +25,8 @@ def test_write_slot_readonly():
     out, err, exitcode = run("rauc -c test.conf write-slot rescue.0 install-content/appfs.img")
     assert exitcode == 1
     assert "Reject writing to readonly slot" in err
+
+
+def test_write_slot(rauc_no_service):
+    out, err, exitcode = run(f"{rauc_no_service} write-slot rootfs.0 install-content/appfs.img")
+    assert exitcode == 0
