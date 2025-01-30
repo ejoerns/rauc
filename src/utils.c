@@ -1091,3 +1091,24 @@ gboolean r_debug_add_domain(const gchar *add_domain) {
 	}
 	return FALSE;
 }
+
+gboolean r_debug_remove_domain(const gchar *remove_domain) {
+	const gchar *domains = g_getenv("G_MESSAGES_DEBUG");
+
+	if (!domains || !g_strrstr(domains, remove_domain))
+		return FALSE;
+
+	g_auto(GStrv) iterlist = g_strsplit(domains, " ", -1);
+	g_autoptr(GPtrArray) newlist = g_ptr_array_new_full(g_strv_length(iterlist), g_free);
+	for (gchar **d = iterlist; *d; d++) {
+		if (g_str_equal(d, remove_domain))
+			continue;
+		g_ptr_array_add(newlist, d);
+	}
+	g_ptr_array_add(newlist, NULL);
+
+	g_autofree gchar *setlist = g_strjoinv(" ", (gchar**) newlist->pdata);
+	g_setenv("G_MESSAGES_DEBUG", setlist, TRUE);
+
+	return TRUE;
+}

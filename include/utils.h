@@ -457,3 +457,11 @@ gboolean r_semver_less_equal(const gchar *version_string_a, const gchar *version
  * @return TRUE if G_MESSAGES_DEBUG was changed, FALSE otherwise
  */
 gboolean r_debug_add_domain(const gchar *add_domain);
+
+/**
+ * Removes domain from G_MESSAGES_DEBUG env.
+ *
+ * @param add_domain Domain to remove
+ * @return TRUE if G_MESSAGES_DEBUG was changed, FALSE otherwise
+ */
+gboolean r_debug_remove_domain(const gchar *remove_domain);
