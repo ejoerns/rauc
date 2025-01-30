@@ -2796,16 +2796,8 @@ static void cmdline_handler(int argc, char **argv)
 	}
 
 	if (debug) {
-		const gchar *domains = g_getenv("G_MESSAGES_DEBUG");
-		if (!domains) {
-			g_assert(g_setenv("G_MESSAGES_DEBUG", G_LOG_DOMAIN, TRUE));
-		} else if (!g_str_equal(domains, "all")) {
-			gchar *newdomains = g_strdup_printf("%s %s", domains, G_LOG_DOMAIN);
-			g_setenv("G_MESSAGES_DEBUG", newdomains, TRUE);
-			g_free(newdomains);
-		}
-		domains = g_getenv("G_MESSAGES_DEBUG");
-		g_message("Debug log domains: '%s'", domains);
+		r_debug_add_domain(G_LOG_DOMAIN);
+		g_message("Debug log domains: '%s'", g_getenv("G_MESSAGES_DEBUG"));
 		g_debug(PACKAGE_VERSION
 				" create=" G_STRINGIFY(ENABLE_CREATE)
 				" emmc-boot=" G_STRINGIFY(ENABLE_EMMC_BOOT_SUPPORT)

@@ -1077,3 +1077,17 @@ gboolean r_semver_less_equal(const gchar *version_string_a, const gchar *version
 	else
 		return (pre_fields_a[i] == NULL) && (pre_fields_b[i] != NULL);
 }
+
+gboolean r_debug_add_domain(const gchar *add_domain) {
+	const gchar *domains = g_getenv("G_MESSAGES_DEBUG");
+	if (!domains) {
+		g_assert(g_setenv("G_MESSAGES_DEBUG", add_domain, TRUE));
+		return TRUE;
+	} else if (!g_str_equal(domains, "all")) {
+		gchar *newdomains = g_strdup_printf("%s %s", domains, add_domain);
+		g_setenv("G_MESSAGES_DEBUG", newdomains, TRUE);
+		g_free(newdomains);
+		return TRUE;
+	}
+	return FALSE;
+}

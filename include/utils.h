@@ -449,3 +449,11 @@ gboolean r_semver_parse(const gchar *version_string, guint64 version_core[3], gc
  * @return TRUE if A<=B, FALSE otherwise
  */
 gboolean r_semver_less_equal(const gchar *version_string_a, const gchar *version_string_b, GError **error);
+
+/**
+ * Adds domain to G_MESSAGES_DEBUG env.
+ *
+ * @param add_domain Domain to add
+ * @return TRUE if G_MESSAGES_DEBUG was changed, FALSE otherwise
+ */
+gboolean r_debug_add_domain(const gchar *add_domain);
