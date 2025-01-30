@@ -1099,7 +1099,7 @@ gboolean r_debug_remove_domain(const gchar *remove_domain) {
 		return FALSE;
 
 	g_auto(GStrv) iterlist = g_strsplit(domains, " ", -1);
-	g_autoptr(GPtrArray) newlist = g_ptr_array_new_full(g_strv_length(iterlist), g_free);
+	g_autoptr(GPtrArray) newlist = g_ptr_array_new();
 	for (gchar **d = iterlist; *d; d++) {
 		if (g_str_equal(d, remove_domain))
 			continue;

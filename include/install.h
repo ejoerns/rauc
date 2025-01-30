@@ -30,6 +30,7 @@ typedef struct {
 	GQueue status_messages;
 	gint status_result;
 	/* install options */
+	gboolean debug;
 	gboolean ignore_compatible;
 	gboolean ignore_version_limit;
 	gchar *transaction;

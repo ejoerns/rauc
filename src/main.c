@@ -40,6 +40,7 @@ gboolean no_check_time = FALSE;
 gboolean info_dumpcert = FALSE;
 gboolean info_dumprecipients = FALSE;
 gboolean status_detailed = FALSE;
+gboolean debug = FALSE;
 gchar *output_format = NULL;
 gchar *keypath = NULL;
 gchar *certpath = NULL;
@@ -261,6 +262,8 @@ static gboolean install_start(int argc, char **argv)
 	args->cleanup = install_cleanup;
 	args->status_result = 2;
 
+	args->debug = debug;
+
 	args->ignore_compatible = install_ignore_compatible;
 	args->ignore_version_limit = install_ignore_version_limit;
 	args->transaction = installation_txn;
@@ -281,6 +284,7 @@ static gboolean install_start(int argc, char **argv)
 
 		g_unix_signal_add(SIGINT, on_sigint, args);
 
+		g_variant_dict_insert(&dict, "debug", "b", args->debug);
 		g_variant_dict_insert(&dict, "ignore-compatible", "b", args->ignore_compatible);
 		g_variant_dict_insert(&dict, "ignore-version-limit", "b", args->ignore_version_limit);
 		if (args->transaction)
@@ -2677,7 +2681,7 @@ static gboolean collect_config_values(const gchar *option_name, const gchar *val
 
 static void cmdline_handler(int argc, char **argv)
 {
-	gboolean help = FALSE, debug = FALSE, version = FALSE;
+	gboolean help = FALSE, version = FALSE;
 	g_autofree gchar *confpath = NULL, *keyring = NULL, *mount = NULL;
 	char *cmdarg = NULL;
 	g_autoptr(GOptionContext) context = NULL;

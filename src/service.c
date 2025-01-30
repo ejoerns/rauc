@@ -88,6 +88,7 @@ static gboolean r_on_handle_install_bundle(
 	gchar *key;
 	g_autofree gchar *message = NULL;
 	gboolean res;
+	gboolean temp_debug_enabled = FALSE;
 
 	g_print("input bundle: %s\n", source);
 
@@ -101,6 +102,9 @@ static gboolean r_on_handle_install_bundle(
 	args->name = g_strdup(source);
 	args->notify = service_install_notify;
 	args->cleanup = service_install_cleanup;
+
+	if (g_variant_dict_lookup(&dict, "debug", "b", &args->debug))
+		g_variant_dict_remove(&dict, "debug");
 
 	if (g_variant_dict_lookup(&dict, "ignore-compatible", "b", &args->ignore_compatible))
 		g_variant_dict_remove(&dict, "ignore-compatible");
@@ -126,6 +130,11 @@ static gboolean r_on_handle_install_bundle(
 
 	r_config_file_modified_check();
 
+	/* enable temporary debug output */
+	if (args->debug) {
+		temp_debug_enabled = r_debug_add_domain(G_LOG_DOMAIN);
+	}
+
 	r_installer_set_operation(r_installer, "installing");
 	g_dbus_interface_skeleton_flush(G_DBUS_INTERFACE_SKELETON(r_installer));
 	res = install_run(args);
@@ -137,6 +146,9 @@ static gboolean r_on_handle_install_bundle(
 	args = NULL;
 
 out:
+	if (temp_debug_enabled)
+		r_debug_remove_domain(G_LOG_DOMAIN);
+
 	g_clear_pointer(&args, install_args_free);
 	if (res) {
 		r_installer_complete_install(interface, invocation);
