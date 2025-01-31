@@ -1107,8 +1107,8 @@ gboolean r_debug_remove_domain(const gchar *remove_domain) {
 	}
 	g_ptr_array_add(newlist, NULL);
 
-	g_autofree gchar *setlist = g_strjoinv(" ", (gchar**) newlist->pdata);
-	g_setenv("G_MESSAGES_DEBUG", setlist, TRUE);
+	/* FIXME: Not available before glib 2.80! */
+	g_log_writer_default_set_debug_domains(newlist->pdata);
 
 	return TRUE;
 }
