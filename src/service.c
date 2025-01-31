@@ -133,6 +133,7 @@ static gboolean r_on_handle_install_bundle(
 	/* enable temporary debug output */
 	if (args->debug) {
 		temp_debug_enabled = r_debug_add_domain(G_LOG_DOMAIN);
+		g_message("Debug log domains: '%s'", g_getenv("G_MESSAGES_DEBUG"));
 	}
 
 	r_installer_set_operation(r_installer, "installing");

@@ -1749,6 +1749,7 @@ static gpointer install_thread(gpointer data)
 	/* clear LastError property */
 	set_last_error("");
 
+	g_message("Debug log domains: '%s'", g_getenv("G_MESSAGES_DEBUG"));
 	g_debug("thread started for %s", args->name);
 	install_args_update(args, "started");
 
@@ -1799,6 +1800,7 @@ gboolean install_run(RaucInstallArgs *args)
 	r_context_set_busy(TRUE);
 
 	g_message("Active slot bootname: '%s'", r_context()->bootslot);
+	g_message("Debug log domains: '%s'", g_getenv("G_MESSAGES_DEBUG"));
 
 	thread = g_thread_new("installer", install_thread, args);
 	if (thread == NULL)
