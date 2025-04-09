@@ -144,21 +144,21 @@ Host (Build) Prerequisites
 -  libcurl3-dev
 -  libssl-dev
 
-::
+.. code-block:: console
 
-   sudo apt-get install build-essential meson libtool libdbus-1-dev libglib2.0-dev libcurl3-dev libssl-dev
+   $ sudo apt-get install build-essential meson libtool libdbus-1-dev libglib2.0-dev libcurl3-dev libssl-dev
 
 For HTTP(S) streaming support, you also need netlink protocol headers:
 
-::
+.. code-block:: console
 
-    sudo apt-get install libnl-genl-3-dev
+   $ sudo apt-get install libnl-genl-3-dev
 
 If you intend to use json-support you also need
 
-::
+.. code-block:: console
 
-    sudo apt-get install libjson-glib-dev
+   $ sudo apt-get install libjson-glib-dev
 
 Target Prerequisites
 ~~~~~~~~~~~~~~~~~~~~
