@@ -37,6 +37,12 @@ def test_write_slot(rauc_no_service):
     assert "Slot written successfully" in out
 
 
+def test_write_slot_image_type(rauc_no_service):
+    out, err, exitcode = run(f"{rauc_no_service} write-slot --image-type=image rootfs.0 install-content/appfs.img")
+    assert exitcode == 0
+    assert "Slot written successfully" in out
+
+
 def test_write_slot_no_handler(tmp_path, rauc_no_service):
     open(tmp_path / "image.vfat", mode="w").close()
 
