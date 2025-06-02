@@ -90,6 +90,93 @@ static gboolean raspberrypi_bootloader_get_tryboot(gboolean *tryboot, GError **e
 	return TRUE;
 }
 
+static gboolean raspberrypi_tryboot_get(gboolean *enabled, GError **error)
+{
+	g_autoptr(GSubprocess) sub = NULL;
+	GError *ierror = NULL;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	/*
+	 * The tag Get Reboot Flags is undocumented.
+	 * https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+	 *
+	 * However, it is defined here
+	 * https://github.com/raspberrypi/linux/blob/564a5ad0b40b9ca7f1c33697f3a983ff22fd2bad/include/soc/bcm2835/raspberrypi-firmware.h#L99
+	 * and used by the raspberrypi-linux firmware driver:
+	 * https://github.com/raspberrypi/linux/commit/777a6a08bcf8f5f0a0086358dc66d
+	 */
+	sub = r_subprocess_new(G_SUBPROCESS_FLAGS_STDOUT_PIPE, &ierror, RASPBERRYPI_VCMAILBOX,
+			"0x00030064", "4", "0", "0", NULL);
+	if (!sub) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to start " RASPBERRYPI_VCMAILBOX ": ");
+		return FALSE;
+	}
+
+	g_autoptr(GBytes) stdout_bytes = NULL;
+	if (!g_subprocess_communicate(sub, NULL, NULL, &stdout_bytes, NULL, &ierror)) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to run " RASPBERRYPI_VCMAILBOX ": ");
+		return FALSE;
+	}
+
+	if (!g_subprocess_get_if_exited(sub)) {
+		g_set_error_literal(
+				error,
+				G_SPAWN_ERROR,
+				G_SPAWN_ERROR_FAILED,
+				RASPBERRYPI_VCMAILBOX " did not exit normally");
+		return FALSE;
+	}
+
+	gint ret = g_subprocess_get_exit_status(sub);
+	if (ret != 0) {
+		g_set_error(
+				error,
+				G_SPAWN_EXIT_ERROR,
+				ret,
+				RASPBERRYPI_VCMAILBOX " failed with exit code: %i", ret);
+		return FALSE;
+	}
+
+	gsize size;
+	const gchar *data = g_bytes_get_data(stdout_bytes, &size);
+	g_auto(GStrv) bytes = g_strsplit(data, " ", -1);
+
+	g_message("got byte 2: %s", bytes[2]);
+	g_message("got byte 5: %s", bytes[5]);
+
+	if (g_strcmp0(bytes[2], "0x00030064") != 0) {
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
+				"Failed to parse "RASPBERRYPI_VCMAILBOX" output");
+		return FALSE;
+	}
+
+	/* return value of 0 means 'disabled', 1 means 'enabled' */
+	if (g_strcmp0(bytes[5], "0x00000000") == 0) {
+		*enabled = FALSE;
+	} else if (g_strcmp0(bytes[5], "0x00000001") == 0) {
+		*enabled = TRUE;
+	} else  {
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
+				"Failed to parse "RASPBERRYPI_VCMAILBOX" output");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static gboolean raspberrypi_tryboot_set(gboolean enable, GError **error)
 {
 	g_autoptr(GSubprocess) sub = NULL;
