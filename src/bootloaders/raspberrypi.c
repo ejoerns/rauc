@@ -291,60 +291,44 @@ static gboolean raspberrypi_parse_autoboot_txt(RPIAutoBoot *autoboot_status, GEr
  * section [all] in the file autoboot.txt */
 RaucSlot *r_raspberrypi_get_primary(GError **error)
 {
-	g_autoptr(GList) slots = NULL;
-	RaucSlot *booted;
-	GError *ierror = NULL;
-	gboolean tryboot;
-	guint partition;
-
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	if (!raspberrypi_bootloader_get_partition(&partition, &ierror)) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed to get bootloader partition property: ");
+	gboolean tryboot_set;
+	if (!raspberrypi_tryboot_get(&tryboot_set, error)) {
+		return NULL;
+	}
+	g_debug("tryboot_set: %d", tryboot_set);
+
+	g_autoptr(RPIAutoBoot) autoboot = g_new0(RPIAutoBoot, 1);
+	if (!raspberrypi_parse_autoboot_txt(autoboot, error)) {
 		return NULL;
 	}
 
-	if (!raspberrypi_bootloader_get_tryboot(&tryboot, &ierror)) {
-		g_propagate_prefixed_error(
+	gchar *bootname = NULL;
+	if (tryboot_set) {
+		if (!autoboot->try_boot) {
+			g_set_error(
 				error,
-				ierror,
-				"Failed to get bootloader tryboot property: ");
-		return NULL;
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_FAILED,
+				"Tryboot flag set but no [tryboot] section found in autoboot.txt");
+			return NULL;
+		}
+		bootname = autoboot->try_boot;
+	} else {
+		bootname = autoboot->default_boot;
 	}
 
-	booted = raspberrypi_find_config_slot_by_boot_partition(r_context()->config, partition);
+	RaucSlot *booted = find_config_slot_by_bootname(r_context()->config, bootname);
 	if (!booted) {
 		g_set_error(
 				error,
 				R_BOOTCHOOSER_ERROR,
 				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
-				"No slot found with partition %i", partition);
-		return NULL;
+				"No slot found for bootname %s", bootname);
 	}
 
-	if (!tryboot)
-		return booted;
-
-	slots = g_hash_table_get_values(r_context()->config->slots);
-	for (GList *l = slots; l != NULL; l = l->next) {
-		RaucSlot *s = l->data;
-		if (s == booted)
-			continue;
-		if (!s->bootname)
-			continue;
-
-		return s;
-	}
-
-	g_set_error_literal(
-			error,
-			R_BOOTCHOOSER_ERROR,
-			R_BOOTCHOOSER_ERROR_PARSE_FAILED,
-			"No slot found");
-	return NULL;
+	return booted;
 }
 
 /* Set the oneshot reboot flag to cause the firmware to run tryboot at next
