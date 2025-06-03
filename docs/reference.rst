@@ -2725,3 +2725,38 @@ Raspberry Pi
   Sets the reboot-flag to boot the slot set in `[tryboot]` `boot_partition`
   property if the booted slot is the primary slot.
   This will make the slot being booted upon next reboot only!
+
+Raspberry Pi Firmware
+~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: This is valid for Raspberry Pi 4 and 5 only.
+
+The Raspberry PI boot selection implementation maps the good/bad/primary calls
+to modifications of the ``autoboot.txt`` and setting of the ``tryboot`` flag.
+As the tryboot mechanism does not map cleanly onto RAUC's boot selection model,
+some operations are intentionally no-ops, while others are unsupported and will
+raise an error when called.
+
+:state bad:
+  booted normally:
+    'booted': <No-Op>
+    'other': remove from 'tryboot'
+  booted via tryboot:
+    'booted': remove from 'tryboot'
+    'other: <NotSupported>
+
+:state good:
+  In normal mode:
+    'active': <No-Op>
+    'other': <NotSupported>
+  In tryboot mode:
+    'active': commit
+    'other: <NotSupported>
+
+:primary:
+  In normal mode:
+    'active': <No-Op>
+    'other': <NotSupported>
+  In tryboot mode:
+    'active': commit
+    'other: <NotSupported>
