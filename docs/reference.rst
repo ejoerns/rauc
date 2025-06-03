@@ -2208,3 +2208,32 @@ EFI
   targets etc. It may also depend on the actual implementation if EFI variable
   writing is atomic or not.
   Thus make sure your EFI works as expected and required.
+
+Raspberry Pi Firmware
+~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: This is valid for Rapsberry Pi 4 and 5 only.
+
+:state bad:
+  In normal mode:
+    'active': <NotSupported>
+    'other': remove from 'tryboot'
+  In tryboot mode:
+    'active': remove from 'tryboot'
+    'other: <NotSupported>
+
+:state good:
+  In normal mode:
+    'active': <No-Op>
+    'other': <NotSupported>
+  In tryboot mode:
+    'active': commit
+    'other: <NotSupported>
+
+:primary:
+  In normal mode:
+    'active': <No-Op>
+    'other': <NotSupported>
+  In tryboot mode:
+    'active': commit
+    'other: <NotSupported>
