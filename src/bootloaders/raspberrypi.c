@@ -229,6 +229,64 @@ gchar *r_raspberrypi_get_bootname(RaucConfig *config, GError **error)
 	return g_strdup_printf("%u", partition);
 }
 
+typedef struct {
+	gboolean a_b_enabled;
+	gchar *default_boot;
+	gchar *try_boot;
+} RPIAutoBoot;
+
+static void rpi_autoboot_free(gpointer value) {
+	RPIAutoBoot *autoboot = (RPIAutoBoot*) value;
+
+	g_free(autoboot->default_boot);
+	g_free(autoboot->try_boot);
+
+	g_free(autoboot);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(RPIAutoBoot, rpi_autoboot_free);
+
+static gboolean raspberrypi_parse_autoboot_txt(RPIAutoBoot *autoboot_status, GError **error)
+{
+	GError *ierror = NULL;
+
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+	g_autoptr(GKeyFile) key_file = g_key_file_new();
+	if (!g_key_file_load_from_file(key_file, r_context()->config->raspberrypi_autoboottxt_path, G_KEY_FILE_NONE, &ierror)) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	autoboot_status->a_b_enabled = g_key_file_get_integer(key_file, "all", "tryboot_a_b", &ierror);
+	if (ierror) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	autoboot_status->default_boot = g_key_file_get_string(key_file, "all", "boot_partition", &ierror);
+	if (ierror) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+
+	if (!g_key_file_has_group(key_file, "tryboot")) {
+		autoboot_status->try_boot = NULL;
+	} else {
+		autoboot_status->try_boot = g_key_file_get_string(key_file, "tryboot", "boot_partition", &ierror);
+		if (ierror) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+	}
+
+	g_message("tryboot_enabled: %d", autoboot_status->a_b_enabled);
+	g_message("default boot: %s", autoboot_status->default_boot);
+	g_message("try boot: %s", autoboot_status->try_boot);
+
+	return TRUE;
+}
+
 /* Get slot marked as primary one, i.e. the slot with boot_partition set in the
  * section [all] in the file autoboot.txt */
 RaucSlot *r_raspberrypi_get_primary(GError **error)
