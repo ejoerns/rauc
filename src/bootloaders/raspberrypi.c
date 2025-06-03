@@ -445,6 +445,8 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 	}
 
 	if (!tryboot) {
+		// FIXME: should at least throw an error if 'slot' is not the other
+		// otherwise this is a silen no-op for "mark-active booted"
 		if (!raspberrypi_set_other_temporary(&ierror)) {
 			g_propagate_prefixed_error(
 					error,
