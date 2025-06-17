@@ -68,6 +68,7 @@ static gboolean clear_slot(RaucSlot *slot, GError **error)
 	static gchar zerobuf[CLEAR_BLOCK_SIZE] = {};
 	g_autoptr(GOutputStream) outstream = NULL;
 	gint write_count = 0;
+	guint64 total_written = 0;
 
 	outstream = G_OUTPUT_STREAM(r_unix_output_stream_open_device(slot->device, NULL, &ierror));
 	if (outstream == NULL) {
@@ -76,7 +77,13 @@ static gboolean clear_slot(RaucSlot *slot, GError **error)
 	}
 
 	while (write_count != -1) {
-		write_count = g_output_stream_write(outstream, zerobuf, CLEAR_BLOCK_SIZE, NULL,
+		/* cap writes to slot->size_limit if set */
+		gsize write_size = CLEAR_BLOCK_SIZE;
+		if (slot->size_limit > 0 &&
+		    total_written + write_size > slot->size_limit)
+			write_size = slot->size_limit - total_written;
+
+		write_count = g_output_stream_write(outstream, zerobuf, write_size, NULL,
 				&ierror);
 		/*
 		 * G_IO_ERROR_NO_SPACE is expected here, because the block
@@ -92,7 +99,13 @@ static gboolean clear_slot(RaucSlot *slot, GError **error)
 				return FALSE;
 			}
 		}
+
+		total_written += write_count;
+		if (slot->size_limit > 0 && total_written >= slot->size_limit)
+			break;
 	}
+
+	g_debug("Cleared %"G_GOFFSET_FORMAT " bytes", total_written);
 
 	if (!g_output_stream_close(outstream, NULL, &ierror)) {
 		g_propagate_error(error, ierror);
@@ -2206,6 +2219,7 @@ static gboolean img_to_boot_emmc_handler(RaucImage *image, RaucSlot *dest_slot, 
 			"%sboot%d",
 			realdev,
 			INACTIVE_BOOT_PARTITION(part_active));
+	part_slot->size_limit = dest_slot->size_limit;
 
 	/* disable read-only on determined eMMC boot partition */
 	g_debug("Disabling read-only mode of slot device partition %s",
@@ -2252,12 +2266,17 @@ static gboolean img_to_boot_emmc_handler(RaucImage *image, RaucSlot *dest_slot, 
 	}
 
 	/* check size */
-	if (!check_image_size(g_unix_output_stream_get_fd(outstream), image, &ierror)) {
+	if (part_slot->size_limit > 0 && (guint64)image->checksum.size > part_slot->size_limit) {
+		g_set_error(error, R_UPDATE_ERROR, R_UPDATE_ERROR_FAILED,
+				"Image size (%"G_GOFFSET_FORMAT " bytes) is larger than size-limit (%"G_GOFFSET_FORMAT " bytes).",
+				image->checksum.size, part_slot->size_limit);
+		res = FALSE;
+		goto out;
+	} else if (!check_image_size(g_unix_output_stream_get_fd(outstream), image, &ierror)) {
 		res = FALSE;
 		g_propagate_error(error, ierror);
 		goto out;
 	}
-
 
 	/* copy */
 	g_message("Copying image to slot device partition %s",
