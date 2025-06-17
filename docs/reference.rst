@@ -616,6 +616,14 @@ hierarchical separator.
   ``boot-raw-fallback`` only!
   See :ref:`sec-mbr-partition` and the following or more details.
 
+``size-limit`` (type-specific, optional)
+  For very specific use cases only.
+  Valid for slot type ``boot-emmc`` only.
+  Allows defining the maximum size of an eMMC boot partition to write.
+  This is only useful if the eMMC boot partitions contain e.g. manufacturer
+  at the end and, for certain reason, this cannot be migrated to a more
+  appropriate location anymore.
+
 .. _sec_ref_artifacts:
 
 ``[artifacts.<repo-name>]`` Sections
