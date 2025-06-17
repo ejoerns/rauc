@@ -2175,6 +2175,14 @@ static gboolean img_to_boot_emmc_handler(RaucImage *image, RaucSlot *dest_slot, 
 		return FALSE;
 	}
 
+	if (g_str_has_suffix(realdev, "boot0") || g_str_has_suffix(realdev, "boot1")) {
+		g_set_error(error,
+				R_UPDATE_ERROR,
+				R_UPDATE_ERROR_FAILED,
+				"Device path '%s' refers to boot partition, but base device is expected", realdev);
+		return FALSE;
+	}
+
 	/* read active boot partition from ext_csd */
 	res = r_emmc_read_bootpart(realdev, &part_active, &ierror);
 	if (!res) {
