@@ -2294,7 +2294,7 @@ static gboolean copy_img_to_emmc_bootpart(RaucImage *image, RaucSlot *dest_slot,
 		goto out;
 	}
 
-	if (!copy_raw_image_to_dev(image, dest_slot, &ierror)) {
+	if (!write_image_to_dev(image, dest_slot, &ierror)) {
 		g_propagate_error(error, ierror);
 		res = FALSE;
 		goto out;
@@ -2694,6 +2694,7 @@ static RaucImageTypeMap image_type_map[] = {
 	/* boot-* slot types */
 #if ENABLE_EMMC_BOOT_SUPPORT == 1
 	{"raw", "boot-emmc", img_to_boot_emmc_handler},
+	{"*.img.caibx", "boot-emmc", img_to_boot_emmc_handler},
 #endif
 	{"vfat", "boot-mbr-switch", img_to_boot_mbr_switch_handler},
 	{"raw", "boot-mbr-switch", img_to_boot_mbr_switch_handler},
