@@ -585,8 +585,6 @@ static gboolean casync_extract_image(RaucImage *image, gchar *dest, int out_fd, 
 	gboolean seed_mounted = FALSE;
 
 	g_assert_nonnull(r_context()->install_info);
-	g_assert_nonnull(r_context()->install_info->mounted_bundle);
-	g_assert_nonnull(r_context()->install_info->mounted_bundle->storepath);
 
 	if (r_context()->config->use_desync) {
 		/* TODO: do something clever to locate and/or generate the seed index file */
@@ -634,8 +632,26 @@ static gboolean casync_extract_image(RaucImage *image, gchar *dest, int out_fd, 
 	}
 
 extract:
-	/* Set store */
-	store = r_context()->install_info->mounted_bundle->storepath;
+	/* Determine store path for casync, defaults to bundle */
+	if (r_context()->config->store_path) {
+		store = g_strdup(r_context()->config->store_path);
+	} else if (r_context()->install_info->mounted_bundle) {
+		gchar *path = r_context()->install_info->mounted_bundle->origpath ?: r_context()->install_info->mounted_bundle->path;
+
+		if (g_str_has_suffix(path, ".raucb")) {
+			g_autofree gchar *strprfx = g_strndup(path, strlen(path) - 6);
+
+			store = g_strconcat(strprfx, ".castr", NULL);
+		} else {
+			store = g_strconcat(path, ".castr", NULL);
+		}
+	} else {
+		g_set_error_literal(error, R_UPDATE_ERROR, R_UPDATE_ERROR_FAILED,
+				"Could not determine casync store path. No 'storepath' set and not a bundle.");
+		res = FALSE;
+		goto unmount_out;
+	}
+
 	g_debug("Using casync store path: '%s'", store);
 
 	/* Set temporary directory */

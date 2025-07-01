@@ -2374,20 +2374,6 @@ gboolean check_bundle(const gchar *bundlename, RaucBundle **bundle, CheckBundleP
 		ibundle->path = g_strdup(bundlename);
 	}
 
-	/* Determine store path for casync, defaults to bundle */
-	if (r_context()->config->store_path) {
-		ibundle->storepath = g_strdup(r_context()->config->store_path);
-	} else {
-		gchar *path = ibundle->origpath ?: ibundle->path;
-
-		if (g_str_has_suffix(path, ".raucb")) {
-			g_autofree gchar *strprfx = g_strndup(path, strlen(path) - 6);
-			ibundle->storepath = g_strconcat(strprfx, ".castr", NULL);
-		} else {
-			ibundle->storepath = g_strconcat(path, ".castr", NULL);
-		}
-	}
-
 	g_message("Reading bundle: %s", ibundle->path);
 
 	if (!ibundle->nbd_srv) { /* local or downloaded */
