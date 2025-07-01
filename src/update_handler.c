@@ -554,7 +554,8 @@ static RaucSlot *get_active_slot_class_member(gchar *slotclass)
 	RaucSlot *iterslot;
 	GHashTableIter iter;
 
-	g_return_val_if_fail(slotclass, NULL);
+	if (!slotclass)
+		return NULL;
 
 	if (!r_context()->config->slots) {
 		/* when no slots are configured, there can be not active slot */
