@@ -89,3 +89,14 @@ gboolean r_emmc_force_part_ro(const gchar *device, GError **error);
  */
 gboolean r_emmc_force_part_rw(const gchar *device, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Extracts the base device from the given eMMC boot partition.
+ *
+ * @param device_path eMMC boot partition /dev path (/dev/mmcblkXbootY)
+ * @param error return location for a GError, or NULL
+ *
+ * @return base device if succeeded, NULL if failed
+ */
+gchar* r_emmc_extract_base_dev(const gchar *device_path, GError **error)
+G_GNUC_WARN_UNUSED_RESULT;
