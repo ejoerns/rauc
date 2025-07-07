@@ -100,3 +100,19 @@ G_GNUC_WARN_UNUSED_RESULT;
  */
 gchar* r_emmc_extract_base_dev(const gchar *device_path, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
+
+/**
+ * Active the specified eMMC boot partition.
+ *
+ * This function sets the specified boot partition as active for the given
+ * eMMC device. It ensures that the specified partition is correctly set
+ * as the active boot partition, allowing the system to boot from it.
+ *
+ * @param device eMMC device path
+ * @param activate_partition the partition index to activate (0 or 1)
+ * @param error return location for a GError, or NULL
+ *
+ * @return True if the operation succeeded, False if it failed
+ */
+gboolean r_emmc_activate_bootpart(const gchar *device, gint activate_partition, GError **error)
+G_GNUC_WARN_UNUSED_RESULT;

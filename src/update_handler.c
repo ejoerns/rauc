@@ -2336,7 +2336,6 @@ static gboolean img_to_boot_emmc_handler(RaucImage *image, RaucSlot *dest_slot, 
 	gboolean res = FALSE;
 	gint part_active;
 	g_autofree gchar *realdev = NULL;
-	gint part_active_after;
 	GError *ierror = NULL;
 	g_autoptr(RaucSlot) part_slot = NULL;
 	g_autoptr(GHashTable) vars = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -2397,33 +2396,10 @@ static gboolean img_to_boot_emmc_handler(RaucImage *image, RaucSlot *dest_slot, 
 	 */
 	g_debug("Toggling active eMMC boot partition %sboot%d -> %s", realdev, part_active,
 			part_slot->device);
-	res = r_emmc_write_bootpart(
-			part_slot->device,
-			INACTIVE_BOOT_PARTITION(part_active),
-			&ierror);
-	if (!res) {
+	if (!r_emmc_activate_bootpart(realdev, INACTIVE_BOOT_PARTITION(part_active), &ierror)) {
 		g_propagate_error(error, ierror);
 		return FALSE;
 	}
-
-	/* sanity check: read active boot partition from ext_csd
-	 *
-	 * Read explicitly from root device (this forces another kernel
-	 * partition switch and should trigger the ext_csd bug more reliably).
-	 */
-	res = r_emmc_read_bootpart(realdev, &part_active_after, &ierror);
-	if (!res) {
-		g_propagate_error(error, ierror);
-		return FALSE;
-	}
-
-	if (part_active == part_active_after) {
-		g_set_error(error, R_UPDATE_ERROR, R_UPDATE_ERROR_FAILED,
-				"Toggling the boot partition failed! Your kernel is most-likely affected by the ioctl ext_csd bug: see https://rauc.readthedocs.io/en/latest/advanced.html#update-bootloader-in-emmc-boot-partitions");
-		return FALSE;
-	}
-
-	g_message("Boot partition %s is now active", part_slot->device);
 
 	return TRUE;
 }
