@@ -1,8 +1,8 @@
 import os
 from subprocess import check_call
 
-from helper import run
 from conftest import needs_emmc
+from helper import run
 
 
 def test_write_slot_invalid_local_paths():
@@ -38,11 +38,11 @@ def test_write_slot(rauc_no_service):
 
 
 def test_write_slot_no_handler(tmp_path, rauc_no_service):
-    open(tmp_path / "image.xyz", mode="w").close()
+    open(tmp_path / "image.vfat", mode="w").close()
 
-    out, err, exitcode = run(f"{rauc_no_service} write-slot rootfs.0 {tmp_path}/image.xyz")
+    out, err, exitcode = run(f"{rauc_no_service} write-slot rootfs.0 {tmp_path}/image.vfat")
     assert exitcode == 1
-    assert f"Unsupported image {tmp_path}/image.xyz for slot type ext4" in err
+    assert f"Unsupported image {tmp_path}/image.vfat for slot type ext4" in err
 
 
 @needs_emmc

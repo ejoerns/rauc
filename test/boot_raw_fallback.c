@@ -220,6 +220,7 @@ static void test_boot_raw_fallback(BootRawFallbackFixture *fixture,
 		g_assert_true(fill_file(slotpath, data->region_start + (data->region_size / 2), (data->region_size / 2), 0xAA, FALSE));
 
 	image = create_source_image(fixture->tmpdir, "image.img", data->image_size);
+	image->type = g_strdup(derive_image_type_from_filename_pattern(image->filename));
 	g_assert_nonnull(image);
 
 	/* create target slot */
