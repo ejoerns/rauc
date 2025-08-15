@@ -1,7 +1,6 @@
 import os
 from subprocess import check_call
 
-from conftest import needs_emmc
 from helper import run
 
 
