@@ -13,22 +13,6 @@
 
 #define R_MANIFEST_ERROR r_manifest_error_quark()
 
-static gboolean validate_image_type(const gchar *type, GError **error)
-{
-	/* allow fall back to filename detection, as type might not be in use yet */
-	if (!type) {
-		return TRUE;
-	}
-
-	if (!is_image_type_supported(type)) {
-		g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_INVALID_IMAGE_TYPE,
-				"Unsupported image type '%s'", type);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 GQuark r_manifest_error_quark(void)
 {
 	return g_quark_from_static_string("r_manifest_error_quark");
