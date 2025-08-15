@@ -34,6 +34,15 @@ G_GNUC_WARN_UNUSED_RESULT;
 const gchar* derive_image_type_from_filename_pattern(const gchar *filename)
 G_GNUC_WARN_UNUSED_RESULT;
 
+/**
+ * Checks if the provided name is a valid image type.
+ *
+ * Uses the internal 'image_type_map' to check for supported types.
+ *
+ * @param type name of an image type
+ *
+ * @return TRUE if supported, FALSE otherwise
+ */
 gboolean is_image_type_supported(const gchar *type)
 G_GNUC_WARN_UNUSED_RESULT;
 
