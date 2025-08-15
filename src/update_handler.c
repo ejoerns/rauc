@@ -2662,7 +2662,7 @@ static RaucImageTypeMap image_type_map[] = {
 	{"caidx", "vfat", archive_to_vfat_handler},
 	/* casync - catar */
 	{"catar", "ext4", archive_to_ext4_handler},
-	/* ext4 */
+	/* file system */
 	{"ext4", "ext4", img_to_fs_handler},
 	{"ext4", "raw", img_to_raw_handler},
 	/* vfat */
