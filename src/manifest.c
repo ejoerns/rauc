@@ -121,8 +121,10 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 			g_propagate_error(error, ierror);
 			return FALSE;
 		}
-		if (!validate_image_type(iimage->type, &ierror)) {
-			g_propagate_error(error, ierror);
+
+		if (!iimage->hooks.install && !is_image_type_supported(iimage->type)) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_INVALID_IMAGE_TYPE,
+					"Unsupported image type '%s'", iimage->type);
 			return FALSE;
 		}
 	}
