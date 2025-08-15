@@ -100,7 +100,7 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 		}
 	}
 
-	/* Setting the type option for artifacts is not supported */
+	/* Setting the 'type' option for artifacts is not supported */
 	if (!iimage->artifact) {
 		iimage->type_from_fileext = FALSE;
 		iimage->type = key_file_consume_string(key_file, group, "type", &ierror);
