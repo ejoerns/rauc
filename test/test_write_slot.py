@@ -42,7 +42,7 @@ def test_write_slot_no_handler(tmp_path, rauc_no_service):
 
     out, err, exitcode = run(f"{rauc_no_service} write-slot rootfs.0 {tmp_path}/image.vfat")
     assert exitcode == 1
-    assert f"Unsupported image {tmp_path}/image.vfat for slot type ext4" in err
+    assert "Unsupported image type 'vfat' for slot type 'ext4'" in err
 
 
 @needs_emmc
