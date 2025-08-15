@@ -2641,7 +2641,7 @@ typedef struct {
 
 /* Image type to handler mapping */
 static RaucImageTypeMap image_type_map[] = {
-	/* caibx */
+	/* casync - caibx */
 	{"ext4-caibx", "ext4", img_to_fs_handler},
 	{"vfat-caibx", "ext4", img_to_fs_handler},
 	{"img-caibx", "ext4", img_to_fs_handler},
