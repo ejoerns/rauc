@@ -2668,7 +2668,7 @@ static RaucImageTypeMap image_type_map[] = {
 	{"vfat", "vfat", img_to_fs_handler},
 	{"vfat", "raw", img_to_raw_handler},
 	{"squashfs", "ubivol", img_to_ubivol_handler},
-	/* ubifs */
+	{"squashfs", "raw", img_to_raw_handler},
 	{"ubifs", "ubivol", img_to_ubivol_handler},
 	{"ubifs", "ubifs", img_to_ubifs_handler},
 	/* image */
