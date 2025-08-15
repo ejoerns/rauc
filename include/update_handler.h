@@ -21,6 +21,16 @@ G_GNUC_WARN_UNUSED_RESULT;
 img_to_slot_handler get_update_handler(RaucImage *mfimage, RaucSlot  *dest_slot, GError **error)
 G_GNUC_WARN_UNUSED_RESULT;
 
+/**
+ * Matches the file name extension of the input filename with a corresponding
+ * image type.
+ *
+ * Uses the internal matching 'ext_type_map'.
+ *
+ * @param filename name of image file to inspect
+ *
+ * @return matching image type, or NULL if none found
+ */
 const gchar* derive_image_type_from_filename_pattern(const gchar *filename)
 G_GNUC_WARN_UNUSED_RESULT;
 
