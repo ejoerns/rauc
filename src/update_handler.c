@@ -2656,7 +2656,7 @@ static RaucImageTypeMap image_type_map[] = {
 	{"img-caibx", "ubivol", img_to_ubivol_handler},
 	{"ubifs-caibx", "ubifs", img_to_ubifs_handler},
 	{"img-caibx", "ubifs", img_to_ubifs_handler},
-	/* caidx */
+	/* casync - caidx */
 	{"caidx", "ext4", archive_to_ext4_handler},
 	{"caidx", "ubifs", archive_to_ubifs_handler},
 	{"caidx", "vfat", archive_to_vfat_handler},
