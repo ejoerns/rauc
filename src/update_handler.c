@@ -2665,8 +2665,6 @@ static RaucImageTypeMap image_type_map[] = {
 	/* file system */
 	{"ext4", "ext4", img_to_fs_handler},
 	{"ext4", "raw", img_to_raw_handler},
-	/* vfat */
-	{"vfat", "raw", img_to_raw_handler},
 	{"vfat", "vfat", img_to_fs_handler},
 	/* squashfs */
 	{"squashfs", "raw", img_to_raw_handler},
