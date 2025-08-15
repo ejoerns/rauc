@@ -2684,6 +2684,7 @@ static RaucImageTypeMap image_type_map[] = {
 	{"tar", "ubifs", archive_to_ubifs_handler},
 	{"tar", "vfat", archive_to_vfat_handler},
 	{"tar", "jffs2", archive_to_jffs2_handler},
+	/* boot-* slot types */
 #if ENABLE_EMMC_BOOT_SUPPORT == 1
 	{"image", "boot-emmc", img_to_boot_emmc_handler},
 #endif
