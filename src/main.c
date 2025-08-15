@@ -499,7 +499,7 @@ static gboolean write_slot_start(int argc, char **argv)
 
 	const gchar *derived_type = derive_image_type_from_filename_pattern(image->filename);
 	if (derived_type == NULL) {
-		g_printerr("No matching type for filename: %s found\n", image->filename);
+		g_printerr("Unable to map extension of file '%s' to known image type\n", image->filename);
 		r_exit_status = 1;
 		return TRUE;
 	}
