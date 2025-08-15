@@ -32,6 +32,7 @@ typedef struct {
 	RaucChecksum checksum;
 	gchar* filename;
 	gchar* type;
+	/* flag to remember if image type was auto-detected from file extension */
 	gboolean type_from_fileext;
 	SlotHooks hooks;
 	GStrv adaptive;
