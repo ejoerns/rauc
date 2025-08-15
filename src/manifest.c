@@ -127,7 +127,7 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 				const gchar *derived_type = derive_image_type_from_filename_pattern(iimage->filename);
 				if (derived_type == NULL) {
 					g_set_error(error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE,
-							"Unable to map filename '%s' extension to known image type", iimage->filename);
+							"No 'type=' set and unable to map extension of file '%s' to known image type", iimage->filename);
 					return FALSE;
 				}
 				iimage->type_from_fileext = TRUE;

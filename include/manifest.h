@@ -7,12 +7,12 @@
 #define R_MANIFEST_ERROR r_manifest_error_quark()
 GQuark r_manifest_error_quark(void);
 
-#define R_MANIFEST_ERROR_NO_DATA			0
-#define R_MANIFEST_ERROR_CHECKSUM			1
-#define R_MANIFEST_ERROR_COMPATIBLE			2
-#define R_MANIFEST_PARSE_ERROR				3
-#define R_MANIFEST_EMPTY_STRING				4
-#define R_MANIFEST_CHECK_ERROR				5
+#define R_MANIFEST_ERROR_NO_DATA            0
+#define R_MANIFEST_ERROR_CHECKSUM           1
+#define R_MANIFEST_ERROR_COMPATIBLE         2
+#define R_MANIFEST_PARSE_ERROR              3
+#define R_MANIFEST_EMPTY_STRING             4
+#define R_MANIFEST_CHECK_ERROR              5
 #define R_MANIFEST_ERROR_INVALID_IMAGE_TYPE 6
 
 typedef struct {

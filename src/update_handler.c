@@ -2771,7 +2771,6 @@ gboolean is_image_type_supported(const gchar *type)
 
 img_to_slot_handler get_update_handler(RaucImage *mfimage, RaucSlot *dest_slot, GError **error)
 {
-	const gchar *src = mfimage->filename;
 	const gchar *dest = dest_slot->type;
 	img_to_slot_handler handler = NULL;
 
@@ -2785,7 +2784,7 @@ img_to_slot_handler get_update_handler(RaucImage *mfimage, RaucSlot *dest_slot, 
 	handler = get_handler_from_type(mfimage->type, dest);
 	if (!handler) {
 		g_set_error(error, R_UPDATE_ERROR, R_UPDATE_ERROR_NO_HANDLER,
-				"Unsupported image %s for slot type %s", src, dest);
+				"Unsupported image type '%s' for slot type '%s'", mfimage->type, dest);
 		return NULL;
 	}
 

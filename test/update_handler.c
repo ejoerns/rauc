@@ -128,7 +128,8 @@ static void update_handler_fixture_set_up(UpdateHandlerFixture *fixture,
 	    (test_pair->params & TEST_UPDATE_HANDLER_ADAPTIVE_BLOCK_HASH_IDX)) {
 		g_test_expect_message(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
 				"Checking image type for slot type: *");
-		g_test_expect_message(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Found handler for image type * and slot type *");
+		g_test_expect_message(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
+				"Found handler for image type * and slot type *");
 		g_test_expect_message(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
 				"Selected adaptive update method *");
 		g_test_expect_message(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
