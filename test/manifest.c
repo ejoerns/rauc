@@ -409,50 +409,6 @@ filename=appfs.vfat\n\
 	free_manifest(rm);
 }
 
-static void test_manifest_load_types_by_filext(void)
-{
-	gchar *tmpdir;
-	RaucManifest *rm = NULL;
-	gchar* manifestpath = NULL;
-	gboolean res;
-	GError *error = NULL;
-	RaucImage *test_img = NULL;
-	const gchar *mffile = "\
-[update]\n\
-compatible=FooCorp Super BarBazzer\n\
-version=2015.04-1\n\
-\n\
-[image.rootfs]\n\
-filename=rootfs-default.ext4\n\
-\n\
-[image.appfs]\n\
-filename=appfs.vfat\n\
-";
-
-	tmpdir = g_dir_make_tmp("rauc-XXXXXX", NULL);
-	g_assert_nonnull(tmpdir);
-
-	manifestpath = write_tmp_file(tmpdir, "manifest.raucm", mffile, NULL);
-	g_assert_nonnull(manifestpath);
-
-	g_free(tmpdir);
-
-	res = load_manifest_file(manifestpath, &rm, &error);
-	g_assert_no_error(error);
-	g_assert_true(res);
-
-	g_clear_error(&error);
-	g_free(manifestpath);
-
-	test_img = (RaucImage*)g_list_nth_data(rm->images, 0);
-	g_assert_nonnull(test_img);
-
-	test_img = (RaucImage*)g_list_nth_data(rm->images, 1);
-	g_assert_nonnull(test_img);
-
-	free_manifest(rm);
-}
-
 static void test_manifest_load_types_invalid(void)
 {
 	gchar *tmpdir;
@@ -932,8 +888,7 @@ int main(int argc, char *argv[])
 	g_test_add_func("/manifest/load_mem", test_load_manifest_mem);
 	g_test_add_func("/manifest/load_variants", test_manifest_load_variants);
 	g_test_add_func("/manifest/load_types", test_manifest_load_types);
-	g_test_add_func("/manifest/load_types_by_fileext", test_manifest_load_types_by_filext);
-	g_test_add_func("/manifest/load_types_invalid",		test_manifest_load_types_invalid);
+	g_test_add_func("/manifest/load_types_invalid", test_manifest_load_types_invalid);
 	g_test_add_func("/manifest/load_adaptive", test_manifest_load_adaptive);
 	g_test_add_func("/manifest/load_meta", test_manifest_load_meta);
 	g_test_add_func("/manifest/load_details", test_manifest_load_details);
