@@ -880,6 +880,7 @@ out:
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
 #define KBLD  "\x1B[1m"
+#define KITL  "\x1B[3m"
 
 static void formatter_shell_append_idx_str(GPtrArray *entries, const gchar* varname, gint outer_idx, gint middle_idx, guint cnt)
 {
@@ -1067,6 +1068,7 @@ static gchar *info_formatter_readable(RaucManifest *manifest)
 		if (img->filename) {
 			g_autofree gchar* formatted_size = g_format_size_full(img->checksum.size, G_FORMAT_SIZE_LONG_FORMAT);
 			g_string_append_printf(text, "    Filename:  %s\n", img->filename);
+			g_string_append_printf(text, "    Type:      %s%s\n", img->type, img->type_from_fileext ? KITL " (detected)"KNRM : "");
 			g_string_append_printf(text, "    Checksum:  %s\n", img->checksum.digest);
 			g_string_append_printf(text, "    Size:      %s\n", formatted_size);
 		} else {
