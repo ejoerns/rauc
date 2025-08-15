@@ -1046,15 +1046,14 @@ Supported Image Types
 
 .. note::
   Newer versions of RAUC support setting an explicit ``type`` field
-  instead of using the filename extensions to determine image type.
+  instead of using the filename extensions to determine the image type.
   For backward compatibility, RAUC can still derive the image type
   from file name extensions.
 
-  RAUC uses the image ``type`` in combination with the slot ``type``
-  to determine how to process images during installation.
-  When the ``type`` parameter is set, the extension of the filename is not taken into account.
-
-The ``image`` type is valid for all slot types and should be used for raw binary data.
+RAUC uses the image ``type`` in combination with the slot ``type``
+to determine how to process images during installation.
+When the ``type`` parameter is set, the filename extension is not taken into
+account and can be chosen freely.
 
 Supported file system image types are:
 
@@ -1062,7 +1061,14 @@ Supported file system image types are:
   * ``vfat``: vfat/EFI file system image
   * ``ubifs``: UBIFS file system image
   * ``squashfs``: SquashFS image (uncompressed, or compressed with one of ``lz4``, ``lzo``, ``xz``, ``xst``)
+
+Supported binary image types are:
+
   * ``image``: Generic image format (raw binary data)
+
+.. note::
+  The ``image`` type is valid for all slot types and should be used for raw
+  binary data like bootloader images, firmware binaries, etc.
 
 Supported archive types are:
 
@@ -1077,6 +1083,25 @@ For casync support, specific image types are available:
   * ``squashfs-caibx``: SquashFS image in casync blob index format
   * ``img-caibx``: Generic image in casync blob index format
   * ``catar``: casync directory tree archive
+
+The following image file name extensions can be auto-mapped by RAUC:
+
+  * ``*.ext4.caibx`` -> ``ext4-caibx``
+  * ``*.vfat.caibx`` -> ``vfat-caibx``
+  * ``*.ubifs.caibx`` -> ``ubifs-caibx``
+  * ``*.img.caibx`` -> ``img-caibx``
+  * ``*.squashfs.caibx`` -> ``squashfs-caibx``
+  * ``*.squashfs-*.caibx`` -> ``squashfs-caibx``
+  * ``*.catar`` -> ``catar``
+  * ``*.caidx`` -> ``caidx``
+  * ``*.tar*`` -> ``tar``
+  * ``*.tgz`` -> ``tar``
+  * ``*.ext4`` -> ``ext4``
+  * ``*.vfat`` -> ``vfat``
+  * ``*.img`` -> ``image``
+  * ``*.squashfs-*`` -> ``squashfs``
+  * ``*.squashfs`` -> ``squashfs``
+  * ``*.ubifs`` -> ``ubifs``
 
 .. _sec_ref_formats:
 
