@@ -90,14 +90,11 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 	g_key_file_remove_key(key_file, group, "hooks", NULL);
 
 	iimage->filename = key_file_consume_string(key_file, group, "filename", &ierror);
-	/* 'filename' is optional only for 'install' hooks */
-	if (iimage->filename == NULL) {
-		if (!iimage->hooks.install) {
-			g_propagate_error(error, ierror);
-			return FALSE;
-		} else {
-			g_clear_error(&ierror);
-		}
+	if (g_error_matches(ierror, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND)) {
+		g_clear_error(&ierror);
+	} else if (ierror) {
+		g_propagate_error(error, ierror);
+		return FALSE;
 	}
 
 	/* Setting the 'type' option for artifacts is not supported */
@@ -125,6 +122,21 @@ static gboolean parse_image(GKeyFile *key_file, const gchar *group, RaucImage **
 		if (!iimage->hooks.install && !is_image_type_supported(iimage->type)) {
 			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_INVALID_IMAGE_TYPE,
 					"Unsupported image type '%s'", iimage->type);
+			return FALSE;
+		}
+	}
+
+	if (iimage->type && g_strcmp0(iimage->type, "emptyfs") == 0) {
+		if (iimage->filename) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_INVALID_IMAGE_TYPE,
+					"'emptyfs' does not support setting 'filename'");
+			return FALSE;
+		}
+	} else {
+		/* 'filename' is optional only for 'install' hooks */
+		if (!iimage->filename && !iimage->hooks.install) {
+			g_set_error(error, R_MANIFEST_ERROR, R_MANIFEST_ERROR_INVALID_IMAGE_TYPE,
+					"filename missing");
 			return FALSE;
 		}
 	}
