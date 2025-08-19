@@ -920,8 +920,11 @@ The following fields are supported for image sections:
 
 .. _image-filename:
 
-``filename`` (required)
+``filename`` (required, exceptions)
   Name of the image file (relative to bundle content).
+
+  Optional with a post-install hook.
+  Not supported for ``emptyfs`` image type.
 
   .. note::
     While RAUC can automatically detect the image type from filename extensions
