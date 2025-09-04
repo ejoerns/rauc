@@ -2430,9 +2430,7 @@ static gboolean emmc_boot_linked_migration_helper(RaucImage *image, RaucSlot *de
 		return TRUE;
 	}
 
-	/* Check if the currently active boot partition is the same as the target boot partition.
-	 * Overwriting the active boot partition has to be avoided so there's still a fallback in
-	 * case something goes wrong */
+	/* Check if the target slot is the currently active eMMC boot partition */
 	g_message("Active eMMC boot partition for %s: boot%d", real_dest, active_partition);
 	g_autofree gchar *boot_suffix = g_strdup_printf("boot%d", active_partition);
 	if (!g_str_has_suffix(dest_slot->device, boot_suffix)) {
