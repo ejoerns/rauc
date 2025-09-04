@@ -156,7 +156,7 @@ def test_write_emmc_boot_linked_with_active_boot0_with_migrate(system):
     assert exitcode == 0
     assert "Slot written successfully" in out
     assert f"Active eMMC boot partition for {emmc.boot0}: boot0" in err
-    assert f"Copying from {emmc.boot0} to {emmc.boot1}" in err
+    assert f"Preserving boot partition content by copying from {emmc.boot0} to {emmc.boot1}" in err
 
     # Read back migrated data from boot1
     with open(emmc.boot1, "rb") as f:
@@ -220,7 +220,7 @@ def test_write_emmc_boot_linked_with_active_boot0_no_migrate(system):
     assert exitcode == 0
     assert "Slot written successfully" in out
     assert f"Active eMMC boot partition for {emmc.boot1}: boot0" in err
-    assert f"Copying from {emmc.boot0} to {emmc.boot1}" not in err
+    assert f"Preserving boot partition content by copying from {emmc.boot0} to {emmc.boot1}" not in err
 
 
 @needs_emmc
@@ -296,13 +296,13 @@ def test_write_emmc_boot_linked_multiple_writes(system):
     assert exitcode == 0
     assert "Slot written successfully" in out
     assert f"Active eMMC boot partition for {emmc.boot0}: boot0" in err
-    assert f"Copying from {emmc.boot0} to {emmc.boot1}" in err
+    assert f"Preserving boot partition content by copying from {emmc.boot0} to {emmc.boot1}" in err
 
     out, err, exitcode = run(f"{system.prefix} write-slot bootloader.0 install-content/rootfs.img")
     assert exitcode == 0
     assert "Slot written successfully" in out
     assert f"Active eMMC boot partition for {emmc.boot0}: boot1" in err
-    assert f"Copying from {emmc.boot0} to {emmc.boot1}" not in err
+    assert f"Preserving boot partition content by copying from {emmc.boot0} to {emmc.boot1}" not in err
 
 
 @needs_emmc
