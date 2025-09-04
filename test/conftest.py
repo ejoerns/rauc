@@ -581,7 +581,6 @@ class System:
             "type": "composefs",
         }
 
-    @needs_emmc
     def prepare_emmc_boot_linked_config(self):
         device_emmc = EMMC()
         self.config["slot.rootfs.0"] = {
@@ -660,7 +659,6 @@ def system(tmp_path, dbus_session_bus):
     yield system
 
 
-@needs_emmc
 class EMMC:
     def __init__(self):
         self.base_dev = os.environ["RAUC_TEST_EMMC"]
