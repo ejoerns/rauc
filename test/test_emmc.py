@@ -114,7 +114,7 @@ def test_write_boot_emmc_size_limit_too_large(system):
 def test_write_emmc_boot_linked_no_active_boot(system):
     """
     Test emmc-boot-linked handler when no boot partition is active yet.
-    Should fail with appropriate error message.
+    Should be ignored.
     """
 
     emmc = system.prepare_emmc_boot_linked_config()
@@ -123,8 +123,8 @@ def test_write_emmc_boot_linked_no_active_boot(system):
     check_call(["mmc", "bootpart", "enable", "0", "0", emmc.base_dev])
 
     out, err, exitcode = run(f"{system.prefix} write-slot bootloader.0 install-content/rootfs.img")
-    assert exitcode == 1
-    assert f"Device '{emmc.base_dev}' is not boot enabled" in err
+    assert exitcode == 0
+    assert "eMMC device was not enabled for booting, yet. Ignoring." in err
 
 
 @needs_emmc
