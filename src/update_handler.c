@@ -2437,6 +2437,17 @@ static gboolean emmc_boot_linked_migration_helper(RaucImage *image, RaucSlot *de
 		return TRUE;
 	}
 
+        /* If the target slot corresponds to the currently active eMMC boot partition,
+	 * we assume it contains the running bootloader.
+	 *
+	 * To avoid bricking the device in case of an update failure,
+	 * first copy the contents of the active boot partition to the inactive one.
+	 * Then switch the active boot partition to the new one.
+	 *
+	 * This migration step ensures that a fallback bootloader is preserved,
+	 * providing a recovery path in case something goes wrong.
+	 */
+
 	/* Create a temporary RaucSlot for the inactive boot partition */
 	g_autoptr(RaucSlot) inactive_slot = g_new0(RaucSlot, 1);
 	inactive_slot->device = g_strdup_printf("%sboot%d", base_device, INACTIVE_BOOT_PARTITION(active_partition));
