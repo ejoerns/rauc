@@ -2460,7 +2460,7 @@ static gboolean emmc_boot_linked_migration_helper(RaucImage *image, RaucSlot *de
 		return FALSE;
 	}
 
-	g_message("Copying from %s to %s", source_image->filename, inactive_slot->device);
+	g_message("Preserving boot partition content by copying from %s to %s", source_image->filename, inactive_slot->device);
 	if (!copy_img_to_emmc_bootpart(source_image, inactive_slot, NULL, NULL, &ierror)) {
 		g_propagate_error(error, ierror);
 		return FALSE;
