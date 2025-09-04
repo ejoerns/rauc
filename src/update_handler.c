@@ -2417,8 +2417,7 @@ static gboolean emmc_boot_linked_migration_helper(RaucImage *image, RaucSlot *de
 		return FALSE;
 	}
 
-	/* read active boot partition from ext_csd. The active partition will be returned
-	 * to calling function for future usage */
+	/* read active boot partition from ext_csd. */
 	gint active_partition = -1;
 	if (!r_emmc_read_bootpart(base_device, &active_partition, &ierror)) {
 		g_propagate_error(error, ierror);
