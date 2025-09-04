@@ -228,6 +228,11 @@ gboolean r_emmc_extract_base_dev(const gchar *device_path, gchar **base_device, 
 gboolean r_emmc_toggle_active_bootpart(gchar *device, gint active_partition, GError **error)
 {
 	GError *ierror = NULL;
+
+	g_return_val_if_fail(device != NULL, FALSE);
+	g_return_val_if_fail(active_partition < EMMC_BOOT_PARTITIONS, FALSE);
+	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
 	/* toggle active boot partition in ext_csd register; do this explicitly on
 	 * determined boot partition to force the kernel to switch to the partition;
 	 * for simplicity reasons: in case the user partition is active use
