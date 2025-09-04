@@ -2482,7 +2482,7 @@ static gboolean img_to_emmc_boot_linked_handler(RaucImage *image, RaucSlot *dest
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
 	GError *ierror = NULL;
-	/* When coming from an older version the boot partitions might not be aligned as expected
+	/* When coming from an older version, the boot partitions might not be aligned as expected
 	 * from the new linked config. So we have to check how they are aligned and ensure the target boot
 	 * partition is not the currently activated one. */
 	if (!emmc_boot_linked_migration_helper(image, dest_slot, &ierror)) {
