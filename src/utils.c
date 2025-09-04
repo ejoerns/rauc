@@ -723,7 +723,7 @@ goffset get_device_size(gint fd, GError **error)
 
 goffset get_device_size_from_dev(const gchar *device, GError **error)
 {
-	g_return_val_if_fail(device != NULL, FALSE);
+	g_return_val_if_fail(device != NULL, 0);
 	g_return_val_if_fail(error == NULL || *error == NULL, 0);
 
 	g_auto(filedesc) fd = g_open(device, O_RDONLY);
