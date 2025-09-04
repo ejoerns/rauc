@@ -213,9 +213,7 @@ gboolean r_emmc_extract_base_dev(const gchar *device_path, gchar **base_device, 
 	g_return_val_if_fail(base_device != NULL, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	/* Pattern to find valid MMC/eMMC base device
-	 * Matches: /dev/mmcblk[0-9]+
-	 */
+	/* Pattern to find valid MMC/eMMC base device */
 	*base_device = r_regex_match_simple("(/dev/mmcblk[0-9]+)", device_path);
 
 	if (*base_device == NULL) {
