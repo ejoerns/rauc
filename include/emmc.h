@@ -110,7 +110,7 @@ G_GNUC_WARN_UNUSED_RESULT;
  * as the active boot partition, allowing the system to boot from it.
  *
  * @param device eMMC device path
- * @param active_partition the currently active partition index
+ * @param active_partition the currently active partition index (0 or 1)
  * @param error return location for a GError, or NULL
  *
  * @return True if the operation succeeded, False if it failed
