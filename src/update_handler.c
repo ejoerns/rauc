@@ -2424,11 +2424,10 @@ static gboolean emmc_boot_linked_migration_helper(RaucImage *image, RaucSlot *de
 		return FALSE;
 	}
 
-	/* Device is not boot enabled at all, so there is nothing to switch */
+	/* Device is not boot enabled at all, so there is nothing to migrate */
 	if (active_partition == -1) {
-		g_set_error(error, R_UPDATE_ERROR, R_UPDATE_ERROR_EMMC_MIGRATION,
-				"Device '%s' is not boot enabled", base_device);
-		return FALSE;
+		g_warning("eMMC device was not enabled for booting, yet. Ignoring.");
+		return TRUE;
 	}
 
 	/* Check if the currently active boot partition is the same as the target boot partition.
