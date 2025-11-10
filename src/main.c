@@ -2579,7 +2579,7 @@ static GOptionEntry entries_install[] = {
 	{"progress", '\0', 0, G_OPTION_ARG_NONE, &install_progressbar, "show progress bar", NULL},
 #else
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra arguments for full custom handler", "ARGS"},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "(override) keyring file", "PEMFILE"},
 	{"override-boot-slot", '\0', 0, G_OPTION_ARG_STRING, &bootslot, "override auto-detection of booted slot", "BOOTNAME"},
 #endif
 	{0}
@@ -2592,7 +2592,7 @@ static GOptionEntry entries_bundle[] = {
 
 static GOptionEntry entries_resign[] = {
 	{"append", '\0', 0, G_OPTION_ARG_NONE, &resign_append, "append instead of replace signature", NULL},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{0}
@@ -2608,7 +2608,7 @@ static GOptionEntry entries_replace[] = {
 
 static GOptionEntry entries_convert[] = {
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"mksquashfs-args", '\0', 0, G_OPTION_ARG_STRING, &mksquashfs_args, "mksquashfs extra args", "ARGS"},
 	{"casync-args", '\0', 0, G_OPTION_ARG_STRING, &casync_args, "casync extra args", "ARGS"},
@@ -2631,7 +2631,7 @@ static GOptionEntry entries_extract[] = {
 };
 
 static GOptionEntry entries_info[] = {
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{"key", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keypath, "decryption key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
@@ -2657,7 +2657,7 @@ static GOptionEntry entries_write_slot[] = {
 
 static GOptionEntry entries_service[] = {
 	{"handler-args", '\0', 0, G_OPTION_ARG_STRING, &handler_args, "extra arguments for full custom handler", "ARGS"},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "(override) keyring file", "PEMFILE"},
 	{"override-boot-slot", '\0', 0, G_OPTION_ARG_STRING, &bootslot, "override auto-detection of booted slot", "BOOTNAME"},
 	{0}
 };
