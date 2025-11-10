@@ -616,6 +616,8 @@ static gboolean resign_start(int argc, char **argv)
 		check_bundle_params |= CHECK_BUNDLE_NO_VERIFY;
 	if (no_check_time)
 		check_bundle_params |= CHECK_BUNDLE_NO_CHECK_TIME;
+	if (trust_environment)
+		check_bundle_params |= CHECK_BUNDLE_TRUST_ENV;
 
 	if (!check_bundle(argv[2], &bundle, check_bundle_params, NULL, &ierror)) {
 		g_printerr("%s\n", ierror->message);
@@ -2592,6 +2594,7 @@ static GOptionEntry entries_bundle[] = {
 
 static GOptionEntry entries_resign[] = {
 	{"append", '\0', 0, G_OPTION_ARG_NONE, &resign_append, "append instead of replace signature", NULL},
+	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
 	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
 	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
