@@ -2595,24 +2595,18 @@ static GOptionEntry entries_bundle[] = {
 static GOptionEntry entries_resign[] = {
 	{"append", '\0', 0, G_OPTION_ARG_NONE, &resign_append, "append instead of replace signature", NULL},
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
-	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{0}
 };
 
 static GOptionEntry entries_replace[] = {
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "keyring file", "PEMFILE"},
-	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "post-signing verification keyring file", "PEMFILE"},
 	{0}
 };
 
 static GOptionEntry entries_convert[] = {
 	{"trust-environment", '\0', 0, G_OPTION_ARG_NONE, &trust_environment, "trust environment and skip bundle access checks", NULL},
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
-	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"mksquashfs-args", '\0', 0, G_OPTION_ARG_STRING, &mksquashfs_args, "mksquashfs extra args", "ARGS"},
 	{"casync-args", '\0', 0, G_OPTION_ARG_STRING, &casync_args, "casync extra args", "ARGS"},
 	{"ignore-image", '\0', 0, G_OPTION_ARG_STRING_ARRAY, &convert_ignore_images, "ignore image during conversion", "SLOTCLASS"},
@@ -2634,8 +2628,6 @@ static GOptionEntry entries_extract[] = {
 };
 
 static GOptionEntry entries_info[] = {
-	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
-	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{"no-check-time", '\0', 0, G_OPTION_ARG_NONE, &no_check_time, "don't check validity period of certificates against current time", NULL},
 	{"key", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keypath, "decryption key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 	{"output-format", '\0', 0, G_OPTION_ARG_STRING, &output_format, "output format (readable, shell, json, json-pretty, json-2)", "FORMAT"},
@@ -2670,6 +2662,12 @@ static GOptionEntry entries_signing[] = {
 	{"key", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keypath, "signing key file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 	{"intermediate", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME_ARRAY, &intermediate, "intermediate CA file or PKCS#11 URL", "PEMFILE|PKCS11-URL"},
 	{"signing-keyring", '\0', 0, G_OPTION_ARG_FILENAME, &signing_keyring, "post-signing verification keyring file", "PEMFILE"},
+	{0}
+};
+
+static GOptionEntry entries_soft_verification[] = {
+	{"keyring", '\0', G_OPTION_FLAG_NOALIAS, G_OPTION_ARG_FILENAME, &keyring, "bundle verification keyring file", "PEMFILE"},
+	{"no-verify", '\0', 0, G_OPTION_ARG_NONE, &verification_disabled, "disable bundle verification", NULL},
 	{0}
 };
 
@@ -2716,13 +2714,16 @@ static void create_option_groups(void)
 		resign_group = g_option_group_new("resign", "Resign options:", "help dummy", NULL, NULL);
 		g_option_group_add_entries(resign_group, entries_resign);
 		g_option_group_add_entries(resign_group, entries_signing);
+		g_option_group_add_entries(resign_group, entries_soft_verification);
 
 		replace_group = g_option_group_new("replace-signature", "Replace signature options:", "help dummy", NULL, NULL);
 		g_option_group_add_entries(replace_group, entries_replace);
+		g_option_group_add_entries(replace_group, entries_soft_verification);
 
 		convert_group = g_option_group_new("convert", "Convert options:", "help dummy", NULL, NULL);
 		g_option_group_add_entries(convert_group, entries_convert);
 		g_option_group_add_entries(convert_group, entries_signing);
+		g_option_group_add_entries(convert_group, entries_soft_verification);
 
 		encrypt_group = g_option_group_new("encrypt", "Encryption options:", "help dummy", NULL, NULL);
 		g_option_group_add_entries(encrypt_group, entries_encryption);
@@ -2736,6 +2737,7 @@ static void create_option_groups(void)
 
 	info_group = g_option_group_new("info", "Info options:", "help dummy", NULL, NULL);
 	g_option_group_add_entries(info_group, entries_info);
+	g_option_group_add_entries(info_group, entries_soft_verification);
 	if (ENABLE_STREAMING)
 		g_option_group_add_entries(info_group, entries_bundle_access);
 
