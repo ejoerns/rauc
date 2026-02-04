@@ -70,6 +70,8 @@ static gboolean raspberrypi_bootloader_get(const gchar *property, guint *value, 
 
 	*value = g_htonl(val);
 
+	g_debug("got %d from %s", *value, property);
+
 	return TRUE;
 }
 
@@ -146,6 +148,7 @@ static gboolean raspberrypi_tryboot_get(gboolean *enabled, GError **error)
 
 	gsize size;
 	const gchar *data = g_bytes_get_data(stdout_bytes, &size);
+	r_bytes_unref_to_string(&stdout_bytes)
 	g_auto(GStrv) bytes = g_strsplit(data, " ", -1);
 
 	g_message("got byte 2: %s", bytes[2]);
@@ -184,6 +187,7 @@ static gboolean raspberrypi_tryboot_set(gboolean enable, GError **error)
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
+	g_debug("set tryboot %s", enable ? "enable" : "disable");
 	/*
 	 * The tag Set Reboot Flags is undocumented.
 	 * https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
@@ -381,6 +385,7 @@ static gboolean raspberrypi_set_other_persistent(RaucSlot *primary, RaucSlot *ot
 
 	data = g_strdup_printf("[all]\ntryboot_a_b=1\nboot_partition=%s\n[tryboot]\nboot_partition=%s\n",
 			other->bootname, primary->bootname);
+	g_debug("Writing to %s:\n%s", filename, data);
 	size = strlen(data);
 	if (write(fd, data, size) != (gssize)size) {
 		int err = errno;

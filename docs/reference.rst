@@ -2215,11 +2215,11 @@ Raspberry Pi Firmware
 .. note:: This is valid for Rapsberry Pi 4 and 5 only.
 
 :state bad:
-  In normal mode:
-    'active': <NotSupported>
+  booted normally:
+    'booted': <NotSupported>
     'other': remove from 'tryboot'
-  In tryboot mode:
-    'active': remove from 'tryboot'
+  booted via tryboot:
+    'booted': remove from 'tryboot'
     'other: <NotSupported>
 
 :state good:
