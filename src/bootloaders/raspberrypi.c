@@ -516,6 +516,13 @@ gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 			return FALSE;
 		}
 		g_debug("File autoboot.txt updated");
+	} else {
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_NOT_SUPPORTED,
+				"Marking %s slot %s is not supported",(slot == primary) ? "current" : "other", good ? "good" : "bad");
+		return FALSE;
 	}
 
 	return TRUE;
