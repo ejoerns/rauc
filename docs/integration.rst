@@ -1364,7 +1364,7 @@ argument in the ``efibootmgr`` call above:
   type=ext4
   parent=efi.1
 
-Raspberry Pi firmware
+Raspberry Pi Firmware
 ~~~~~~~~~~~~~~~~~~~~~
 
 The Raspberry Pi firmware supports fail-safe OS updates with A/B booting,
@@ -1372,6 +1372,13 @@ thanks to the optional configuration file `autoboot.txt
 <https://www.raspberrypi.com/documentation/computers/config_txt.html#autoboot-txt>`_
 and the one-shot reboot flag `tryboot
 <https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#fail-safe-os-updates-tryboot>`_.
+
+.. important:: Make sure to have a recent firmware version running.
+   The minimum version required is `2025-03-10
+   <https://github.com/raspberrypi/rpi-eeprom/blob/master/firmware-2712/release-notes.md#2025-03-10-add-boot_partition-filter-plus-sdram-init-fixes-latest>`_.
+   Check the current version by running::
+
+     vcgencmd version
 
 .. warning:: The Raspberry Pi firmware relies on a set of FAT filesystems to
    sync its state.
