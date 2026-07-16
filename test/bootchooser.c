@@ -1058,9 +1058,9 @@ boot_partition=3\n\
 	test_raspberrypi_initialize_bootloader_property("partition", 0);
 	test_raspberrypi_initialize_bootloader_property("tryboot", 0);
 
-	/* check firmware.0 is considered bad (i.e. not booted) */
+	/* check getting firmware.0 state fails */
 	g_assert_false(r_boot_get_state(firmware0, &good, NULL));
-	/* check firmware.1 is considered bad (i.e. not booted) */
+	/* check getting firmware.1 state fails */
 	g_assert_false(r_boot_get_state(firmware1, &good, NULL));
 
 	/* check firmware.0 and firmware.1 can be set to bad */
