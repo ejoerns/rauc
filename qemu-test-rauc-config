@@ -1,7 +1,6 @@
 [system]
 compatible=Test Config
-bootloader=grub
-grubenv=/tmp/boot/grub/grubenv
+bootloader=raspberrypi
 # HACK: must be on a separate partition for real systems
 data-directory=/tmp/rauc
 
@@ -22,11 +21,11 @@ cert=enc-cert.pem
 
 [slot.rootfs.0]
 device=/dev/root
-bootname=A
+bootname=2
 
 [slot.rootfs.1]
 device=/tmp/rootdev
-bootname=B
+bootname=3
 
 [slot.appfs.0]
 device=/tmp/appdev0

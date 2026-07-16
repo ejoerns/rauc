@@ -140,6 +140,9 @@ fi
 cp test/bin/barebox-state /tmp/bin/barebox-state
 chmod +x /tmp/bin/barebox-state
 
+cp test/bin/vcmailbox /tmp/bin/vcmailbox
+chmod +x /tmp/bin/vcmailbox
+
 # create helper scripts to manage coverage data
 if [ -n "$GCOV_PREFIX" ]; then
   cat > /tmp/bin/save_gcov_data <<EOF
@@ -251,6 +254,15 @@ if [ -n "$SERVICE" ]; then
   mkdir -p /tmp/boot/grub
   mount --bind /tmp/boot /boot
   grub-editenv /tmp/boot/grub/grubenv set ORDER="A B" A_TRY="0" B_TRY="0" A_OK="1" B_OK="1"
+  RASPBERRYPI_TMPDIR="$(mktemp -d)"
+  export RASPBERRYPI_TMPDIR
+  printf "%i" 0x00 > "$RASPBERRYPI_TMPDIR/00038064"
+  cat > /tmp/boot/autoboot.txt <<EOF
+[all]
+tryboot_a_b=1
+boot_partition=2
+EOF
+
 
   # fake slot devices
   truncate --size=64M /tmp/rootdev
