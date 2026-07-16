@@ -491,6 +491,7 @@ gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 				error,
 				ierror,
 				"Failed to get bootloader tryboot property: ");
+		return FALSE;
 	}
 
 	/* The tryboot is unset, do nothing */
