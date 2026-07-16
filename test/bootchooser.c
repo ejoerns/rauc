@@ -984,19 +984,7 @@ static gboolean test_raspberrypi_reboot_tag(const BootchooserFixture *fixture, c
 	return TRUE;
 }
 
-static void bootchooser_raspberrypi(BootchooserFixture *fixture,
-		gconstpointer user_data)
-{
-	RaucSlot *firmware0 = NULL, *firmware1 = NULL;
-	RaucSlot *primary = NULL;
-	gboolean good;
-
-	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
-		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
-		return;
-	}
-
-	const gchar *cfg_file = "\
+const gchar *rpi_cfg_file = "\
 [system]\n\
 compatible=FooCorp Super BarBazzer\n\
 bootloader=raspberrypi\n\
@@ -1026,7 +1014,19 @@ device=/dev/mmcblk0p6\n\
 type=ext4\n\
 parent=firmware.1\n";
 
-	gchar* pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", cfg_file, NULL);
+static void bootchooser_raspberrypi_abnormal0(BootchooserFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = NULL, *firmware1 = NULL;
+	//RaucSlot *primary = NULL;
+	gboolean good;
+
+	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
+		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
+		return;
+	}
+
+	gchar* pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", rpi_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
 	g_clear_pointer(&r_context_conf()->configpath, g_free);
@@ -1116,6 +1116,33 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+}
+
+static void bootchooser_raspberrypi_abnormal1(BootchooserFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = NULL, *firmware1 = NULL;
+	RaucSlot *primary = NULL;
+	gboolean good;
+
+	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
+		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
+		return;
+	}
+
+	gchar* pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", rpi_cfg_file, NULL);
+	g_assert_nonnull(pathname);
+
+	g_clear_pointer(&r_context_conf()->configpath, g_free);
+	r_context_conf()->configpath = pathname;
+	r_context();
+
+	firmware0 = find_config_slot_by_name(r_context()->config, "firmware.0");
+	g_assert_nonnull(firmware0);
+	firmware1 = find_config_slot_by_name(r_context()->config, "firmware.1");
+	g_assert_nonnull(firmware1);
+
+	g_assert_true(g_setenv("RASPBERRYPI_TMPDIR", fixture->tmpdir, TRUE));
 
 	/* the bootloader has not booted normally; i.e. bootloader partition number is the
 	 * boot_partition one set in section [tryboot] and the tryboot flag is set */
@@ -1209,6 +1236,33 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+}
+
+static void bootchooser_raspberrypi_normal(BootchooserFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = NULL, *firmware1 = NULL;
+	RaucSlot *primary = NULL;
+	gboolean good;
+
+	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
+		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
+		return;
+	}
+
+	gchar* pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", rpi_cfg_file, NULL);
+	g_assert_nonnull(pathname);
+
+	g_clear_pointer(&r_context_conf()->configpath, g_free);
+	r_context_conf()->configpath = pathname;
+	r_context();
+
+	firmware0 = find_config_slot_by_name(r_context()->config, "firmware.0");
+	g_assert_nonnull(firmware0);
+	firmware1 = find_config_slot_by_name(r_context()->config, "firmware.1");
+	g_assert_nonnull(firmware1);
+
+	g_assert_true(g_setenv("RASPBERRYPI_TMPDIR", fixture->tmpdir, TRUE));
 
 	/* the bootloader has booted normally; i.e. bootloader partition number is the boot_partion
 	 * one set in section [all] and the tryboot flag is unset */
@@ -1618,8 +1672,16 @@ int main(int argc, char *argv[])
 			bootchooser_fixture_set_up, bootchooser_uboot_asymmetric,
 			bootchooser_fixture_tear_down);
 
-	g_test_add("/bootchooser/raspberrypi", BootchooserFixture, NULL,
-			bootchooser_fixture_set_up, bootchooser_raspberrypi,
+	g_test_add("/bootchooser/raspberrypi/abnormal0", BootchooserFixture, NULL,
+			bootchooser_fixture_set_up, bootchooser_raspberrypi_abnormal0,
+			bootchooser_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/abnormal1", BootchooserFixture, NULL,
+			bootchooser_fixture_set_up, bootchooser_raspberrypi_abnormal1,
+			bootchooser_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/normal", BootchooserFixture, NULL,
+			bootchooser_fixture_set_up, bootchooser_raspberrypi_normal,
 			bootchooser_fixture_tear_down);
 
 	g_test_add("/bootchooser/efi", BootchooserFixture, NULL,
