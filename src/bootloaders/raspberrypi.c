@@ -417,7 +417,7 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 	/* The slot is already already the primary slot in autoboot.txt (the
 	 * reboot flag is set), clear the reboot flag. */
 	if (reboot) {
-		if (!raspberrypi_set_reboot_flag(FALSE, error)) {
+		if (!raspberrypi_set_reboot_flag(FALSE, &ierror)) {
 			g_propagate_prefixed_error(
 					error,
 					ierror,
@@ -431,7 +431,7 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 
 	/* The slot is not yet the primary slot in autoboot.txt (the reboot
 	 * flag is unset), set the reboot flag. */
-	if (!raspberrypi_set_reboot_flag(TRUE, error)) {
+	if (!raspberrypi_set_reboot_flag(TRUE, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
