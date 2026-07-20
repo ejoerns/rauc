@@ -32,12 +32,6 @@ static int rename_file(const gchar *oldfilename, const char *newfilename)
 	return res;
 }
 
-static RaucSlot *raspberrypi_find_config_slot_by_bootloader_partition(RaucConfig *config, gint partition)
-{
-	g_autofree gchar *name = g_strdup_printf("%u", partition);
-	return find_config_slot_by_bootname(config, name);
-}
-
 static RaucSlot *raspberrypi_find_config_slot_by_autoboot_section(RaucConfig *config, const gchar *group_name)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
