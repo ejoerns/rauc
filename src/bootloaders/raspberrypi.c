@@ -369,9 +369,8 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 {
 	RaucSlot *primary;
 	GError *ierror = NULL;
-	gboolean reboot;
 
-	primary = raspberrypi_get_primary_and_reboot_flag(&reboot, &ierror);
+	primary = r_raspberrypi_get_primary(&ierror);
 	if (!primary) {
 		g_propagate_prefixed_error(
 				error,
