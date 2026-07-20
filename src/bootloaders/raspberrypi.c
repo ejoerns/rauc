@@ -9,7 +9,7 @@
 
 #define RASPBERRYPI_VCMAILBOX "vcmailbox"
 
-static int r_rename(const gchar *oldfilename, const char *newfilename)
+static int rename_file(const gchar *oldfilename, const char *newfilename)
 {
 	int res;
 
@@ -276,7 +276,7 @@ static gboolean raspberrypi_write_autoboot(gchar *persistent_bootname, gchar *tr
 		return FALSE;
 	}
 
-	if (r_rename(filename_tmp, filename) == -1) {
+	if (rename_file(filename_tmp, filename) == -1) {
 		int err = errno;
 		g_set_error(
 				error,
