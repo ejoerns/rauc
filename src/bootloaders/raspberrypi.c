@@ -38,41 +38,66 @@ static RaucSlot *raspberrypi_find_config_slot_by_bootloader_partition(RaucConfig
 	return find_config_slot_by_bootname(config, name);
 }
 
-static RaucSlot *raspberrypi_find_config_slot_by_autoboot_section(RaucConfig *config, const gchar *group_name)
+static RaucSlot *raspberrypi_find_config_slot_by_autoboot_section(RaucConfig *config, const gchar *group_name, GError **error)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
-	g_autoptr(GError) ierror = NULL;
+	GError *ierror = NULL;
 	g_autofree gchar *data = NULL;
 	g_autofree gchar *boot_partition = NULL;
 	const gchar *filename;
 	gsize length;
+	RaucSlot *slot;
 
 	g_return_val_if_fail(config, NULL);
 	g_return_val_if_fail(group_name, NULL);
+	g_return_val_if_fail(error == NULL || *error == NULL, NULL);
 
 	filename = r_context()->config->raspberrypi_autoboottxt_path;
 	if (!g_file_get_contents(filename, &data, &length, &ierror)) {
-		g_warning("Failed to read %s: %s", filename, ierror->message);
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to read %s: ", filename);
 		return NULL;
 	}
 
 	key_file = g_key_file_new();
 	if (!g_key_file_load_from_data(key_file, data, length, G_KEY_FILE_NONE, &ierror)) {
-		g_warning("Failed to load %s: %s", filename, ierror->message);
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to parse %s: ", filename);
 		return NULL;
 	}
 
 	boot_partition = g_key_file_get_string(key_file, group_name, "boot_partition", &ierror);
 	if (!boot_partition) {
-		g_warning("Failed to get 'boot_partition' in '%s': %s", group_name, ierror->message);
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to get 'boot_partition' in '[%s]' of %s: ", group_name, filename);
 		return NULL;
 	}
 	if (boot_partition[0] == '\0') {
-		g_warning("Empty 'boot_partition' in '%s'", group_name);
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
+				"Empty 'boot_partition' in '[%s]' of %s", group_name, filename);
 		return NULL;
 	}
 
-	return find_config_slot_by_bootname(config, boot_partition);
+	slot = find_config_slot_by_bootname(config, boot_partition);
+	if (!slot) {
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
+				"No slot with bootname '%s' found for '[%s] boot_partition' in %s", boot_partition, group_name, filename);
+		return NULL;
+	}
+
+	return slot;
 }
 
 static gboolean raspberrypi_bootloader_get(const gchar *property, guint *value, GError **error)
@@ -338,13 +363,9 @@ static RaucSlot *raspberrypi_get_primary_and_reboot_flag(gboolean *reboot, GErro
 		return NULL;
 	}
 
-	primary = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, *reboot ? "tryboot" : "all");
+	primary = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, *reboot ? "tryboot" : "all", &ierror);
 	if (!primary) {
-		g_set_error_literal(
-				error,
-				R_BOOTCHOOSER_ERROR,
-				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
-				"No slot found");
+		g_propagate_error(error, ierror);
 		return NULL;
 	}
 
