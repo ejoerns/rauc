@@ -272,7 +272,7 @@ static gboolean raspberrypi_set_other_persistent(RaucSlot *primary, RaucSlot *ot
 	filename = r_context()->config->raspberrypi_autoboottxt_path;
 	filename_tmp = g_strdup_printf("%s.tmp", filename);
 
-	fd = g_open(filename_tmp, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+	fd = g_open(filename_tmp, O_CREAT|O_TRUNC|O_RDWR, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
 		int err = errno;
 		g_set_error(
