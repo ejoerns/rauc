@@ -13,6 +13,13 @@ typedef struct {
 	gchar *tmpdir;
 } BootchooserFixture;
 
+typedef struct {
+	gchar *tmpdir;
+	RaucSlot *firmware0;
+	RaucSlot *firmware1;
+	gboolean skip; // check and call g_test_skip() if true
+} RaspberrypiFixture;
+
 static void bootchooser_fixture_set_up(BootchooserFixture *fixture,
 		gconstpointer user_data)
 {
@@ -923,7 +930,7 @@ BOOT_B_LEFT=3\n\
  * boot_partition=3\n\
  * "
  */
-static void test_raspberrypi_initialize_autoboot_txt(const BootchooserFixture *fixture, const gchar *ini)
+static void test_raspberrypi_initialize_autoboot_txt(const RaspberrypiFixture *fixture, const gchar *ini)
 {
 	g_autofree gchar *filename = g_build_filename(fixture->tmpdir, "autoboot.txt", NULL);
 	g_assert_nonnull(filename);
@@ -931,7 +938,7 @@ static void test_raspberrypi_initialize_autoboot_txt(const BootchooserFixture *f
 }
 
 /* Write content to 00038064 for vcmailbox RAUC mock tool. */
-static void test_raspberrypi_initialize_reboot_tag(const BootchooserFixture *fixture)
+static void test_raspberrypi_initialize_reboot_tag(const RaspberrypiFixture *fixture)
 {
 	g_autofree gchar *filename = g_build_filename(fixture->tmpdir, "00038064", NULL);
 	g_assert_nonnull(filename);
@@ -958,7 +965,7 @@ static void test_raspberrypi_initialize_bootloader_property(const gchar *propert
  *
  * asserts that autoboot.txt content equals desired content
  */
-static void assert_raspberrypi_autoboot_txt(const BootchooserFixture *fixture, const gchar *expected)
+static void assert_raspberrypi_autoboot_txt(const RaspberrypiFixture *fixture, const gchar *expected)
 {
 	g_autofree gchar *path = g_build_filename(fixture->tmpdir, "autoboot.txt", NULL);
 	g_autofree gchar *autoboot_txt = NULL;
@@ -969,7 +976,7 @@ static void assert_raspberrypi_autoboot_txt(const BootchooserFixture *fixture, c
 }
 
 /* Returns TRUE if vcmailbox mock tools content equals desired content, FALSE otherwise */
-static gboolean test_raspberrypi_reboot_tag(const BootchooserFixture *fixture, const gchar *compare)
+static gboolean test_raspberrypi_reboot_tag(const RaspberrypiFixture *fixture, const gchar *compare)
 {
 	g_autofree gchar *path = g_build_filename(fixture->tmpdir, "00038064", NULL);
 	g_autofree gchar *contents = NULL;
@@ -984,19 +991,7 @@ static gboolean test_raspberrypi_reboot_tag(const BootchooserFixture *fixture, c
 	return TRUE;
 }
 
-static void bootchooser_raspberrypi(BootchooserFixture *fixture,
-		gconstpointer user_data)
-{
-	RaucSlot *firmware0 = NULL, *firmware1 = NULL;
-	RaucSlot *primary = NULL;
-	gboolean good;
-
-	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
-		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
-		return;
-	}
-
-	const gchar *cfg_file = "\
+const gchar *rpi_cfg_file = "\
 [system]\n\
 compatible=FooCorp Super BarBazzer\n\
 bootloader=raspberrypi\n\
@@ -1026,21 +1021,49 @@ device=/dev/mmcblk0p6\n\
 type=ext4\n\
 parent=firmware.1\n";
 
-	gchar* pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", cfg_file, NULL);
+static void raspberrypi_fixture_set_up(RaspberrypiFixture *fixture, gconstpointer user_data)
+{
+	fixture->tmpdir = g_dir_make_tmp("rauc-bootchooser-XXXXXX", NULL);
+	g_assert_nonnull(fixture->tmpdir);
+
+	if (g_access("/sys/firmware/devicetree/base/chosen/bootloader", W_OK) != 0) {
+		g_test_skip("Test requires file /sys/firmware/devicetree/base/chosen/bootloader to be writable");
+		fixture->skip = TRUE;
+		return;
+	}
+
+	gchar *pathname = write_tmp_file(fixture->tmpdir, "raspberrypi.conf", rpi_cfg_file, NULL);
 	g_assert_nonnull(pathname);
 
 	g_clear_pointer(&r_context_conf()->configpath, g_free);
 	r_context_conf()->configpath = pathname;
 	r_context();
 
-	firmware0 = find_config_slot_by_name(r_context()->config, "firmware.0");
-	g_assert_nonnull(firmware0);
-	firmware1 = find_config_slot_by_name(r_context()->config, "firmware.1");
-	g_assert_nonnull(firmware1);
+	fixture->firmware0 = find_config_slot_by_name(r_context()->config, "firmware.0");
+	g_assert_nonnull(fixture->firmware0);
+	fixture->firmware1 = find_config_slot_by_name(r_context()->config, "firmware.1");
+	g_assert_nonnull(fixture->firmware1);
 
 	g_assert_true(g_setenv("RASPBERRYPI_TMPDIR", fixture->tmpdir, TRUE));
+}
 
-	/* the bootloader has booted abnormally; i.e. bootloader partition number is 0 */
+static void raspberrypi_fixture_tear_down(RaspberrypiFixture *fixture, gconstpointer user_data)
+{
+	g_assert_true(rm_tree(fixture->tmpdir, NULL));
+	g_free(fixture->tmpdir);
+}
+
+/* The autoboot.txt is valid, but the bootloader booted with an unknown
+ * partition number (0) that matches no configured slot. */
+static void bootchooser_raspberrypi_unknown_partition(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
 	test_raspberrypi_initialize_reboot_tag(fixture);
 	test_raspberrypi_initialize_autoboot_txt(fixture, "\
 [all]\n\
@@ -1116,10 +1139,23 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+}
 
-	/* The bootloader booted via tryboot; i.e. the bootloader partition
-	 * number is the boot_partition set in the [tryboot] section and the
-	 * tryboot devicetree property is set. */
+/* The bootloader booted via tryboot; i.e. the bootloader partition
+ * number is the boot_partition set in the [tryboot] section and the
+ * tryboot devicetree property is set.
+ * This is the case when the system rebooted after an installation (when the
+ * reboot flag was set) */
+static void bootchooser_raspberrypi_tryboot_mark_good(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	RaucSlot *primary = NULL;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
 	test_raspberrypi_initialize_reboot_tag(fixture);
 	test_raspberrypi_initialize_autoboot_txt(fixture, "\
 [all]\n\
@@ -1210,9 +1246,21 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+}
 
-	/* the bootloader has booted normally; i.e. bootloader partition number is the boot_partion
-	 * one set in section [all] and the tryboot flag is unset */
+/* The bootloader booted normally; i.e. the bootloader partition number
+ * is the boot_partition set in the [all] section and the tryboot
+ * devicetree property is unset. */
+static void bootchooser_raspberrypi_normal(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	RaucSlot *primary = NULL;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
 	test_raspberrypi_initialize_reboot_tag(fixture);
 	test_raspberrypi_initialize_autoboot_txt(fixture, "\
 [all]\n\
@@ -1670,9 +1718,17 @@ int main(int argc, char *argv[])
 			bootchooser_fixture_set_up, bootchooser_uboot_asymmetric,
 			bootchooser_fixture_tear_down);
 
-	g_test_add("/bootchooser/raspberrypi", BootchooserFixture, NULL,
-			bootchooser_fixture_set_up, bootchooser_raspberrypi,
-			bootchooser_fixture_tear_down);
+	g_test_add("/bootchooser/raspberrypi/unknown-partition", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_unknown_partition,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/tryboot", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_tryboot_mark_good,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/normal", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_normal,
+			raspberrypi_fixture_tear_down);
 
 	g_test_add("/bootchooser/efi", BootchooserFixture, NULL,
 			bootchooser_fixture_set_up, bootchooser_efi,
