@@ -60,11 +60,15 @@ static RaucSlot *raspberrypi_find_config_slot_by_reboot_flag(RaucConfig *config,
 		return NULL;
 	}
 
-        boot_partition = g_key_file_get_string(key_file, group_name, "boot_partition", &ierror);
-        if (!boot_partition || (boot_partition[0] == '\0')) {
+	boot_partition = g_key_file_get_string(key_file, group_name, "boot_partition", &ierror);
+	if (!boot_partition) {
 		g_warning("Failed to get 'boot_partition' in '%s': %s", group_name, ierror->message);
-                return NULL;
-        }
+		return NULL;
+	}
+	if (boot_partition[0] == '\0') {
+		g_warning("Empty 'boot_partition' in '%s'", group_name);
+		return NULL;
+	}
 
 	return find_config_slot_by_bootname(config, boot_partition);
 }
