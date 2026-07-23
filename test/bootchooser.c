@@ -1143,6 +1143,53 @@ boot_partition=3\n\
 ");
 }
 
+/* An autoboot.txt with only [all] must still allow determining the primary
+ * and updating; resolving [tryboot] fails cleanly and mark-active restores it. */
+static void bootchooser_raspberrypi_autoboot_txt_incomplete(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	GError *error = NULL;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
+	test_raspberrypi_initialize_reboot_tag(fixture);
+	test_raspberrypi_initialize_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+");
+	test_raspberrypi_initialize_bootloader_property("partition", 2);
+	test_raspberrypi_initialize_bootloader_property("tryboot", 0);
+
+	g_assert(r_boot_get_primary(&error) == firmware0);
+	g_assert_no_error(error);
+
+	g_assert_true(r_boot_get_state(firmware0, &good, &error));
+	g_assert_no_error(error);
+
+	/* firmware.1 can only be selected via the missing [tryboot] section, so
+	 * it is not bootable -- which is answerable without that section */
+	g_assert_true(r_boot_get_state(firmware1, &good, &error));
+	g_assert_no_error(error);
+	g_assert_false(good);
+
+	g_assert_true(r_boot_set_primary(firmware1, &error));
+	g_assert_no_error(error);
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "1"));
+	g_assert(r_boot_get_primary(&error) == firmware1);
+	g_assert_no_error(error);
+}
+
 /* The bootloader booted via tryboot; i.e. the bootloader partition
  * number is the boot_partition set in the [tryboot] section and the
  * tryboot devicetree property is set.
@@ -1689,6 +1736,10 @@ int main(int argc, char *argv[])
 
 	g_test_add("/bootchooser/raspberrypi/unknown-partition", RaspberrypiFixture, NULL,
 			raspberrypi_fixture_set_up, bootchooser_raspberrypi_unknown_partition,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/autoboot-txt-incomplete", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_autoboot_txt_incomplete,
 			raspberrypi_fixture_tear_down);
 
 	g_test_add("/bootchooser/raspberrypi/tryboot", RaspberrypiFixture, NULL,

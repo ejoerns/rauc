@@ -381,43 +381,61 @@ RaucSlot *r_raspberrypi_get_primary(GError **error)
 	return primary;
 }
 
-/* Set slot as primary slot temporarily toggling the reboot flag. */
+/* Activate a slot for the next boot: if it is already the [all] default,
+ * just cancel any pending one-shot switch; otherwise point [tryboot] at it
+ * and arm the reboot flag (valid for the next boot only). */
 gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 {
-	RaucSlot *primary;
 	GError *ierror = NULL;
-	gboolean reboot;
 
-	primary = raspberrypi_get_primary_and_reboot_flag(&reboot, &ierror);
-	if (!primary) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed to get primary slot and reboot flag: ");
+	RaucSlot *default_slot = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, "all", &ierror);
+	if (!default_slot) {
+		g_propagate_error(error, ierror);
 		return FALSE;
 	}
 
-	/* The slot is already the primary slot, do nothing. */
-	if (slot == primary)
-		return TRUE;
+	if (slot == default_slot) {
+		g_debug("set primary: Slot %s is already selected in [all] section.", slot->name);
 
-	/* The slot is already already the primary slot in autoboot.txt (the
-	 * reboot flag is set), clear the reboot flag. */
-	if (reboot) {
+		/* [all] already selects this slot, nothing to persist. But a
+		 * previous set_primary() call for another slot may have armed
+		 * the one-shot tryboot flag — cancel it so this slot is what
+		 * actually boots next. */
+		gboolean reboot;
+		if (!raspberrypi_get_reboot_flag(&reboot, &ierror)) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"Failed to get reboot flag: ");
+			return FALSE;
+		}
+
+		if (!reboot)
+			return TRUE;
+
 		if (!raspberrypi_set_reboot_flag(FALSE, &ierror)) {
 			g_propagate_prefixed_error(
 					error,
 					ierror,
-					"Failed to set reboot flag: ");
+					"Failed to clear reboot flag: ");
 			return FALSE;
 		}
 
-		g_debug("Reboot flag cleared");
+		g_debug("set primary: Reboot flag cleared");
 		return TRUE;
 	}
 
-	/* The slot is not yet the primary slot in autoboot.txt (the reboot
-	 * flag is unset), set the reboot flag. */
+	/* Write the autoboot.txt to ensure the slot is set in the [tryboot] section */
+	if (!raspberrypi_write_autoboot(default_slot->bootname, slot->bootname, &ierror)) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to set %s as [tryboot] in autoboot.txt: ", slot->bootname);
+		return FALSE;
+	}
+
+	/* Activate slot by setting the reboot flag.
+	 * Note that the flag will be valid for the next boot, only. */
 	if (!raspberrypi_set_reboot_flag(TRUE, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
@@ -426,8 +444,7 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 		return FALSE;
 	}
 
-
-	g_debug("Reboot flag set");
+	g_debug("set primary: set [tryboot] entry and reboot flag for slot %s", slot->name);
 	return TRUE;
 }
 

@@ -2745,6 +2745,11 @@ Raspberry Pi
   Setting state good is then used to persist this.
 
 :primary:
-  Sets the reboot-flag to boot the slot set in `[tryboot]` `boot_partition`
-  property if the booted slot is the primary slot.
+  *Set as tryboot slot*, if the slot is not set as default in ``[all]``.
+  Ensures it's set in the ``[tryboot]`` section and sets the reboot flag.
   This will make the slot being booted upon next reboot only!
+
+  *Clear the reboot flag*, if the slot is already the one set in ``[all]`` and
+  the reboot flag is set.
+  This cancels a potentially pending one-shot switch to another slot.
+  Otherwise, this is a no-op.
