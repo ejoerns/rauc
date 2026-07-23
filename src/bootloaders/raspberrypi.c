@@ -32,12 +32,6 @@ static int rename_file(const gchar *oldfilename, const char *newfilename)
 	return res;
 }
 
-static RaucSlot *raspberrypi_find_config_slot_by_bootloader_partition(RaucConfig *config, gint partition)
-{
-	g_autofree gchar *name = g_strdup_printf("%u", partition);
-	return find_config_slot_by_bootname(config, name);
-}
-
 static RaucSlot *raspberrypi_find_config_slot_by_autoboot_section(RaucConfig *config, const gchar *group_name, GError **error)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
@@ -253,35 +247,6 @@ static gboolean raspberrypi_set_reboot_flag(gboolean enable, GError **error)
 	return TRUE;
 }
 
-static RaucSlot *raspberrypi_get_booted(GError **error)
-{
-	RaucSlot *booted;
-	GError *ierror = NULL;
-	guint partition;
-
-	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
-
-	if (!raspberrypi_bootloader_get_partition(&partition, &ierror)) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed to get bootloader partition property: ");
-		return NULL;
-	}
-
-	booted = raspberrypi_find_config_slot_by_bootloader_partition(r_context()->config, partition);
-	if (!booted) {
-		g_set_error(
-				error,
-				R_BOOTCHOOSER_ERROR,
-				R_BOOTCHOOSER_ERROR_PARSE_FAILED,
-				"No slot found with partition %i", partition);
-		return NULL;
-	}
-
-	return booted;
-}
-
 /* Write autoboot.txt with
  * 'persistent_bootname' as the [all] boot_partition and
  * 'tryboot_bootname' as the [tryboot] boot_partition. */
@@ -466,27 +431,52 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 	return TRUE;
 }
 
-/* We assume bootstate to be good if the slot is the booted slot. */
+/* A slot is good if it is selected in [all], or in [tryboot] while the reboot
+ * flag is set. An unresolvable section is reported as an error. */
 gboolean r_raspberrypi_get_state(RaucSlot *slot, gboolean *good, GError **error)
 {
-	RaucSlot *booted;
 	GError *ierror = NULL;
 
 	g_return_val_if_fail(slot, FALSE);
 	g_return_val_if_fail(good, FALSE);
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	booted = raspberrypi_get_booted(&ierror);
-	if (!booted) {
+	RaucSlot *all_slot = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, "all", &ierror);
+	if (!all_slot) {
+		g_propagate_error(error, ierror);
+		return FALSE;
+	}
+	/* The [all] slot is bootable no matter what the reboot flag says. */
+	if (slot == all_slot) {
+		*good = TRUE;
+		return TRUE;
+	}
+
+	/* Any other slot is only bootable while the reboot flag selects it. */
+	gboolean reboot;
+	if (!raspberrypi_get_reboot_flag(&reboot, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
-				"Failed to get booted slot: ");
+				"Failed to get reboot flag: ");
 		return FALSE;
 	}
 
-	*good = (booted == slot) ? TRUE : FALSE;
+	/* Without the reboot flag set, the [tryboot] section has no influence on
+	 * what boots next, so do not require it to be resolvable. */
+	if (reboot) {
+		RaucSlot *tryboot_slot = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, "tryboot", &ierror);
+		if (!tryboot_slot) {
+			g_propagate_error(error, ierror);
+			return FALSE;
+		}
+		if (slot == tryboot_slot) {
+			*good = TRUE;
+			return TRUE;
+		}
+	}
 
+	*good = FALSE;
 	return TRUE;
 }
 

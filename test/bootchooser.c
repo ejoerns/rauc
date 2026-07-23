@@ -1075,10 +1075,12 @@ boot_partition=3\n\
 	test_raspberrypi_initialize_bootloader_property("partition", 0);
 	test_raspberrypi_initialize_bootloader_property("tryboot", 0);
 
-	/* check getting firmware.0 state fails */
-	g_assert_false(r_boot_get_state(firmware0, &good, NULL));
-	/* check getting firmware.1 state fails */
-	g_assert_false(r_boot_get_state(firmware1, &good, NULL));
+	/* firmware.0 is the [all] slot -> good (bootable)
+	 * firmware.1 is the [tryboot] slot with the reboot flag unset -> bad (not bootable) */
+	g_assert_true(r_boot_get_state(firmware0, &good, NULL));
+	g_assert_true(good);
+	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
+	g_assert_false(good);
 
 	/* check firmware.0 and firmware.1 can be set to bad */
 	g_assert_true(r_boot_set_state(firmware0, FALSE, NULL));
@@ -1167,12 +1169,13 @@ boot_partition=3\n\
 	test_raspberrypi_initialize_bootloader_property("partition", 3);
 	test_raspberrypi_initialize_bootloader_property("tryboot", 1);
 
-	/* check firmware.0 is considered bad (i.e. not booted) */
+	/* firmware.0 is the [all] slot -> good (bootable)
+	 * firmware.1 is the [tryboot] slot, but the reboot flag was already
+	 * consumed by the firmware for this boot -> bad (not bootable) */
 	g_assert_true(r_boot_get_state(firmware0, &good, NULL));
-	g_assert_false(good);
-	/* check firmware.1 is considered good (i.e. booted) */
-	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
 	g_assert_true(good);
+	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
+	g_assert_false(good);
 
 	/* check firmware.0 is considered as primary (i.e. not booted but tryboot) */
 	primary = r_boot_get_primary(NULL);
@@ -1257,10 +1260,10 @@ boot_partition=3\n\
 	test_raspberrypi_initialize_bootloader_property("partition", 2);
 	test_raspberrypi_initialize_bootloader_property("tryboot", 0);
 
-	/* check firmware.0 is considered good */
+	/* check firmware.0 is considered good (bootable) */
 	g_assert_true(r_boot_get_state(firmware0, &good, NULL));
 	g_assert_true(good);
-	/* check firmware.1 is considered bad (i.e. not booted) */
+	/* check firmware.1 is considered bad (i.e. not bootable) */
 	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
 	g_assert_true(!good);
 
@@ -1307,9 +1310,9 @@ boot_partition=3\n\
 	g_assert_nonnull(primary);
 	g_assert(primary == firmware1);
 
-	/* check firmware.1 is considered bad (not bootable) */
+	/* check firmware.1 is considered good (bootable) */
 	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
-	g_assert_false(good);
+	g_assert_true(good);
 }
 
 static void bootchooser_efi(BootchooserFixture *fixture,
