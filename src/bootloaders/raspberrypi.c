@@ -44,7 +44,7 @@ static RaucSlot *raspberrypi_find_config_slot_by_reboot_flag(RaucConfig *config,
 	g_autoptr(GError) ierror = NULL;
 	g_autofree gchar *data = NULL;
 	const gchar *group_name = tryboot ? "tryboot" : "all";
-	const gchar *boot_partition;
+	g_autofree gchar *boot_partition = NULL;
 	const gchar *filename;
 	gsize length;
 
