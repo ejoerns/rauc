@@ -1123,8 +1123,9 @@ boot_partition=2\n\
 boot_partition=3\n\
 "));
 
-	/* the bootloader has not booted normally; i.e. bootloader partition number is the
-	 * boot_partition one set in section [tryboot] and the tryboot flag is set */
+	/* The bootloader booted via tryboot; i.e. the bootloader partition
+	 * number is the boot_partition set in the [tryboot] section and the
+	 * tryboot devicetree property is set. */
 	test_raspberrypi_initialize_reboot_tag(fixture);
 	test_raspberrypi_initialize_autoboot_txt(fixture, "\
 [all]\n\
