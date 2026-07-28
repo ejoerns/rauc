@@ -1234,7 +1234,8 @@ boot_partition=2\n\
 
 /* The bootloader booted normally; i.e. the bootloader partition number
  * is the boot_partition set in the [all] section and the tryboot
- * devicetree property is unset. */
+ * devicetree property is unset.
+ * Mark it good, then test the flow of a normal installation. */
 static void bootchooser_raspberrypi_normal(RaspberrypiFixture *fixture,
 		gconstpointer user_data)
 {
@@ -1269,8 +1270,8 @@ boot_partition=3\n\
 	g_assert(primary == firmware0);
 	g_assert(primary != firmware1);
 
-	/* check firmware.0 and firmware.1 can be set to bad */
-	g_assert_true(r_boot_set_state(firmware0, FALSE, NULL));
+	/* check firmware.0 (current) can be set to good (no-op) */
+	g_assert_true(r_boot_set_state(firmware0, TRUE, NULL));
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1279,6 +1280,8 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+
+	/* check firmware.1 (other) can be set to 'bad' (no-op) */
 	g_assert_true(r_boot_set_state(firmware1, FALSE, NULL));
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
@@ -1289,36 +1292,7 @@ boot_partition=2\n\
 boot_partition=3\n\
 ");
 
-	/* check firmware.0 and firmware.1 can be set to good */
-	g_assert_true(r_boot_set_state(firmware0, TRUE, NULL));
-	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
-	assert_raspberrypi_autoboot_txt(fixture, "\
-[all]\n\
-tryboot_a_b=1\n\
-boot_partition=2\n\
-[tryboot]\n\
-boot_partition=3\n\
-");
-	g_assert_true(r_boot_set_state(firmware1, TRUE, NULL));
-	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
-	assert_raspberrypi_autoboot_txt(fixture, "\
-[all]\n\
-tryboot_a_b=1\n\
-boot_partition=2\n\
-[tryboot]\n\
-boot_partition=3\n\
-");
-
-	/* check firmware.0 and firmware.1 can be set to primary */
-	g_assert_true(r_boot_set_primary(firmware0, NULL));
-	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
-	assert_raspberrypi_autoboot_txt(fixture, "\
-[all]\n\
-tryboot_a_b=1\n\
-boot_partition=2\n\
-[tryboot]\n\
-boot_partition=3\n\
-");
+	/* check firmware.1 can be set to primary */
 	g_assert_true(r_boot_set_primary(firmware1, NULL));
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "1"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
@@ -1328,6 +1302,14 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
+	/* check firmware.1 is now considered as primary */
+	primary = r_boot_get_primary(NULL);
+	g_assert_nonnull(primary);
+	g_assert(primary == firmware1);
+
+	/* check firmware.1 is considered bad (not bootable) */
+	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
+	g_assert_false(good);
 }
 
 static void bootchooser_efi(BootchooserFixture *fixture,
