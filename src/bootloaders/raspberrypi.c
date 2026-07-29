@@ -300,31 +300,6 @@ static gboolean raspberrypi_write_autoboot(gchar *persistent_bootname, gchar *tr
 	return TRUE;
 }
 
-static RaucSlot *raspberrypi_get_primary_and_reboot_flag(gboolean *reboot, GError **error)
-{
-	RaucSlot *primary;
-	GError *ierror = NULL;
-
-	g_return_val_if_fail(reboot, NULL);
-	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
-
-	if (!raspberrypi_get_reboot_flag(reboot, &ierror)) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed to get reboot flag: ");
-		return NULL;
-	}
-
-	primary = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, *reboot ? "tryboot" : "all", &ierror);
-	if (!primary) {
-		g_propagate_error(error, ierror);
-		return NULL;
-	}
-
-	return primary;
-}
-
 /* Get booted bootname */
 gchar *r_raspberrypi_get_bootname(RaucConfig *config, GError **error)
 {
@@ -354,17 +329,22 @@ RaucSlot *r_raspberrypi_get_primary(GError **error)
 
 	g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
 
-	primary = raspberrypi_get_primary_and_reboot_flag(&reboot, &ierror);
-	if (!primary) {
+	if (!raspberrypi_get_reboot_flag(&reboot, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
-				"Failed to get primary slot and reboot flag: ");
+				"Failed to get reboot flag: ");
 		return NULL;
 	}
 
 	if (reboot)
 		g_debug("Detected reboot flag");
+
+	primary = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, reboot ? "tryboot" : "all", &ierror);
+	if (!primary) {
+		g_propagate_error(error, ierror);
+		return NULL;
+	}
 
 	return primary;
 }
