@@ -1390,6 +1390,65 @@ boot_partition=2\n\
 ");
 }
 
+/* Marking a slot bad must withdraw a pending tryboot activation of that very
+ * slot, so the persisted [all] default boots again instead of the slot just
+ * declared bad. A pending activation of another slot must be left alone. */
+static void bootchooser_raspberrypi_activate_then_bad(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	GError *error = NULL;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
+	test_raspberrypi_initialize_reboot_tag(fixture);
+	test_raspberrypi_initialize_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+	test_raspberrypi_initialize_bootloader_property("partition", 2);
+	test_raspberrypi_initialize_bootloader_property("tryboot", 0);
+
+	/* activate firmware.1 for the next boot */
+	g_assert_true(r_boot_set_primary(firmware1, &error));
+	g_assert_no_error(error);
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "1"));
+	g_assert_true(r_boot_get_state(firmware1, &good, &error));
+	g_assert_no_error(error);
+	g_assert_true(good);
+
+	/* marking the other slot bad must not withdraw firmware.1's activation */
+	g_assert_true(r_boot_set_state(firmware0, FALSE, &error));
+	g_assert_no_error(error);
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "1"));
+	g_assert(r_boot_get_primary(NULL) == firmware1);
+
+	/* marking firmware.1 bad withdraws its pending activation */
+	g_assert_true(r_boot_set_state(firmware1, FALSE, &error));
+	g_assert_no_error(error);
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
+
+	/* autoboot.txt is left untouched, only the one-shot flag was cleared */
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+
+	/* firmware.1 is no longer bootable and firmware.0 boots again */
+	g_assert_true(r_boot_get_state(firmware1, &good, &error));
+	g_assert_no_error(error);
+	g_assert_false(good);
+	g_assert(r_boot_get_primary(NULL) == firmware0);
+}
+
 /* The bootloader booted normally; i.e. the bootloader partition number
  * is the boot_partition set in the [all] section and the tryboot
  * devicetree property is unset.
@@ -1863,6 +1922,10 @@ int main(int argc, char *argv[])
 
 	g_test_add("/bootchooser/raspberrypi/tryboot-mark-good-other-rejected", RaspberrypiFixture, NULL,
 			raspberrypi_fixture_set_up, bootchooser_raspberrypi_tryboot_mark_good_other_rejected,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/activate-then-bad", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_activate_then_bad,
 			raspberrypi_fixture_tear_down);
 
 	g_test_add("/bootchooser/raspberrypi/normal", RaspberrypiFixture, NULL,

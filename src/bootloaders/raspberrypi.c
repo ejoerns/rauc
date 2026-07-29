@@ -488,7 +488,10 @@ gboolean r_raspberrypi_get_state(RaucSlot *slot, gboolean *good, GError **error)
 /* Persist a good slot as the new [all] default, demoting the previous default
  * to [tryboot]. Only commits the slot actually booted (per the devicetree
  * partition), so a later mark-good for a different slot cannot revert an
- * earlier commit made in the same boot session. Marking bad is a no-op. */
+ * earlier commit made in the same boot session.
+ *
+ * Marking bad cannot disable a slot persistently, but it does withdraw a
+ * pending tryboot activation of that slot. */
 gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 {
 	GError *ierror = NULL;
@@ -496,6 +499,39 @@ gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 	guint partition;
 
 	if (!good) {
+		gboolean reboot;
+
+		if (!raspberrypi_get_reboot_flag(&reboot, &ierror)) {
+			g_propagate_prefixed_error(
+					error,
+					ierror,
+					"Failed to get reboot flag: ");
+			return FALSE;
+		}
+
+		/* Withdraw a pending one-shot activation of this very slot so that
+		 * the persisted [all] default boots instead. An unresolvable
+		 * [tryboot] section is not an error here, it just means there is no
+		 * pending activation to attribute to this slot. */
+		if (reboot) {
+			RaucSlot *tryboot_slot = raspberrypi_find_config_slot_by_autoboot_section(
+					r_context()->config, "tryboot", &ierror);
+			if (!tryboot_slot) {
+				g_debug("Ignoring unusable [tryboot] section: %s", ierror->message);
+				g_clear_error(&ierror);
+			} else if (slot == tryboot_slot) {
+				if (!raspberrypi_set_reboot_flag(FALSE, &ierror)) {
+					g_propagate_prefixed_error(
+							error,
+							ierror,
+							"Failed to clear reboot flag: ");
+					return FALSE;
+				}
+				g_message("raspberrypi backend: cleared pending tryboot activation of slot '%s'", slot->name);
+				return TRUE;
+			}
+		}
+
 		g_message("raspberrypi backend: setting boot state to 'bad' has no effect");
 		return TRUE;
 	}
