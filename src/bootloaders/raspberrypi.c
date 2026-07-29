@@ -38,15 +38,17 @@ static RaucSlot *raspberrypi_find_config_slot_by_bootloader_partition(RaucConfig
 	return find_config_slot_by_bootname(config, name);
 }
 
-static RaucSlot *raspberrypi_find_config_slot_by_reboot_flag(RaucConfig *config, gboolean tryboot)
+static RaucSlot *raspberrypi_find_config_slot_by_autoboot_section(RaucConfig *config, const gchar *group_name)
 {
 	g_autoptr(GKeyFile) key_file = NULL;
 	g_autoptr(GError) ierror = NULL;
 	g_autofree gchar *data = NULL;
-	const gchar *group_name = tryboot ? "tryboot" : "all";
 	g_autofree gchar *boot_partition = NULL;
 	const gchar *filename;
 	gsize length;
+
+	g_return_val_if_fail(config, NULL);
+	g_return_val_if_fail(group_name, NULL);
 
 	filename = r_context()->config->raspberrypi_autoboottxt_path;
 	if (!g_file_get_contents(filename, &data, &length, &ierror)) {
@@ -336,7 +338,7 @@ static RaucSlot *raspberrypi_get_primary_and_reboot_flag(gboolean *reboot, GErro
 		return NULL;
 	}
 
-	primary = raspberrypi_find_config_slot_by_reboot_flag(r_context()->config, *reboot);
+	primary = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, *reboot ? "tryboot" : "all");
 	if (!primary) {
 		g_set_error_literal(
 				error,
