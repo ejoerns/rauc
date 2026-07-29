@@ -1059,6 +1059,7 @@ static void bootchooser_raspberrypi_unknown_partition(RaspberrypiFixture *fixtur
 		gconstpointer user_data)
 {
 	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	GError *error = NULL;
 	gboolean good;
 
 	if (fixture->skip)
@@ -1102,8 +1103,11 @@ boot_partition=2\n\
 boot_partition=3\n\
 ");
 
-	/* check firmware.0 and firmware.1 can be set to good */
-	g_assert_true(r_boot_set_state(firmware0, TRUE, NULL));
+	/* check firmware.0 can be set to good (no-op)
+	 * firmware.1 is neither the default nor the booted partition (0), so marking
+	 * it good is rejected */
+	g_assert_true(r_boot_set_state(firmware0, TRUE, &error));
+	g_assert_no_error(error);
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1112,15 +1116,9 @@ boot_partition=2\n\
 [tryboot]\n\
 boot_partition=3\n\
 ");
-	g_assert_true(r_boot_set_state(firmware1, TRUE, NULL));
-	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
-	assert_raspberrypi_autoboot_txt(fixture, "\
-[all]\n\
-tryboot_a_b=1\n\
-boot_partition=2\n\
-[tryboot]\n\
-boot_partition=3\n\
-");
+	g_assert_false(r_boot_set_state(firmware1, TRUE, &error));
+	g_assert_error(error, R_BOOTCHOOSER_ERROR, R_BOOTCHOOSER_ERROR_NOT_SUPPORTED);
+	g_clear_error(&error);
 
 	/* check firmware.0 and firmware.1 can be set to primary */
 	g_assert_true(r_boot_set_primary(firmware0, NULL));
@@ -1200,6 +1198,7 @@ static void bootchooser_raspberrypi_tryboot_mark_good(RaspberrypiFixture *fixtur
 {
 	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
 	RaucSlot *primary = NULL;
+	GError *error = NULL;
 	gboolean good;
 
 	if (fixture->skip)
@@ -1231,7 +1230,8 @@ boot_partition=3\n\
 	g_assert(primary != firmware1);
 
 	/* check firmware.1 can be set to 'good' and becomes the default boot_partition (commit update) */
-	g_assert_true(r_boot_set_state(firmware1, TRUE, NULL));
+	g_assert_true(r_boot_set_state(firmware1, TRUE, &error));
+	g_assert_no_error(error);
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1250,7 +1250,8 @@ boot_partition=2\n\
 	 * i.e. -> set bad other -> set primary other */
 
 	/* check other slot (firmware.0) can be set to bad (no-op) */
-	g_assert_true(r_boot_set_state(firmware0, FALSE, NULL));
+	g_assert_true(r_boot_set_state(firmware0, FALSE, &error));
+	g_assert_no_error(error);
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1282,6 +1283,113 @@ boot_partition=2\n\
 	g_assert(primary != firmware1);
 }
 
+/* mark-active on the running (tryboot) slot arms the reboot flag without
+ * persisting; a following mark-good for that slot must still commit and
+ * clear the stale flag. */
+static void bootchooser_raspberrypi_tryboot_reactivate_then_good(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware1 = fixture->firmware1;
+	gboolean good;
+
+	if (fixture->skip)
+		return;
+
+	/* booted via tryboot into firmware.1 (3); firmware.0 (2) is still the
+	 * persisted default and the one-shot reboot flag has already been
+	 * consumed/cleared by the firmware for this boot */
+	test_raspberrypi_initialize_reboot_tag(fixture);
+	test_raspberrypi_initialize_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+	test_raspberrypi_initialize_bootloader_property("partition", 3);
+	test_raspberrypi_initialize_bootloader_property("tryboot", 1);
+
+	/* mark-active on the slot we're already running: re-arms the reboot
+	 * flag but does not change which slot is persisted */
+	g_assert_true(r_boot_set_primary(firmware1, NULL));
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "1"));
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+
+	/* mark-good for that same (currently running) slot must still commit
+	 * it, despite the reboot flag currently being set */
+	g_assert_true(r_boot_set_state(firmware1, TRUE, NULL));
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=3\n\
+[tryboot]\n\
+boot_partition=2\n\
+");
+	/* the stale reboot flag must be cleared as part of the commit */
+	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
+
+	/* check firmware.1 is now the (persisted) primary and 'good' */
+	g_assert(r_boot_get_primary(NULL) == firmware1);
+	g_assert_true(r_boot_get_state(firmware1, &good, NULL));
+	g_assert_true(good);
+}
+
+/* Once mark-good has moved [all] to the booted slot, a mistaken mark-good for
+ * the other slot must be rejected since this is undefined for the tryboot
+ * approach */
+static void bootchooser_raspberrypi_tryboot_mark_good_other_rejected(RaspberrypiFixture *fixture,
+		gconstpointer user_data)
+{
+	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
+	GError *error = NULL;
+
+	if (fixture->skip)
+		return;
+
+	/* booted via tryboot into firmware.1 (3);
+	 * firmware.0 (2) is still the persisted default */
+	test_raspberrypi_initialize_reboot_tag(fixture);
+	test_raspberrypi_initialize_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=2\n\
+[tryboot]\n\
+boot_partition=3\n\
+");
+	test_raspberrypi_initialize_bootloader_property("partition", 3);
+	test_raspberrypi_initialize_bootloader_property("tryboot", 1);
+
+	/* mark-good(booted) commits firmware.1 as the new default */
+	g_assert_true(r_boot_set_state(firmware1, TRUE, &error));
+	g_assert_no_error(error);
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=3\n\
+[tryboot]\n\
+boot_partition=2\n\
+");
+
+	/* mark-good(other) must now be rejected: firmware.0 is no longer
+	 * [all], but it also isn't the slot actually running. */
+	g_assert_false(r_boot_set_state(firmware0, TRUE, &error));
+	g_assert_error(error, R_BOOTCHOOSER_ERROR, R_BOOTCHOOSER_ERROR_NOT_SUPPORTED);
+	g_clear_error(&error);
+	assert_raspberrypi_autoboot_txt(fixture, "\
+[all]\n\
+tryboot_a_b=1\n\
+boot_partition=3\n\
+[tryboot]\n\
+boot_partition=2\n\
+");
+}
+
 /* The bootloader booted normally; i.e. the bootloader partition number
  * is the boot_partition set in the [all] section and the tryboot
  * devicetree property is unset.
@@ -1291,6 +1399,7 @@ static void bootchooser_raspberrypi_normal(RaspberrypiFixture *fixture,
 {
 	RaucSlot *firmware0 = fixture->firmware0, *firmware1 = fixture->firmware1;
 	RaucSlot *primary = NULL;
+	GError *error = NULL;
 	gboolean good;
 
 	if (fixture->skip)
@@ -1321,7 +1430,8 @@ boot_partition=3\n\
 	g_assert(primary != firmware1);
 
 	/* check firmware.0 (current) can be set to good (no-op) */
-	g_assert_true(r_boot_set_state(firmware0, TRUE, NULL));
+	g_assert_true(r_boot_set_state(firmware0, TRUE, &error));
+	g_assert_no_error(error);
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1332,7 +1442,8 @@ boot_partition=3\n\
 ");
 
 	/* check firmware.1 (other) can be set to 'bad' (no-op) */
-	g_assert_true(r_boot_set_state(firmware1, FALSE, NULL));
+	g_assert_true(r_boot_set_state(firmware1, FALSE, &error));
+	g_assert_no_error(error);
 	g_assert_true(test_raspberrypi_reboot_tag(fixture, "0"));
 	assert_raspberrypi_autoboot_txt(fixture, "\
 [all]\n\
@@ -1744,6 +1855,14 @@ int main(int argc, char *argv[])
 
 	g_test_add("/bootchooser/raspberrypi/tryboot", RaspberrypiFixture, NULL,
 			raspberrypi_fixture_set_up, bootchooser_raspberrypi_tryboot_mark_good,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/tryboot-reactivate-then-good", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_tryboot_reactivate_then_good,
+			raspberrypi_fixture_tear_down);
+
+	g_test_add("/bootchooser/raspberrypi/tryboot-mark-good-other-rejected", RaspberrypiFixture, NULL,
+			raspberrypi_fixture_set_up, bootchooser_raspberrypi_tryboot_mark_good_other_rejected,
 			raspberrypi_fixture_tear_down);
 
 	g_test_add("/bootchooser/raspberrypi/normal", RaspberrypiFixture, NULL,

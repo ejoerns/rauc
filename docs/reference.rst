@@ -2731,18 +2731,39 @@ EFI
 Raspberry Pi
 ~~~~~~~~~~~~
 
+.. note:: This is valid for Raspberry Pi 4 and 5 only.
+
+The Raspberry Pi implementation maps the good/bad/primary calls onto
+modifications of ``autoboot.txt``'s ``[all]``/``[tryboot]`` sections and the
+one-shot ``tryboot`` reboot flag.
+As this mechanism does not map cleanly onto RAUC's boot selection model,
+several operations are intentionally no-ops rather than persisting anything.
+
 :state bad:
-  Do nothing.
-  This behaves slightly different than the other implementations because we
-  avoid unnecessary writes to FAT filesystem.
+  *Clear the reboot flag*, if the slot is the one in the ``[tryboot]`` section
+  and currently activated for the next boot via the reboot flag.
+  This will make the default (in ``[all]``) boot again.
+
+  Otherwise *do nothing*.
+  In particular, the slot persisted as the default (in ``[all]``) is never
+  disabled, since marking it bad would leave no bootable slot.
+
+  The ``autoboot.txt`` is never modified (the slot is not removed from the
+  ``[tryboot]`` section).
 
 :state good:
-  Sets the slot to `[all]` `boot_partition` property if the slot is not the
-  primary slot and if the slot has booted with the `tryboot` reboot-flag set.
-  This behaves slightly different than the other implementations because we use
-  `tryboot` reboot-flag for allowing setting primary with an initial fallback
-  option.
-  Setting state good is then used to persist this.
+  *No-op*, if the slot is already the one set in ``[all]``.
+  This is always the case after a normal (non-``tryboot``) boot, since nothing
+  should rewrite ``[all]`` outside of this very operation.
+
+  If it is not the default slot:
+
+  *Reject with an error*, if it is not the one actually booted (checked against
+  the live devicetree ``partition`` property).
+
+  Otherwise *persist as default* in ``autoboot.txt`` ``[all]`` section.
+  Swaps the previous ``[all]`` slot to the ``[tryboot]`` section.
+  Clears the reboot flag for consistency.
 
 :primary:
   *Set as tryboot slot*, if the slot is not set as default in ``[all]``.

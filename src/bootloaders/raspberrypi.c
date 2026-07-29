@@ -134,18 +134,6 @@ static gboolean raspberrypi_bootloader_get_partition(guint *partition, GError **
 	return raspberrypi_bootloader_get("partition", partition, error);
 }
 
-static gboolean raspberrypi_bootloader_get_tryboot(gboolean *tryboot, GError **error)
-{
-	guint value;
-
-	if (!raspberrypi_bootloader_get("tryboot", &value, error))
-		return FALSE;
-
-	*tryboot = value ? TRUE : FALSE;
-
-	return TRUE;
-}
-
 static gboolean raspberrypi_get_reboot_flag(gboolean *enabled, GError **error)
 {
 	g_autoptr(GBytes) stdout_bytes = NULL;
@@ -497,58 +485,66 @@ gboolean r_raspberrypi_get_state(RaucSlot *slot, gboolean *good, GError **error)
 	return TRUE;
 }
 
-/* We assume to set bootstate persistently in autoboot.txt if the slot is good
- * and it is not the primary slot, and if booted using tryboot. */
+/* Persist a good slot as the new [all] default, demoting the previous default
+ * to [tryboot]. Only commits the slot actually booted (per the devicetree
+ * partition), so a later mark-good for a different slot cannot revert an
+ * earlier commit made in the same boot session. Marking bad is a no-op. */
 gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 {
-	RaucSlot *primary;
 	GError *ierror = NULL;
-	gboolean reboot;
-	gboolean tryboot;
+	RaucSlot *default_slot;
+	guint partition;
 
-	primary = raspberrypi_get_primary_and_reboot_flag(&reboot, &ierror);
-	if (!primary) {
-		g_propagate_prefixed_error(
-				error,
-				ierror,
-				"Failed to get primary slot and reboot flag: ");
+	if (!good) {
+		g_message("raspberrypi backend: setting boot state to 'bad' has no effect");
+		return TRUE;
+	}
+
+	default_slot = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, "all", &ierror);
+	if (!default_slot) {
+		g_propagate_error(error, ierror);
 		return FALSE;
 	}
 
-	/* The slot is bad, do nothing */
-	if (!good)
+	/* The slot is already the default slot, nothing to persist. */
+	if (slot == default_slot) {
+		g_message("raspberrypi backend: setting boot state to 'good': already the default slot");
 		return TRUE;
+	}
 
-	if (!raspberrypi_bootloader_get_tryboot(&tryboot, &ierror)) {
+	if (!raspberrypi_bootloader_get_partition(&partition, &ierror)) {
 		g_propagate_prefixed_error(
 				error,
 				ierror,
-				"Failed to get bootloader tryboot property: ");
+				"Failed to get bootloader 'partition' DTB property: ");
+		return FALSE;
+	}
+	g_autofree gchar *partition_str = g_strdup_printf("%u", partition);
+	if (g_strcmp0(slot->bootname, partition_str) != 0) {
+		g_set_error(
+				error,
+				R_BOOTCHOOSER_ERROR,
+				R_BOOTCHOOSER_ERROR_NOT_SUPPORTED,
+				"Setting slot '%s' good is not supported: it is not the slot actually booted (partition %s)",
+				slot->name, partition_str);
 		return FALSE;
 	}
 
-	/* The tryboot is unset, do nothing */
-	if (!tryboot)
-		return TRUE;
-
-	g_debug("Detected tryboot boot");
-
-	/* The reboot flag is set, do nothing */
-	if (reboot) {
-		g_debug("Detected reboot flag");
-		return TRUE;
+	if (!raspberrypi_write_autoboot(slot->bootname, default_slot->bootname, &ierror)) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to persist slot '%s' in [all] section: ", slot->name);
+		return FALSE;
 	}
+	g_debug("set good: Slot '%s' persisted in autoboot.txt [all] section", slot->name);
 
-	/* The slot is not yet the primary slot, update autoboot.txt */
-	if (slot != primary) {
-		if (!raspberrypi_write_autoboot(slot->bootname, primary->bootname, &ierror)) {
-			g_propagate_prefixed_error(
-					error,
-					ierror,
-					"Failed to set other persistent: ");
-			return FALSE;
-		}
-		g_debug("File autoboot.txt updated");
+	if (!raspberrypi_set_reboot_flag(FALSE, &ierror)) {
+		g_propagate_prefixed_error(
+				error,
+				ierror,
+				"Failed to clear reboot flag: ");
+		return FALSE;
 	}
 
 	return TRUE;
