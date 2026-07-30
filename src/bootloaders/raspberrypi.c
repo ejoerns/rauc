@@ -242,6 +242,7 @@ static gboolean raspberrypi_write_autoboot(gchar *persistent_bootname, gchar *tr
 {
 	g_auto(filedesc) fd = -1;
 	g_autofree gchar *data = NULL;
+	g_autofree gchar *current = NULL;
 	g_autofree gchar *filename_tmp = NULL;
 	gchar *filename;
 	gsize size;
@@ -252,6 +253,17 @@ static gboolean raspberrypi_write_autoboot(gchar *persistent_bootname, gchar *tr
 
 	filename = r_context()->config->raspberrypi_autoboottxt_path;
 	filename_tmp = g_strdup_printf("%s.tmp", filename);
+
+	data = g_strdup_printf("[all]\ntryboot_a_b=1\nboot_partition=%s\n[tryboot]\nboot_partition=%s\n",
+			persistent_bootname, tryboot_bootname);
+	size = strlen(data);
+
+	/* Skip rewriting a file that already has exactly this content, to avoid
+	 * unnecessary writes to the FAT filesystem holding autoboot.txt.*/
+	if (g_file_get_contents(filename, &current, NULL, NULL) && g_strcmp0(current, data) == 0) {
+		g_debug("File autoboot.txt is already up to date");
+		return TRUE;
+	}
 
 	fd = g_open(filename_tmp, O_CREAT|O_TRUNC|O_RDWR, S_IRUSR|S_IWUSR);
 	if (fd < 0) {
@@ -264,9 +276,6 @@ static gboolean raspberrypi_write_autoboot(gchar *persistent_bootname, gchar *tr
 		return FALSE;
 	}
 
-	data = g_strdup_printf("[all]\ntryboot_a_b=1\nboot_partition=%s\n[tryboot]\nboot_partition=%s\n",
-			persistent_bootname, tryboot_bootname);
-	size = strlen(data);
 	if (write(fd, data, size) != (gssize)size) {
 		int err = errno;
 		g_set_error(

@@ -2774,3 +2774,6 @@ several operations are intentionally no-ops rather than persisting anything.
   the reboot flag is set.
   This cancels a potentially pending one-shot switch to another slot.
   Otherwise, this is a no-op.
+
+.. note:: ``autoboot.txt`` is only rewritten if its content actually changes,
+   to avoid unnecessary writes to the FAT filesystem holding it.
