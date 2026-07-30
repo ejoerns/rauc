@@ -134,6 +134,24 @@ static gboolean raspberrypi_bootloader_get_partition(guint *partition, GError **
 	return raspberrypi_bootloader_get("partition", partition, error);
 }
 
+/* Log whether the firmware booted this system via tryboot.
+ * (informational only) */
+static void raspberrypi_log_boot_mode(void)
+{
+	g_autoptr(GError) ierror = NULL;
+	guint tryboot;
+
+	if (!raspberrypi_bootloader_get("tryboot", &tryboot, &ierror)) {
+		g_debug("Could not determine whether this is a tryboot boot: %s", ierror->message);
+		return;
+	}
+
+	if (tryboot)
+		g_message("raspberrypi backend: system booted via tryboot");
+	else
+		g_debug("raspberrypi backend: system booted via default");
+}
+
 static gboolean raspberrypi_get_reboot_flag(gboolean *enabled, GError **error)
 {
 	g_autoptr(GBytes) stdout_bytes = NULL;
@@ -365,6 +383,8 @@ gboolean r_raspberrypi_set_primary(RaucSlot *slot, GError **error)
 {
 	GError *ierror = NULL;
 
+	raspberrypi_log_boot_mode();
+
 	RaucSlot *default_slot = raspberrypi_find_config_slot_by_autoboot_section(r_context()->config, "all", &ierror);
 	if (!default_slot) {
 		g_propagate_error(error, ierror);
@@ -486,6 +506,8 @@ gboolean r_raspberrypi_set_state(RaucSlot *slot, gboolean good, GError **error)
 	GError *ierror = NULL;
 	RaucSlot *default_slot;
 	guint partition;
+
+	raspberrypi_log_boot_mode();
 
 	if (!good) {
 		gboolean reboot;
