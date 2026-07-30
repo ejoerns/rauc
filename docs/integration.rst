@@ -1393,11 +1393,17 @@ Refer to these backends if using one of those.
    It is a boot attempts counter of 1 after an update; the firmware cannot fall
    back to the other slot if the primary slot becomes unbootable later.
 
-The Raspberry Pi backend updates the file ``autoboot.txt`` present in the first
-FAT partition.
-It gets the one-shot reboot flag set by the firmware in the device-tree node
-``/chosen/bootloader/tryboot`` at boot, and it sets it to the firmware for
-the next boot thanks to the utility ``vcmailbox``.
+The Raspberry Pi backend determines the booted slot from the device-tree node
+``/chosen/bootloader/partition``, which the firmware sets at boot.
+It updates the file ``autoboot.txt`` present in the first FAT partition, and it
+reads or sets the firmware's one-shot *reboot* flag using the ``vcmailbox``
+utility.
+With the flag set, the Raspberry Pi firmware loads the partition set in the
+``autoboot.txt`` ``[tryboot]`` section.
+
+The device-tree node ``/chosen/bootloader/tryboot``, which indicates that the
+system was booted with the *reboot* flag enabled, is read for logging purposes
+only.
 
 .. important:: The first FAT filesystem is given by the partition type FAT32
    (``0x0C``) for an MBR Partition Table, or by the GUID partition types EFI
