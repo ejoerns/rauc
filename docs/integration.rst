@@ -1396,7 +1396,7 @@ Refer to these backends if using one of those.
 The Raspberry Pi backend updates the file ``autoboot.txt`` present in the first
 FAT partition.
 It gets the one-shot reboot flag set by the firmware in the device-tree node
-``/chosen/bootloader/partition`` at boot, and it sets it to the firmware for
+``/chosen/bootloader/tryboot`` at boot, and it sets it to the firmware for
 the next boot thanks to the utility ``vcmailbox``.
 
 .. important:: The first FAT filesystem is given by the partition type FAT32
