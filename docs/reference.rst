@@ -142,6 +142,12 @@ Example configuration:
   .. note:: Requires to have at least `dt-utils
      <https://git.pengutronix.de/cgit/tools/dt-utils>`_ version 2021.03.0
 
+``raspberrypi-autoboot-txt`` (optional)
+  Only valid when ``bootloader`` is set to ``raspberrypi``.
+  Specifies the path under which the ``autoboot.txt`` of the Raspberry Pi
+  firmware can be accessed.
+  Defaults to ``/boot/autoboot.txt``.
+
 ``boot-attempts`` (optional)
   This configures the number of boot attempts to set when a slot is marked good
   through the D-Bus API or via the command line tool.
